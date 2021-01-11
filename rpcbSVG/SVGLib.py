@@ -1,18 +1,19 @@
-# -*- coding: utf-8 -*- 
 '''
 Construção de um documento SVG
 '''
 
-import cairo
+#import cairo
 #import rsvg
 
 from io import StringIO
 from math import pi, sin, cos, sqrt, pow
+from typing import Optional, List, Union
+from collections import namedtuple
 
 from lxml import etree
 
-from SVGstyle import toCSS, Fill, Stroke, TextAttribs
-from BasicGeom import Envelope
+from rpcbSVG.SVGstyle import toCSS, Fill, Stroke, TextAttribs
+from rpcbSVG.BasicGeom import Envelope, Pt
 
 XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
@@ -30,6 +31,7 @@ DECLARATION_ROOT = """<?xml version="1.0" standalone="no"?>
 	 
 POINTS_FORMAT = "{0:.2f},{1:.2f}"
 
+SPECIAL_ATTRS = ('x','y','width','height','id','class')
 
 def polar2rect(ang, rad):
 	return POINTS_FORMAT.format(cos(ang) * rad, sin(ang) * rad )
@@ -106,11 +108,85 @@ class DimsFull(Dims):
 	def __init__(self):
 		super().__init__(100, 100, unit='%')
 
-class DimsZero(Dims):
-	def __init__(self):
-		super().__init__(0, 0, unit='')
-				
-class SVGContent(object):
+# class attrIface(object):
+# 	def transf(self, svgelem):
+# 		for a in dir(self):
+# 			if not a.startswith("__"):
+# 				if not callable(getattr(self, a)):
+# 					svgelem.set(getattr(self, a))
+
+class Rect(namedtuple('Rect', ("x", "y", "width", "height"))):
+	def fromEnvelope(self, env: Envelope) -> None:
+		self.x = env.minx
+		self.y = env.miny
+		self.width = env.getWidth()
+		self.height = env.getHeight()
+
+class BaseSVGElem(object):
+
+	def __init__(self, attr_interfaces: List[namedtuple]) -> None:
+		self.el = None
+		self.attr_interfaces = attr_interfaces # Namedtuple classes
+
+	def getEl(self):
+		assert not self.el is None
+		return self.el
+
+	def setId(self, idval):
+		assert isinstance(idval, str)
+		assert not self.el is None
+		self.el.set('id', idval)
+
+	def getId(self):
+		assert not self.el is None
+		assert "id" in self.el.keys()
+		return self.el.get('id')
+
+	def setAttrs(self, inobj: namedtuple) -> None:
+		assert not self.el is None
+		for c in self.attr_interfaces:
+			if isinstance(inobj, c):
+				for fld in inobj._fields:
+					self.el.set(fld, str(getattr(inobj, fld)))
+				break
+
+
+
+class SVGRoot(BaseSVGElem):
+	def __init__(self, tree = None, rect: Optional[Rect] = None) -> None:
+		super().__init__([Rect])
+		if tree is None:
+			self.tree = etree.parse(StringIO(SVG_ROOT))
+		elif hasattr(tree, 'getroot'):
+			self.tree = tree
+		else:
+			raise RuntimeError("object supllied is not ElementTree")
+		assert not self.tree is None
+		self.el = self.tree.getroot()
+		if not rect is None:
+			self.setAttrs(rect)
+
+class SVGElem(BaseSVGElem):
+	def __init__(self, tag: str, parent, idval: Optional[str] = None) -> None:
+		assert not parent is None
+		if hasattr(parent, 'getroot'):
+			rootel = parent.getroot()
+		elif isinstance(parent, BaseSVGElem):
+			rootel = parent.getRoot()
+		else:
+			rootel = None
+			raise RuntimeError(f"Wrong parent type: {type(parent)}")
+		self.el = etree.SubElement(rootel, tag)
+		if not idval is None:
+			self.el.set('id', idval)
+
+
+class SVGGroup(BaseSVGElem):
+	def __init__(self, parent, idval: Optional[str]) -> None:
+		super().__init__('g', parent=parent, idval=idval)
+
+
+class SVGContent(SVGGroup):
 	def __init__(self, thisroot_or_parent, creationtag=None, defscontent=None, attribs=None):
 		if hasattr(thisroot_or_parent, 'getRoot'):
 			rootel = thisroot_or_parent.getRoot()
@@ -120,21 +196,14 @@ class SVGContent(object):
 			self.root = etree.SubElement(rootel, creationtag)
 		else:
 			self.root = rootel
-
 		if not attribs is None:
 			for k in list(attribs.keys()):
 				self.root.set(k, str(attribs[k]))
-
 		self.defscontent = defscontent
 		self.dims = None
-		self.id_serial = 0
 		self.envelope = Envelope()
 		self.groups = {}
-	def _nextIDSerial(self):
-		ret = self.id_serial
-		self.id_serial = self.id_serial + 1
-		return ret
-	def addGroup(self, idval=None, attribs=None, todefs=False):
+	def addGroup(self, idval=None, cls=None, attribs=None, todefs=False):
 		if idval is None:
 			idval = 'G{0}'.format(self._nextIDSerial())
 		if todefs:
@@ -143,7 +212,7 @@ class SVGContent(object):
 		else:
 			self.groups[idval] = GROUPContent(self, idval=idval, attribs=attribs)
 		return self.groups[idval]
-	def getGroup(self, idval):
+	def getGroup(self, idval, cls=None):
 		if not idval in list(self.groups.keys()):
 			raise MissingGroup(idval, list(self.groups.keys()))
 		else:
@@ -154,8 +223,6 @@ class SVGContent(object):
 		return self.defscontent
 	def getDims(self):
 		return self.dims
-	def setId(self, idval):
-		self.root.set('id', idval)
 	def setViewbox(self, viewport):		
 		if self.root.tag in [
 				'{' + SVG_NAMESPACE + '}svg', '{' + SVG_NAMESPACE + '}symbol',
@@ -193,8 +260,7 @@ class SVGContent(object):
 		flt.set('width', '150%')
 		flt.set('height', '150%')
 		return flt
-
-	def addUse(self, x, y, refid, idval=None, attribs=None):
+	def addUse(self, x, y, refid, idval=None, cls=None, attribs=None):
 		if idval is None:
 			trueid = 'U{0}'.format(self._nextIDSerial())
 		else:
@@ -202,14 +268,16 @@ class SVGContent(object):
 		u = etree.SubElement(self.root, 'use')
 		u.set('{' + XLINK_NAMESPACE + '}href', '#{0}'.format(refid))
 		u.set('id',trueid)
+		if not cls is None:
+			u.set('class')
 		u.set('x', str(x))
 		u.set('y', str(y))
 		if not attribs is None:
 			for k in list(attribs.keys()):
-				if not k in ['x','y','width','height']:
+				if not k in SPECIAL_ATTRS:
 					u.set(k, str(attribs[k]))
 		return u	
-	def addRect(self, x, y, width, height, attribs=None, idval=None, todefs=False, ns_stroke=None):
+	def addRect(self, x, y, width, height, attribs=None, idval=None, cls=None, todefs=False, ns_stroke=None):
 		if todefs:
 			assert not self.getDefs() is None, "add... element to defs: no DEFS defined on this SVGContent"
 			r = etree.SubElement(self.defscontent.getRoot(), 'rect')
@@ -226,14 +294,14 @@ class SVGContent(object):
 		r.set('height', str(height))
 		if not attribs is None:
 			for k in list(attribs.keys()):
-				if not k in ['x','y','width','height']:
+				if not k in SPECIAL_ATTRS:
 					r.set(k, str(attribs[k]))
 		return r
-	def addRectFromEnvelope(self, env, attribs=None, idval=None, todefs=False):
+	def addRectFromEnvelope(self, env, attribs=None, idval=None, cls=None, todefs=False):
 		rect_params = []
 		env.getRectParams(rect_params)
 		return self.addRect(*rect_params, attribs=attribs, idval=idval, todefs=todefs)
-	def addPath(self, pathdatastring, attribs=None, idval=None, todefs=False, ns_stroke=None):
+	def addPath(self, pathdatastring, attribs=None, idval=None, cls=None, todefs=False, ns_stroke=None):
 		if todefs:
 			assert not self.getDefs() is None, "add... element to defs: no DEFS defined on this SVGContent"
 			p = etree.SubElement(self.defscontent.getRoot(), 'path')
@@ -250,9 +318,7 @@ class SVGContent(object):
 				if not k in ['id','d']:
 					p.set(k, str(attribs[k]))
 		return p
-	def addFromPathObj(self, pathobj, attribs=None, idval=None, todefs=False):
-		return self.addPath(pathobj.getPathString(), attribs=attribs, idval=idval, todefs=todefs)
-	def addPolygon(self, pointsdatastring, attribs=None, idval=None, todefs=False):
+	def addPolygon(self, pointsdatastring, attribs=None, idval=None, cls=None, todefs=False):
 		if todefs:
 			assert not self.getDefs() is None, "add... element to defs: no DEFS defined on this SVGContent"
 			p = etree.SubElement(self.defscontent.getRoot(), 'polygon')
@@ -269,7 +335,7 @@ class SVGContent(object):
 				if not k in ['id','points']:
 					p.set(k, str(attribs[k]))
 		return p
-	def addCircle(self, cx, cy, rad, attribs=None, idval=None, todefs=False, ns_stroke=False):
+	def addCircle(self, cx, cy, rad, attribs=None, idval=None, cls=None, todefs=False, ns_stroke=False):
 		if idval is None:
 			trueid = 'C{0}'.format(self._nextIDSerial())
 		else:
@@ -294,7 +360,7 @@ class SVGContent(object):
 				if not k in ['id','cx','cy','r']:
 					c.set(k, str(attribs[k]))
 		return c
-	def addImage(self, x, y, width, height, image_iri, attribs=None, idval=None, todefs=False):
+	def addImage(self, x, y, width, height, image_iri, attribs=None, idval=None, cls=None, todefs=False):
 		if todefs:
 			assert not self.getDefs() is None, "add... element to defs: no DEFS defined on this SVGContent"
 			img = etree.SubElement(self.defscontent.getRoot(), 'image')
@@ -312,11 +378,10 @@ class SVGContent(object):
 		img.set('height',str(height))
 		if not attribs is None:
 			for k, val in attribs.items():
-				if k not in ['id','x','y','width','height']:
+				if k not in SPECIAL_ATTRS:
 					img.set(k, val)
-		return img
-	
-	def addText(self, x, y, content, attribs=None, idval=None, deltay=None, todefs=False):
+		return img	
+	def addText(self, x, y, content, attribs=None, idval=None, cls=None, deltay=None, todefs=False):
 		if todefs:
 			assert not self.getDefs() is None, "add... element to defs: no DEFS defined on this SVGContent"
 			txt = etree.SubElement(self.defscontent.getRoot(), 'text')
@@ -333,13 +398,11 @@ class SVGContent(object):
 			txt.set('dy', str(deltay))
 		if not attribs is None:
 			for k, val in attribs.items():
-				if k not in ['id','x','y','width','height']:
+				if k not in SPECIAL_ATTRS:
 					txt.set(k, val)
 		txt.text = content
-
 		return txt
-
-	def addTextAlongPath(self, content, alongpathid, attribs=None, idval=None, deltay=None, startoffset=40):
+	def addTextAlongPath(self, content, alongpathid, attribs=None, idval=None, cls=None, deltay=None, startoffset=40):
 		txt = etree.SubElement(self.root, 'text')
 		if idval is None:
 			trueid = 'T{0}'.format(self._nextIDSerial())
@@ -360,10 +423,29 @@ class SVGContent(object):
 
 		if not attribs is None:
 			for k, val in attribs.items():
-				if k not in ['id','x','y','width','height']:
+				if k not in SPECIAL_ATTRS:
 					txt.set(k, val)
 
 		return txt
+	def addLinearGradient(self, orig: Optional[Pt]=None, dest: Optional[Pt]=None, idval=None, cls=None, todefs=False):
+		if todefs:
+			assert not self.getDefs() is None, "add... element to defs: no DEFS defined on this SVGContent"
+			lg = etree.SubElement(self.defscontent.getRoot(), 'linearGradient')
+		else:
+			lg = etree.SubElement(self.root, 'linearGradient')
+		if idval is None:
+			trueid = 'T{0}'.format(self._nextIDSerial())
+		else:
+			trueid = idval
+		lg.set('id',trueid)
+		if not orig is None and not dest is None:
+			lg.set('x1', orig.x)
+			lg.set('x2', dest.x)
+			lg.set('y1', orig.y)
+			lg.set('y2', dest.y)
+		return lg
+	# addGradStop/self, idval=x
+
 
 class DEFSContent(SVGContent):
 	def __init__(self, parent):
@@ -383,37 +465,17 @@ class MissingGroup(Exception):
 	def __str__(self):
 		return "missing group: '{0}'; existing groups: {1}".format(self.idval, ','.join(self.existing_list))
 	
-# class SVGGroupableContent(SVGContent):
-# 	def __init__(self, thisroot_or_parent, creationtag=None, defscontent=None):	
-# 		super(SVGGroupableContent, self).__init__(thisroot_or_parent, creationtag=creationtag, defscontent=defscontent)	
-# 		self.groups = {}
-# 	def addGroup(self, idval=None, todefs=False):
-# 		self.groups[idval] = GROUPContent(self, idval=idval)
-# 		if idval is None:
-# 			self.groups[idval].set('id','G{0}'.format(self._nextIDSerial()))
-# 		else:
-# 			self.groups[idval].set('id',idval)
-# 		return self.groups[idval]
-# 	def getGroup(self, idval):
-# 		if not idval in self.groups.keys():
-# 			raise MissingGroup(idval, self.groups.keys())
-# 		else:
-# 			return self.groups[idval]
-		
 class MainContent(SVGContent):
 	def __init__(self, docroot):
 		super().__init__(docroot, defscontent=DEFSContent(docroot))
-		#self.innerContent = {}
-#	def registerInnerContent(self, inner_content, keyname):
-#		self.innerContent[keyname] = inner_content
 
 class InnerContent(SVGContent):
 	def __init__(self, mainContent):
 		super().__init__(mainContent.root, creationtag='svg', defscontent=None)
-		#mainContent.registerInnerContent(self, keyname)
 
+class
 
-class SVGDoc(object):
+class SVGDocOld(object):
 	
 	SVG_DYN_METHOD_NAMES = [
 		"addFilter",
@@ -435,6 +497,7 @@ class SVGDoc(object):
 				inner_fn = getattr(self.content, p_meth_name)	
 				return inner_fn(*args, **kwargs)
 			setattr(p_cls, p_meth_name, fn)
+		self.id_serial = 0
 		
 		self.tree = etree.parse(StringIO(rootTemplate))
 		self.content = MainContent(self.tree.getroot())
@@ -442,6 +505,11 @@ class SVGDoc(object):
 		
 		for mname in self.SVG_DYN_METHOD_NAMES:
 			make_dyn_method(self.__class__, mname)
+		
+	def _nextIDSerial(self):
+		ret = self.id_serial
+		self.id_serial = self.id_serial + 1
+		return ret
 		
 	def getRoot(self):
 		return self.tree.getroot()
@@ -500,11 +568,7 @@ class SVGDoc(object):
 			elif key.lower().strip() == 'text-anchor':
 				if not 'tattribs' in list(styles.keys()):
 					styles['tattribs'] = TextAttribs(symbscale=lsscale)
-				styles['tattribs'].setTAnchor(the_dict['text-anchor'])				
-# 			elif key.lower().strip() == 'dy':
-# 				if not 'tattribs' in styles.keys():
-# 					styles['tattribs'] = TextAttribs(symbscale=lsscale)
-# 				styles['tattribs'].setDeltaY(the_dict['dy'])				
+				styles['tattribs'].setTAnchor(the_dict['text-anchor'])							
 			elif key.lower().strip() == 'pointer-events':
 				styles['pointer-events'] = the_dict
 				
@@ -543,15 +607,27 @@ class SVGDoc(object):
 		if inc_doctype:
 			ret = etree.tostring(self.getRoot(), doctype=DOCTYPE_STR, xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')
 		else:
-			ret = etree.tostring(self.getRoot(), xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')
-			
+			ret = etree.tostring(self.getRoot(), xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')			
 		return ret
-			
 
 	def toString(self, inc_declaration=True, inc_doctype=False, pretty_print=True):
 		return self.toBytes(inc_declaration=inc_declaration, inc_doctype=inc_doctype, pretty_print=pretty_print).decode('utf-8')
 		
 class WorldSVGDoc(SVGDoc):
+
+	SVG_DYN_METHOD_NAMES = [
+		"addFilter",
+		"addRect",
+		"addCircle",
+		"addPolygon",
+		"addPath",
+		"addText",
+		"addTextAlongPath",
+		"addGroup",
+		"addUse",
+		"setDims"
+	]
+
 	def __init__(self, rootTemplate):
 		super().__init__(rootTemplate)		
 		self.world = InnerContent(self.content)
@@ -569,24 +645,6 @@ class WorldSVGDoc(SVGDoc):
 		return self.content
 	def getWorld(self):
 		return self.world	
-	def addGroup(self, idval=None, todefs=False):
-		return self.content.addGroup(idval=idval, todefs=todefs)
-	def addWorldGroup(self, idval=None):
-		return self.world.addGroup(idval=idval)	
-	def addFilter(self, idval=None, todefs=True):
-		return self.content.addFilter(idval=idval, todefs=todefs)
-	def addRect(self, x, y, width, height, attribs=None, idval=None, todefs=False, ns_stroke=None):
-		return self.content.addRect(x, y, width, height, attribs=attribs, idval=idval, todefs=todefs, ns_stroke=ns_stroke)
-	def addCircle(self, cx, cy, rad, attribs=None, idval=None, todefs=False, ns_stroke=None):
-		return self.content.addCircle(cx, cy, rad, attribs=attribs, idval=idval, todefs=todefs, ns_stroke=ns_stroke)
-	def addPolygon(self, pointsdatastring, attribs=None, idval=None, todefs=False):
-		return self.content.addPolygon(pointsdatastring, attribs=attribs, idval=idval, todefs=todefs)
-	def addPath(self, pathdatastring, attribs=None, idval=None, todefs=False):
-		return self.content.addPath(pathdatastring, attribs=attribs, idval=idval, todefs=todefs)
-	def addText(self, x, y, content, attribs=None, idval=None, deltay=None, todefs=False):
-		return self.content.addText(x, y, content, attribs=attribs, idval=idval, deltay=deltay, todefs=todefs)		
-	def addTextAlongPath(self, content, alongpathid, attribs=None, idval=None, deltay=None):
-		return self.content.addTextAlongPath(content, alongpathid, attribs=attribs, idval=idval, deltay=deltay)		
 	def addWorldRect(self, x, y, width, height, attribs=None, idval=None, group=None, ns_stroke=False):
 		if not group is None:
 			c = self.world.getGroup(group)
@@ -699,7 +757,12 @@ class FullDocSVG(SVGDoc):
 	def __init__(self, scale=1.0):
 		super().__init__(DECLARATION_ROOT)
 		self.setDims(DimsFull(), scale=scale)
-		
+
+class BasicDocSVG(SVGDoc):
+	def __init__(self, width, height):
+		super().__init__(DECLARATION_ROOT)
+		self.setDims(Dims(width, height))
+
 class HTMLInsertSVG(SVGDoc):
 	def __init__(self, width, height):
 		super().__init__(SVG_ROOT)
@@ -729,5 +792,9 @@ class HTMLInsertWorldSVG(WorldSVGDoc):
 # 		return self.toString()
 	
 
+if __name__ == "__main__":
 
+	s = SVGRoot(rect=Rect(2,3,100,200))
+	#r.transf(s)
+	print(etree.tostring(s.tree.getroot()))
 

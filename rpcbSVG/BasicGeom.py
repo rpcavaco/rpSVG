@@ -1,30 +1,8 @@
-# -*- coding: utf-8 -*- 
-'''
-Created on 22 de Mai de 2014
 
-@author: rui
+from collections import namedtuple
 
-'''
+Pt = namedtuple("Pt", "x y")
 
-from copy import deepcopy
-
-
-class Point2D(object):
-	def __init__(self, x=0, y=0, other=None):
-		self.x = x
-		self.y = y
-		self.cloneFrom(other)
-	def set(self, x=0, y=0):
-		self.x = x
-		self.y = y
-	def cloneFrom(self, otherpt):
-		if not otherpt is None:
-			self.x = otherpt.x
-			self.y = otherpt.y
-	def setReference(self, otherpt):
-		if not otherpt is None:
-			self.x = otherpt.x + self.x
-			self.y = otherpt.y + self.y
 
 class Envelope(object):
 	def __init__(self):
@@ -32,6 +10,11 @@ class Envelope(object):
 		self.miny = 0
 		self.maxx = 0
 		self.maxy = 0
+	def origAndDims(self, pt, width, height):
+		self.minx = pt.x
+		self.miny = pt.y
+		self.maxx = pt.x + width
+		self.maxy = pt.y + height
 	def getWidth(self):
 		return self.maxx - self.minx
 	def getHeight(self):
@@ -69,32 +52,44 @@ class Envelope(object):
 		if pt.y > self.maxy:
 			self.maxy = pt.y
 	def expand(self, ratio):
-		pt = Point2D()
+		pt = Pt()
 		self.getMidPt(pt)
 		newhwidth = self.getWidth() * ratio * 0.5
 		newhheight = self.getHeight() * ratio * 0.5
 		self.minx = pt.x - newhwidth 
 		self.miny = pt.y - newhheight 
 		self.maxx = pt.x + newhwidth 
-		self.maxy = pt.y + newhheight 
+		self.maxy = pt.y + newhheight 	
+	def extractFromPointlist(self, inlist, mirrory=False):
+		for pt in inlist:
+			if mirrory:
+				pt.y = -pt.y
+			if pt.x < self.minx:
+				self.minx = pt.x
+			if pt.y < self.miny:
+				self.miny = pt.y
+			if pt.x > self.maxx:
+				self.maxx = pt.x
+			if pt.y > self.maxy:
+				self.maxy = pt.y
+
+def list2AbsPolylinePath(p_ptlist, mirrory=False, close=False):
+	strcomps = []
+	for pi, pt in enumerate(p_ptlist):
+		if mirrory:
+			pt.y = -pt.y
+		if pi == 0:
+			strcomps.append("M{0:.4f} {1:.4f}".format(*pt))
+		elif pi == 1:
+			strcomps.append("L{0:.4f} {1:.4f}".format(*pt))
+		else:
+			strcomps.append(" {0:.4f} {1:.4f}".format(*pt))
+	if close:
+		strcomps.append(" z")
+	return "".join(strcomps)	
 	
-# 	def extractFromPath(self, inlist, mirrory=False):
-# 		for pair in pairwise(inlist):
-# 			x, y = pair
-# 			if mirrory:
-# 				y = -y
-# 		if x < self.minx:
-# 			self.minx = x
-# 		if y < self.miny:
-# 			self.miny = y
-# 		if x > self.maxx:
-# 			self.maxx = x
-# 		if y > self.maxy:
-# 			self.maxy = y
-
-
-
-
-	
+if __name__ == "__main__":
+	l = [Pt(0,0), Pt(10,0), Pt(20,12), Pt(6,8)]	
+	print(list2AbsPolylinePath(l))
 
 	

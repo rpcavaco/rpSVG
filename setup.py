@@ -6,14 +6,14 @@ rpcbSVG is a Python 3 library to generate SVG content.
 """
 
 setuptools.setup(
-    name="rpcbSVG", # Replace with your own username
+    name="rpcbSVG", 
     version="0.1.0",
     author="Rui Pedro Cavaco Barrosa",
     author_email="rpcavaco@gmail.com",
     description="An SVG generating package",
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
-    url="https://",
+    url="https://github.com/rpcavaco/rpcbSVG",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
