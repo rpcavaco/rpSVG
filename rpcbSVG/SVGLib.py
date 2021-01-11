@@ -116,6 +116,7 @@ class DimsFull(Dims):
 # 					svgelem.set(getattr(self, a))
 
 class Rect(namedtuple('Rect', ("x", "y", "width", "height"))):
+    
 	def fromEnvelope(self, env: Envelope) -> None:
 		self.x = env.minx
 		self.y = env.miny
@@ -160,13 +161,13 @@ class SVGRoot(BaseSVGElem):
 		elif hasattr(tree, 'getroot'):
 			self.tree = tree
 		else:
-			raise RuntimeError("object supllied is not ElementTree")
+			raise RuntimeError("object supplied is not ElementTree")
 		assert not self.tree is None
 		self.el = self.tree.getroot()
 		if not rect is None:
 			self.setAttrs(rect)
 
-class SVGElem(BaseSVGElem):
+class GenericElem(BaseSVGElem):
 	def __init__(self, tag: str, parent, idval: Optional[str] = None) -> None:
 		assert not parent is None
 		if hasattr(parent, 'getroot'):
@@ -472,8 +473,6 @@ class MainContent(SVGContent):
 class InnerContent(SVGContent):
 	def __init__(self, mainContent):
 		super().__init__(mainContent.root, creationtag='svg', defscontent=None)
-
-class
 
 class SVGDocOld(object):
 	
