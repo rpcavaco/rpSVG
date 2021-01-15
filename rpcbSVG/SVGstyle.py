@@ -11,11 +11,6 @@ import json
 
 from math import ceil
 
-def toCSS(indict):
-	outbuf = []		
-	toCSSItem(outbuf, indict)
-	return '\n'.join(outbuf)
-	
 def toCSSItem(outbuf, indict, depth=-1):
 	dp = depth + 1
 	indent = '\t' * dp
@@ -27,6 +22,11 @@ def toCSSItem(outbuf, indict, depth=-1):
 		else:
 			outbuf.append('{0}{1}: {2};'.format(indent, k, indict[k]))
 
+def toCSS(indict):
+	outbuf = []		
+	toCSSItem(outbuf, indict)
+	return '\n'.join(outbuf)
+	
 styleattrs_notserializable = ['symbscale','minfs']
 
 class StyleAttribs(object):

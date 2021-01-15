@@ -33,6 +33,12 @@ POINTS_FORMAT = "{0:.2f},{1:.2f}"
 
 SPECIAL_ATTRS = ('x','y','width','height','id','class')
 
+class TagOutOfDirectUserManipulation(RuntimeError):
+	def __init__(self, p_tag):
+		self.tag = p_tag
+	def __str__(self):
+		return f"Tag '{self.tag}' not to be manipulated by user."
+
 def polar2rect(ang, rad):
 	return POINTS_FORMAT.format(cos(ang) * rad, sin(ang) * rad )
 
@@ -66,7 +72,7 @@ def addFeGaussianBlur(filterroot, instr, result, stdDeviation):
 	fe.set('result', result)
 	fe.set('stdDeviation', str(stdDeviation))
 							
-class BasicDims(object):
+""" class BasicDims(object):
 	def __init__(self, width, height, x=0, y=0):
 		self.x = int(x)
 		self.y = int(y)
@@ -107,55 +113,204 @@ class WorldViewport(Viewport):
 class DimsFull(Dims):
 	def __init__(self):
 		super().__init__(100, 100, unit='%')
+ """
+class _attrs_struct(object):
+	_fields = () # to be extended in subclasses
+	_subfields = ()
+	def __init__(self, fields, subfields, *args, defaults=None) -> None:
+		for i, fld in enumerate(fields):
+			if i < len(args):
+				setattr(self, fld, str(args[i]))
+			else:
+				revi = len(fields) - i - 1
+				if not defaults is None:
+					if len(defaults) > revi:
+						val = str(defaults[revi])
+					else:
+						val = str(defaults[-1])
+				else:
+					val = None
+				setattr(self, fld, val)
+		if len(subfields) > 0:
+			if len(subfields) == len(args) - len(fields):
+				for j, sfld in enumerate(subfields):
+					idx = j + len(fields)
+					setattr(self, sfld, str(args[idx]))
+	def __repr__(self):
+		out = []
+		for x in self.__dict__.keys():
+			if not x.startswith('_'):
+				out.append(f"{x}={getattr(self, x)}")
+		return ' '.join(out)
+	def setXmlAttrs(self, xmlel) -> None:  
+		for f in self._fields:
+			xmlel.set(f, str(getattr(self, f)))
+	def cloneFrom(self, p_other):
+		for l in [self._fields, self._subfields]:
+			for fld in l:
+				if hasattr(p_other, fld):
+					setattr(self, fld, getattr(p_other, fld))
 
-# class attrIface(object):
-# 	def transf(self, svgelem):
-# 		for a in dir(self):
-# 			if not a.startswith("__"):
-# 				if not callable(getattr(self, a)):
-# 					svgelem.set(getattr(self, a))
+class _withunits_struct(_attrs_struct):
+	def __init__(self, fields, subfields, *args, defaults=None) -> None:
+		self._units = None
+		_subfields = list(subfields)
+		if not "_units" in _subfields:
+			_subfields.append("_units")
+		super().__init__(fields, _subfields, *args, defaults=defaults)
+		if not self._units is None:
+			self._apply_units()
+	def _apply_units(self) -> None:
+		assert not self._units is None
+		assert self._units in ('px', 'pt', 'em', 'rem', '%'), f"invalid units: '{self._units}' not in 'px', 'pt', 'em', 'rem' or '%'"
+		for f in self._fields:
+			val = getattr(self, f)
+			numval = None
+			try:
+				numval = int(val)
+			except ValueError:
+				try:
+					numval = float(val)
+				except ValueError:
+					pass
+			if not numval is None and numval > 0:
+				setattr(self, f, f"{numval}{self._units}")
+	def setUnits(self, un: str) -> None:
+		self._units = un
+		self._apply_units()
+	def iterUnitsRemoved(self):
+		for f in self._fields:
+			val = getattr(self, f)
+			if not self._units is None:
+				val = val.replace(self._units, '')
+			yield val
 
-class Rect(namedtuple('Rect', ("x", "y", "width", "height"))):
-    
+
+
+class Re(_withunits_struct):
+	_fields = ("x",  "y", "width", "height") 
+	def __init__(self, *args) -> None:
+		super().__init__(self._fields, (), *args, defaults=["0"])
 	def fromEnvelope(self, env: Envelope) -> None:
 		self.x = env.minx
 		self.y = env.miny
 		self.width = env.getWidth()
 		self.height = env.getHeight()
+		return self
+	def full(self):
+		self.y = self.x = "0"
+		self.width = self.height = "100"
+		self.setUnits('%')
+		return self
+
+class VBox(_withunits_struct):
+	_fields = ("viewBox",)
+	def __init__(self, *args) -> None:
+		rect = Re(*args)
+		cont = " ".join(list(rect.iterUnitsRemoved()))
+		super().__init__(self._fields, (), cont)
+	def cloneFromRect(self, p_rect: Re, scale: Optional[float] = None):
+		if not scale is None:
+			cont = " ".join([str(round(float(at) * scale)) for at in p_rect.iterUnitsRemoved()])
+		else:
+			cont = " ".join(list(p_rect.iterUnitsRemoved()))
+		self.viewBox = cont
+
+class VBox600x800(VBox):
+	def __init__(self) -> None:
+		super().__init__(0, 0, 600, 800)
+
+class VBox1280x1024(VBox):
+	def __init__(self) -> None:
+		super().__init__(0, 0, 1280, 1024)
+
+
+class Ci(_withunits_struct):
+	_fields = ("cx",  "cy", "rad") 
+	def __init__(self, *args) -> None:
+		super().__init__(self._fields, (), *args, defaults=["0"])
+
 
 class BaseSVGElem(object):
 
-	def __init__(self, attr_interfaces: List[namedtuple]) -> None:
+	NO_XML_EL = "XML Element not created yet"
+
+	def __init__(self, tag: str, struct: Optional[_withunits_struct] = None) -> None:
+		self.tag = tag
+		self.struct = struct
+		self.idprefix = tag[:3].title()
 		self.el = None
-		self.attr_interfaces = attr_interfaces # Namedtuple classes
+
+	def setStruct(self, struct: _withunits_struct):
+		self.struct = struct
+		if not self.el is None:
+			self.struct.setXmlAttrs(self.el)
+		return self
+
+	def hasEl(self):
+		return  not self.el is None
 
 	def getEl(self):
-		assert not self.el is None
+		assert not self.el is None, self.NO_XML_EL
 		return self.el
+
+	def setEl(self, xmlel) -> None:
+		self.el = xmlel
+		if not self.struct is None:
+			self.struct.setXmlAttrs(self.el)
+		return self
 
 	def setId(self, idval):
 		assert isinstance(idval, str)
-		assert not self.el is None
+		assert not self.el is None, self.NO_XML_EL
 		self.el.set('id', idval)
+		return self
 
 	def getId(self):
-		assert not self.el is None
+		assert not self.el is None, self.NO_XML_EL
 		assert "id" in self.el.keys()
 		return self.el.get('id')
 
-	def setAttrs(self, inobj: namedtuple) -> None:
-		assert not self.el is None
-		for c in self.attr_interfaces:
-			if isinstance(inobj, c):
-				for fld in inobj._fields:
-					self.el.set(fld, str(getattr(inobj, fld)))
-				break
+	def hasId(self) -> bool:
+		assert not self.el is None, self.NO_XML_EL
+		return "id" in self.el.keys()
 
+	def setClass(self, clsval):
+		assert isinstance(clsval, str)
+		assert not self.el is None, self.NO_XML_EL
+		self.el.set('class', clsval)
+		return self
 
+	def getClass(self):
+		assert not self.el is None, self.NO_XML_EL
+		assert "class" in self.el.keys()
+		return self.el.get('class')
 
-class SVGRoot(BaseSVGElem):
-	def __init__(self, tree = None, rect: Optional[Rect] = None) -> None:
-		super().__init__([Rect])
+	def hasClass(self) -> bool:
+		assert not self.el is None, self.NO_XML_EL
+		return "class" in self.el.keys()
+
+	def setXmlAttrs(self, xmlel) -> None:  
+		assert not self.struct is None
+		self.struct.setXmlAttrs(xmlel)
+
+class SVGContainer(BaseSVGElem):
+	def addChld(self, p_child: BaseSVGElem):
+		assert self.hasEl()
+		newel = etree.SubElement(self.getEl(), p_child.tag)
+		p_child.setEl(newel)
+		return p_child
+	def addChldTag(self, p_tag: str):
+		assert self.hasEl()
+		newel = etree.SubElement(self.getEl(), p_tag)
+		return newel
+	def clear(self):
+		assert self.hasEl()
+		del self.getEl()[:]
+
+class SVGRoot(SVGContainer):
+	def __init__(self, rect: Re, tree = None, viewbox: Optional[VBox] = None) -> None:
+		super().__init__("svg", struct=rect)
 		if tree is None:
 			self.tree = etree.parse(StringIO(SVG_ROOT))
 		elif hasattr(tree, 'getroot'):
@@ -164,29 +319,113 @@ class SVGRoot(BaseSVGElem):
 			raise RuntimeError("object supplied is not ElementTree")
 		assert not self.tree is None
 		self.el = self.tree.getroot()
-		if not rect is None:
-			self.setAttrs(rect)
+		self.setRect(rect)
+		if not viewbox is None:
+			self.setViewbox(viewbox)
+	def setRect(self, p_rect: Re):
+		assert isinstance(p_rect, Re)
+		self.setStruct(p_rect)
+		p_rect.setXmlAttrs(self.el)
+		return self
+	def setViewbox(self, p_viewbox: VBox):
+		assert isinstance(p_viewbox, VBox)
+		p_viewbox.setXmlAttrs(self.el)
+		return self
+	def setIdentityViewbox(self, scale: Optional[float] = None):
+		assert not self.struct is None
+		vb = VBox()
+		vb.cloneFromRect(self.struct, scale=scale)
+		return self.setViewbox(vb)
 
-class GenericElem(BaseSVGElem):
-	def __init__(self, tag: str, parent, idval: Optional[str] = None) -> None:
-		assert not parent is None
-		if hasattr(parent, 'getroot'):
-			rootel = parent.getroot()
-		elif isinstance(parent, BaseSVGElem):
-			rootel = parent.getRoot()
+
+
+class Rect(BaseSVGElem):
+	def __init__(self, *args) -> None:
+		super().__init__("rect", struct=Re(*args))
+
+class Circle(BaseSVGElem):
+	def __init__(self, *args) -> None:
+		super().__init__("circle", struct=Ci(*args))
+
+class Group(SVGContainer):
+	def __init__(self) -> None:
+		super().__init__('g')
+
+class SVGContent(SVGRoot):
+	forbidden_user_tags = ["defs"]
+	def __init__(self, rect: Re, tree=None, viewbox: Optional[VBox] = None) -> None:
+		super().__init__(rect, tree=tree, viewbox=viewbox)
+		self.id_serial = 0
+		self.styles = {}
+		self._defs = super().addChld(SVGContainer("defs"))
+
+	def _nextIDSerial(self):
+		ret = self.id_serial
+		self.id_serial = self.id_serial + 1
+		return ret
+
+	def addChld(self, p_child: BaseSVGElem):
+		if p_child.tag in self.forbidden_user_tags:
+			raise TagOutOfDirectUserManipulation(p_child.tag)
+		ret = super().addChld(p_child)
+		if not ret.hasId():
+			ret.setId(p_child.idprefix + str(self._nextIDSerial()))
+		return ret
+
+	def prepareRendering(self):
+		# only one style child in defs
+		self._defs.clear()
+		styel = self._defs.addChldTag("style")
+		assert styel is None and styel.tag == "style"
+		styel.set("type", "text/css")
+		outdict = {}
+		for key in self.styles.keys():
+			outdict[key] = {}
+			for st in self.styles[key]:
+				if isinstance(st, dict):
+					outdict[key].update(st)
+				else:
+					st.toCSSDict(outdict[key])
+		styel.text = etree.CDATA(toCSS(outdict))
+
+		# defs = self.content.getDefs()
+		# droot = defs.getRoot()
+
+		# if len(list(self.styles.keys())) > 0:
+		# 	self._defs.addChld(BaseSVGElem("defs"))
+
+		# #print 'style keys :: ',  self.styles.keys()
+
+		# 	# TODO - DETECTAR se o style element com o id correspond. já existe, criar ou reusar
+		# 	s = None
+		# 	for element in droot.iter("style"):
+		# 		s = element
+		# 		break
+		# 	if s is None:
+		# 		s = etree.SubElement(droot, 'style')
+		# 	s.set("type", "text/css")
+		# 	od = {}
+		# 	for key in list(self.styles.keys()):
+		# 		od[key] = {}
+		# 		for st in self.styles[key]:
+		# 			if isinstance(st, dict):
+		# 				od[key].update(st)
+		# 			else:
+		# 				st.toCSSDict(od[key])
+		# 	s.text = etree.CDATA(toCSS(od))
+
+	def toBytes(self, inc_declaration=False, inc_doctype=False, pretty_print=True):
+		self.prepareRendering()
+		if inc_doctype:
+			ret = etree.tostring(self.getEl(), doctype=DOCTYPE_STR, xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')
 		else:
-			rootel = None
-			raise RuntimeError(f"Wrong parent type: {type(parent)}")
-		self.el = etree.SubElement(rootel, tag)
-		if not idval is None:
-			self.el.set('id', idval)
+			ret = etree.tostring(self.getEl(), xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')			
+		return ret
 
+	def toString(self, inc_declaration=False, inc_doctype=False, pretty_print=True):
+		return self.toBytes(inc_declaration=inc_declaration, inc_doctype=inc_doctype, pretty_print=pretty_print).decode('utf-8')
 
-class SVGGroup(BaseSVGElem):
-	def __init__(self, parent, idval: Optional[str]) -> None:
-		super().__init__('g', parent=parent, idval=idval)
-
-
+"""
 class SVGContent(SVGGroup):
 	def __init__(self, thisroot_or_parent, creationtag=None, defscontent=None, attribs=None):
 		if hasattr(thisroot_or_parent, 'getRoot'):
@@ -611,8 +850,9 @@ class SVGDocOld(object):
 
 	def toString(self, inc_declaration=True, inc_doctype=False, pretty_print=True):
 		return self.toBytes(inc_declaration=inc_declaration, inc_doctype=inc_doctype, pretty_print=pretty_print).decode('utf-8')
-		
-class WorldSVGDoc(SVGDoc):
+"""
+
+""" class WorldSVGDoc(SVGDoc):
 
 	SVG_DYN_METHOD_NAMES = [
 		"addFilter",
@@ -776,7 +1016,7 @@ class HTMLInsertWorldSVG(WorldSVGDoc):
 	def __init__(self, width, height, x=0, y=0, scale=1.0):
 		super().__init__(SVG_ROOT)
 		self.setDims(Dims(width, height, x=x, y=y), scale=scale)		
-		
+"""	
 # class HTMLInsertMapSVG(HTMLInsertWorldSVG):
 # 	def __init__(self, width, height, x=0, y=0):
 # 		super(HTMLInsertMapSVG, self).__init__(width, height, x=x, y=y)
@@ -788,12 +1028,71 @@ class HTMLInsertWorldSVG(WorldSVGDoc):
 # 		#wtr.addPath("M 0,0 L 1,1", idval='lengthtoolpath') 
 # 		self.addWorldGroup(idval='worldtemporaries')
 # 		
-# 		return self.toString()
+# 		return self.toString() 
 	
 
 if __name__ == "__main__":
 
-	s = SVGRoot(rect=Rect(2,3,100,200))
-	#r.transf(s)
-	print(etree.tostring(s.tree.getroot()))
+	if False:
+
+		print('= A =========================')
+
+		reo = Re(1, 2, 200, 300)
+		reo.setUnits('px')
+		print("reo:", reo)
+		print(reo.__dict__)
+
+		print('= B =========================')
+
+		s = SVGRoot(Re(2,3,100,200, "px"))
+		r = s.addChld(Rect(0,0,30,40))
+		print('...................')
+		print(r.__dict__)
+		print('...................')
+		print(etree.tostring(s.getEl()))
+
+		del s 
+		print('= C ========================')
+
+		s2 = SVGRoot(Re().full(), viewbox=VBox600x800())
+		g = s2.addChld(Group()).setId("o_grupo")
+		g.addChld(Circle(20, 30, 60))
+		print(etree.tostring(s2.getEl()))
+
+		print('= D ========================')
+
+		r = Re(2,3,100,200, "px")
+		print(r)
+		print(list(r.iterUnitsRemoved()))
+
+	print('= E ========================')
+
+	s = SVGRoot(Re(0,3,100,200, "px")).setIdentityViewbox(scale=10.0)
+	r = s.addChld(Circle(0,0,30))
+	print(etree.tostring(s.getEl()))
+
+	print('= F ========================')
+
+	s = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
+	g = s.addChld(Group()).setId("grupo_a")
+	g.addChld(Circle(0,0,30))
+	print(s.toString())
+
+	print('= G ========================')
+
+	s = SVGContent(Re().full())
+	try:
+		s.addChld(BaseSVGElem("defs"))
+	except TagOutOfDirectUserManipulation:
+		print("OK")
+
+	print('= H ========================')
+
+	s = SVGContent(Re().full())
+	try:
+		s.addChld(BaseSVGElem("defs"))
+	except TagOutOfDirectUserManipulation:
+		print("OK")
+
+
 
