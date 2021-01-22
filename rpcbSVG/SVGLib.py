@@ -13,13 +13,17 @@ from collections import namedtuple
 from lxml import etree
 
 from rpcbSVG.SVGstyle import toCSS, Fill, Stroke, TextAttribs
-from rpcbSVG.BasicGeom import Envelope, Pt
+from rpcbSVG.BasicGeom import Pt
 
 XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
 
 DOCTYPE_STR = """<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">"""
+
+
+MAXCOORD = 99999999999.9
+MINCOORD = -MAXCOORD
 
 SVG_ROOT = """<svg version="1.1"
 	 xmlns="{0}" 
@@ -115,14 +119,16 @@ class DimsFull(Dims):
 		super().__init__(100, 100, unit='%')
  """
 class _attrs_struct(object):
-	_fields = () # to be extended in subclasses
-	_subfields = ()
-	def __init__(self, fields, subfields, *args, defaults=None) -> None:
-		for i, fld in enumerate(fields):
+	_fields = None # Required -- list to be extended in subclasses
+	_subfields = [] # Optional -- list to be extended in subclasses
+	def __init__(self, *args, defaults=None) -> None:
+		self.set(*args, defaults=defaults) 
+	def set(self, *args, defaults=None) -> None:
+		for i, fld in enumerate(self._fields):
 			if i < len(args):
 				setattr(self, fld, str(args[i]))
 			else:
-				revi = len(fields) - i - 1
+				revi = len(self._fields) - i - 1
 				if not defaults is None:
 					if len(defaults) > revi:
 						val = str(defaults[revi])
@@ -131,13 +137,15 @@ class _attrs_struct(object):
 				else:
 					val = None
 				setattr(self, fld, val)
-		if len(subfields) > 0:
-			if len(subfields) == len(args) - len(fields):
-				for j, sfld in enumerate(subfields):
-					idx = j + len(fields)
+		if len(self._subfields) > 0:
+			if len(self._subfields) == len(args) - len(self._fields):
+				for j, sfld in enumerate(self._subfields):
+					idx = j + len(self._fields)
 					setattr(self, sfld, str(args[idx]))
+		return self
 	def __repr__(self):
 		out = []
+		# print(".. id:", id(self), ".. keys:", self.__dict__.keys())
 		for x in self.__dict__.keys():
 			if not x.startswith('_'):
 				out.append(f"{x}={getattr(self, x)}")
@@ -152,14 +160,11 @@ class _attrs_struct(object):
 					setattr(self, fld, getattr(p_other, fld))
 
 class _withunits_struct(_attrs_struct):
-	def __init__(self, fields, subfields, *args, defaults=None) -> None:
+	def __init__(self, *args, defaults=None) -> None:
 		self._units = None
-		_subfields = list(subfields)
-		if not "_units" in _subfields:
-			_subfields.append("_units")
-		super().__init__(fields, _subfields, *args, defaults=defaults)
-		if not self._units is None:
-			self._apply_units()
+		if not "_units" in self._subfields:
+			self._subfields.append("_units")
+		super().__init__(*args, defaults=defaults)
 	def _apply_units(self) -> None:
 		assert not self._units is None
 		assert self._units in ('px', 'pt', 'em', 'rem', '%'), f"invalid units: '{self._units}' not in 'px', 'pt', 'em', 'rem' or '%'"
@@ -184,18 +189,70 @@ class _withunits_struct(_attrs_struct):
 			if not self._units is None:
 				val = val.replace(self._units, '')
 			yield val
-
-
+	def iterUnitsRemoved(self):
+		for f in self._fields:
+			val = getattr(self, f)
+			if not self._units is None:
+				val = val.replace(self._units, '')
+			yield val
+class Env(_attrs_struct):
+	_fields = ("minx",  "miny", "maxx", "maxy") 
+	def __init__(self, *args) -> None:
+		super().__init__(*args, defaults=["0"])
+	def defFromPointList(self, p_ptlist):
+		minx = MAXCOORD
+		miny = MAXCOORD
+		maxx = MINCOORD
+		maxy = MINCOORD
+		changed = False
+		for pt in p_ptlist:
+			changed = True
+			if pt.x < minx:
+				minx = pt.x
+			if pt.y < miny:
+				miny = pt.y
+			if pt.x > maxx:
+				maxx = pt.x
+			if pt.y > maxy:
+				maxy = pt.y
+		if changed:
+			self.minx = minx
+			self.miny = miny
+			self.maxx = maxx
+			self.maxy = maxy
+	def getWidth(self):
+		return float(self.maxx) - float(self.minx)
+	def getHeight(self):
+		return float(self.maxy) - float(self.miny)
+	def getRectParams(self):
+		outlist = []
+		outlist.append(self.minx)
+		outlist.append(self.miny)
+		outlist.append(self.getWidth())
+		outlist.append(self.getHeight())
+		return outlist
+	def cloneFromOther(self, other):
+		self.minx = other.minx
+		self.miny = other.miny
+		self.maxx = other.maxx
+		self.maxy = other.maxy
+		return self
 
 class Re(_withunits_struct):
 	_fields = ("x",  "y", "width", "height") 
 	def __init__(self, *args) -> None:
-		super().__init__(self._fields, (), *args, defaults=["0"])
-	def fromEnvelope(self, env: Envelope) -> None:
+		if len(args) == 1 and isinstance(args[0], list):
+			super().__init__(*args[0], defaults=["0"])
+		else:
+			super().__init__(*args, defaults=["0"])
+	def _fromEnvelope(self, env: Env) -> None:
 		self.x = env.minx
 		self.y = env.miny
 		self.width = env.getWidth()
 		self.height = env.getHeight()
+		return self
+	def fromEnv(self, p_env: Env) -> None:
+		super().set(p_env.getRectParams()) 
 		return self
 	def full(self):
 		self.y = self.x = "0"
@@ -206,15 +263,21 @@ class Re(_withunits_struct):
 class VBox(_withunits_struct):
 	_fields = ("viewBox",)
 	def __init__(self, *args) -> None:
+		if len(args) == 1 and isinstance(args[0], list):
+			super().__init__(*args[0], defaults=["0"])
+		else:
+			super().__init__(*args, defaults=["0"])
 		rect = Re(*args)
 		cont = " ".join(list(rect.iterUnitsRemoved()))
-		super().__init__(self._fields, (), cont)
+		super().__init__(cont)
 	def cloneFromRect(self, p_rect: Re, scale: Optional[float] = None):
 		if not scale is None:
 			cont = " ".join([str(round(float(at) * scale)) for at in p_rect.iterUnitsRemoved()])
 		else:
 			cont = " ".join(list(p_rect.iterUnitsRemoved()))
 		self.viewBox = cont
+
+# clone from Envelope: vb_instance.cloneFromRect(Re().fromEnvelope())
 
 class VBox600x800(VBox):
 	def __init__(self) -> None:
@@ -228,7 +291,7 @@ class VBox1280x1024(VBox):
 class Ci(_withunits_struct):
 	_fields = ("cx",  "cy", "rad") 
 	def __init__(self, *args) -> None:
-		super().__init__(self._fields, (), *args, defaults=["0"])
+		super().__init__(*args, defaults=["0"])
 
 
 class BaseSVGElem(object):
@@ -295,12 +358,12 @@ class BaseSVGElem(object):
 		self.struct.setXmlAttrs(xmlel)
 
 class SVGContainer(BaseSVGElem):
-	def addChld(self, p_child: BaseSVGElem):
+	def addChild(self, p_child: BaseSVGElem):
 		assert self.hasEl()
 		newel = etree.SubElement(self.getEl(), p_child.tag)
 		p_child.setEl(newel)
 		return p_child
-	def addChldTag(self, p_tag: str):
+	def addChildTag(self, p_tag: str):
 		assert self.hasEl()
 		newel = etree.SubElement(self.getEl(), p_tag)
 		return newel
@@ -338,7 +401,6 @@ class SVGRoot(SVGContainer):
 		return self.setViewbox(vb)
 
 
-
 class Rect(BaseSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("rect", struct=Re(*args))
@@ -357,62 +419,40 @@ class SVGContent(SVGRoot):
 		super().__init__(rect, tree=tree, viewbox=viewbox)
 		self.id_serial = 0
 		self.styles = {}
-		self._defs = super().addChld(SVGContainer("defs"))
+		self._defs = None
 
 	def _nextIDSerial(self):
 		ret = self.id_serial
 		self.id_serial = self.id_serial + 1
 		return ret
 
-	def addChld(self, p_child: BaseSVGElem):
+	def addChild(self, p_child: BaseSVGElem):
 		if p_child.tag in self.forbidden_user_tags:
 			raise TagOutOfDirectUserManipulation(p_child.tag)
-		ret = super().addChld(p_child)
+		ret = super().addChild(p_child)
 		if not ret.hasId():
 			ret.setId(p_child.idprefix + str(self._nextIDSerial()))
 		return ret
 
 	def prepareRendering(self):
 		# only one style child in defs
-		self._defs.clear()
-		styel = self._defs.addChldTag("style")
-		assert styel is None and styel.tag == "style"
-		styel.set("type", "text/css")
-		outdict = {}
-		for key in self.styles.keys():
-			outdict[key] = {}
-			for st in self.styles[key]:
-				if isinstance(st, dict):
-					outdict[key].update(st)
-				else:
-					st.toCSSDict(outdict[key])
-		styel.text = etree.CDATA(toCSS(outdict))
-
-		# defs = self.content.getDefs()
-		# droot = defs.getRoot()
-
-		# if len(list(self.styles.keys())) > 0:
-		# 	self._defs.addChld(BaseSVGElem("defs"))
-
-		# #print 'style keys :: ',  self.styles.keys()
-
-		# 	# TODO - DETECTAR se o style element com o id correspond. já existe, criar ou reusar
-		# 	s = None
-		# 	for element in droot.iter("style"):
-		# 		s = element
-		# 		break
-		# 	if s is None:
-		# 		s = etree.SubElement(droot, 'style')
-		# 	s.set("type", "text/css")
-		# 	od = {}
-		# 	for key in list(self.styles.keys()):
-		# 		od[key] = {}
-		# 		for st in self.styles[key]:
-		# 			if isinstance(st, dict):
-		# 				od[key].update(st)
-		# 			else:
-		# 				st.toCSSDict(od[key])
-		# 	s.text = etree.CDATA(toCSS(od))
+		if len(self.styles.keys()) > 0:
+			if self._defs is None:
+				self._defs = super().addChild(SVGContainer("defs"))
+			else:
+				self._defs.clear()
+			styel = self._defs.addChildTag("style")
+			assert not styel is None and styel.tag == "style", styel
+			styel.set("type", "text/css")
+			outdict = {}
+			for key in self.styles.keys():
+				outdict[key] = {}
+				for st in self.styles[key]:
+					if isinstance(st, dict):
+						outdict[key].update(st)
+					else:
+						st.toCSSDict(outdict[key])
+			styel.text = etree.CDATA(toCSS(outdict))
 
 	def toBytes(self, inc_declaration=False, inc_doctype=False, pretty_print=True):
 		self.prepareRendering()
@@ -1045,7 +1085,7 @@ if __name__ == "__main__":
 		print('= B =========================')
 
 		s = SVGRoot(Re(2,3,100,200, "px"))
-		r = s.addChld(Rect(0,0,30,40))
+		r = s.addChild(Rect(0,0,30,40))
 		print('...................')
 		print(r.__dict__)
 		print('...................')
@@ -1055,8 +1095,8 @@ if __name__ == "__main__":
 		print('= C ========================')
 
 		s2 = SVGRoot(Re().full(), viewbox=VBox600x800())
-		g = s2.addChld(Group()).setId("o_grupo")
-		g.addChld(Circle(20, 30, 60))
+		g = s2.addChild(Group()).setId("o_grupo")
+		g.addChild(Circle(20, 30, 60))
 		print(etree.tostring(s2.getEl()))
 
 		print('= D ========================')
@@ -1065,34 +1105,49 @@ if __name__ == "__main__":
 		print(r)
 		print(list(r.iterUnitsRemoved()))
 
-	print('= E ========================')
+	if False:
 
-	s = SVGRoot(Re(0,3,100,200, "px")).setIdentityViewbox(scale=10.0)
-	r = s.addChld(Circle(0,0,30))
-	print(etree.tostring(s.getEl()))
+		print('= E ========================')
 
-	print('= F ========================')
+		s = SVGRoot(Re(0,3,100,200, "px")).setIdentityViewbox(scale=10.0)
+		r = s.addChild(Circle(0,0,30))
+		print(etree.tostring(s.getEl()))
 
-	s = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
-	g = s.addChld(Group()).setId("grupo_a")
-	g.addChld(Circle(0,0,30))
-	print(s.toString())
+		print('= F ========================')
 
-	print('= G ========================')
+		s = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
+		g = s.addChild(Group()).setId("grupo_a")
+		g.addChild(Circle(0,0,30))
+		print(s.toString())
 
-	s = SVGContent(Re().full())
-	try:
-		s.addChld(BaseSVGElem("defs"))
-	except TagOutOfDirectUserManipulation:
-		print("OK")
+		print('= G ========================')
 
-	print('= H ========================')
+		s = SVGContent(Re().full())
+		try:
+			s.addChild(BaseSVGElem("defs"))
+		except TagOutOfDirectUserManipulation:
+			print("OK")
 
-	s = SVGContent(Re().full())
-	try:
-		s.addChld(BaseSVGElem("defs"))
-	except TagOutOfDirectUserManipulation:
-		print("OK")
+		print('= H ========================')
 
+		s = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
+		s.addChild(Rect(
+			*Envelope().origAndDims(Pt(12,34), 300, 800).getRectParams()
+			))
 
+		e2 = Envelope().origAndDims(Pt(8,9), 100, 200)
+		r = s.addChild(Rect())
+		r.fromEnvelope(e2)
 
+		print(s.toString())
+
+	from os.path import join as path_join
+
+	e = Env(-40400, 164400, -39800,  164800)
+
+	s = SVGContent(Re().full()).setViewbox(VBox(e.getRectParams()))
+
+	print(s)
+
+	with open('testeZZ.svg', 'w') as fl:
+		fl.write(s.toString())
