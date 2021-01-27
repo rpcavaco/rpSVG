@@ -12,8 +12,8 @@ from collections import namedtuple
 
 from lxml import etree
 
-from rpcbSVG.SVGstyle import toCSS
-from rpcbSVG.Basics import Pt, Env, _withunits_struct
+from rpcbSVG.SVGstyle import Sty
+from rpcbSVG.Basics import Pt, Env, _withunits_struct, _attrs_struct
 
 XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
@@ -43,8 +43,6 @@ class TagOutOfDirectUserManipulation(RuntimeError):
 	def __str__(self):
 		return f"Tag '{self.tag}' not to be manipulated by user."
 
-def polar2rect(ang, rad):
-	return POINTS_FORMAT.format(cos(ang) * rad, sin(ang) * rad )
 
 # def renderToFile(svgstr, w, h, filename):
 # 	img = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
@@ -52,30 +50,7 @@ def polar2rect(ang, rad):
 # 	svg = rsvg.Handle(data=svgstr)
 # 	svg.render_cairo(ctx)
 # 	img.write_to_png(filename)
-
-def getCSSId(domelem):	
-	return '#' + domelem.get('id')	
-			
-
-def addFeOffset(filterroot, dx, dy, instr="SourceGraphic", result="offOut"):
-	fe = etree.SubElement(filterroot, 'feOffset')
-	fe.set('dx', str(dx))
-	fe.set('dy', str(dy))
-	fe.set('in', instr)
-	fe.set('result', result)
-
-def addFeBlend(filterroot, instr2, instr="SourceGraphic", mode="normal"):
-	fe = etree.SubElement(filterroot, 'feBlend')
-	fe.set('in', instr)
-	fe.set('in2', instr2)
-	fe.set('mode', mode)
-
-def addFeGaussianBlur(filterroot, instr, result, stdDeviation):
-	fe = etree.SubElement(filterroot, 'feGaussianBlur')
-	fe.set('in', instr)
-	fe.set('result', result)
-	fe.set('stdDeviation', str(stdDeviation))
-							
+						
 class Re(_withunits_struct):
 	_fields = ("x",  "y", "width", "height") 
 	def __init__(self, *args) -> None:
@@ -130,18 +105,55 @@ class BaseSVGElem(object):
 
 	NO_XML_EL = "XML Element not created yet"
 
-	def __init__(self, tag: str, struct: Optional[_withunits_struct] = None) -> None:
+	def __init__(self, tag: str, 
+			struct: Optional[_withunits_struct] = None) -> None:
 		self.tag = tag
-		self.struct = struct
-		self.style = None
+		self._struct = None
 		self.idprefix = tag[:3].title()
 		self.el = None
+		self.setStruct(struct)
+
+	def __repr__(self):
+		out = [
+			f"tag={str(self.tag)}"
+		]
+		if not self.el is None:
+			for x in self.el.keys():
+				out.append(f"{x}={self.el.get(x)}")
+		return ' '.join(out)
 
 	def setStruct(self, struct: _withunits_struct):
-		self.struct = struct
+		self._struct = struct
 		if not self.el is None:
-			self.struct.setXmlAttrs(self.el)
+			self._struct.setXmlAttrs(self.el)
 		return self
+
+	def getStruct(self) -> _withunits_struct:
+		assert not self._struct is None
+		if not self.el is None:
+			self._struct.getFromXmlAttrs(self.el)
+		return self._struct
+
+	def setStyle(self, style: Sty):
+		if not self.el is None:
+			style.setXmlAttrs(self.el)
+		return self
+
+	def getStyle(self, select='id'):
+		ret = None
+		if not self.el is None:
+			sel = None
+			if select == 'id':
+				if self.hasId():
+					sel = '#' + self.getId()
+			elif select == 'class':
+				if self.hasClass():
+					sel = '.' + self.getClass()
+			elif select == 'tag':
+				sel = self.tag
+			ret = Sty(selector=sel)
+			ret.fromXmlAttrs(self.el)
+		return ret
 
 	def hasEl(self):
 		return  not self.el is None
@@ -151,9 +163,11 @@ class BaseSVGElem(object):
 		return self.el
 
 	def setEl(self, xmlel) -> None:
+		assert self.el is None
 		self.el = xmlel
-		if not self.struct is None:
-			self.struct.setXmlAttrs(self.el)
+		strct = self._struct
+		if not strct is None:
+			strct.setXmlAttrs(self.el)
 		return self
 
 	def setId(self, idval):
@@ -186,25 +200,33 @@ class BaseSVGElem(object):
 		assert not self.el is None, self.NO_XML_EL
 		return "class" in self.el.keys()
 
+	def getTag(self):
+		return self.tag
+
 	def setXmlAttrs(self, xmlel) -> None:  
-		assert not self.struct is None
-		self.struct.setXmlAttrs(xmlel)
+		strct = self.getStruct()
+		assert not strct is None
+		strct.setXmlAttrs(xmlel)
 
 class SVGContainer(BaseSVGElem):
+
 	def addChild(self, p_child: BaseSVGElem):
 		assert self.hasEl()
 		newel = etree.SubElement(self.getEl(), p_child.tag)
 		p_child.setEl(newel)
 		return p_child
+
 	def addChildTag(self, p_tag: str):
 		assert self.hasEl()
 		newel = etree.SubElement(self.getEl(), p_tag)
 		return newel
+
 	def clear(self):
 		assert self.hasEl()
 		del self.getEl()[:]
 
 class SVGRoot(SVGContainer):
+
 	def __init__(self, rect: Re, tree = None, viewbox: Optional[VBox] = None) -> None:
 		super().__init__("svg", struct=rect)
 		if tree is None:
@@ -218,19 +240,23 @@ class SVGRoot(SVGContainer):
 		self.setRect(rect)
 		if not viewbox is None:
 			self.setViewbox(viewbox)
+
 	def setRect(self, p_rect: Re):
 		assert isinstance(p_rect, Re)
 		self.setStruct(p_rect)
 		p_rect.setXmlAttrs(self.el)
 		return self
+
 	def setViewbox(self, p_viewbox: VBox):
 		assert isinstance(p_viewbox, VBox)
 		p_viewbox.setXmlAttrs(self.el)
 		return self
+
 	def setIdentityViewbox(self, scale: Optional[float] = None):
-		assert not self.struct is None
+		strct = self.getStruct()
+		assert not strct is None
 		vb = VBox()
-		vb.cloneFromRect(self.struct, scale=scale)
+		vb.cloneFromRect(self.getStruct(), scale=scale)
 		return self.setViewbox(vb)
 
 
@@ -247,6 +273,7 @@ class Group(SVGContainer):
 		super().__init__('g')
 
 class SVGContent(SVGRoot):
+
 	forbidden_user_tags = ["defs"]
 	def __init__(self, rect: Re, tree=None, viewbox: Optional[VBox] = None) -> None:
 		super().__init__(rect, tree=tree, viewbox=viewbox)
@@ -268,24 +295,25 @@ class SVGContent(SVGRoot):
 		return ret
 
 	def prepareRendering(self):
-		# only one style child in defs
-		if len(self.styles.keys()) > 0:
-			if self._defs is None:
-				self._defs = super().addChild(SVGContainer("defs"))
-			else:
-				self._defs.clear()
-			styel = self._defs.addChildTag("style")
-			assert not styel is None and styel.tag == "style", styel
-			styel.set("type", "text/css")
-			outdict = {}
-			for key in self.styles.keys():
-				outdict[key] = {}
-				for st in self.styles[key]:
-					if isinstance(st, dict):
-						outdict[key].update(st)
-					else:
-						st.toCSSDict(outdict[key])
-			styel.text = etree.CDATA(toCSS(outdict))
+		pass
+		# # only one style child in defs
+		# if len(self.styles.keys()) > 0:
+		# 	if self._defs is None:
+		# 		self._defs = super().addChild(SVGContainer("defs"))
+		# 	else:
+		# 		self._defs.clear()
+		# 	styel = self._defs.addChildTag("style")
+		# 	assert not styel is None and styel.tag == "style", styel
+		# 	styel.set("type", "text/css")
+		# 	outdict = {}
+		# 	for key in self.styles.keys():
+		# 		outdict[key] = {}
+		# 		for st in self.styles[key]:
+		# 			if isinstance(st, dict):
+		# 				outdict[key].update(st)
+		# 			else:
+		# 				st.toCSSDict(outdict[key])
+		# 	styel.text = etree.CDATA(toCSS(outdict))
 
 	def toBytes(self, inc_declaration=False, inc_doctype=False, pretty_print=True):
 		self.prepareRendering()
@@ -299,6 +327,17 @@ class SVGContent(SVGRoot):
 		return self.toBytes(inc_declaration=inc_declaration, inc_doctype=inc_doctype, pretty_print=pretty_print).decode('utf-8')
 
 	
+class Style(SVGContainer):
+
+	def __init__(self) -> None:
+		super().__init__('style')
+		self.rules = []
+
+	def addRule(self, p_child: Sty, select=None):
+		if not select is None:
+			p_child.setSelector(select)
+		assert p_child.hasSelector()
+
 
 if __name__ == "__main__":
 

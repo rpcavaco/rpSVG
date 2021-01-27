@@ -6,6 +6,10 @@ Pt = namedtuple("Pt", "x y")
 MAXCOORD = 99999999999.9
 MINCOORD = -MAXCOORD
 
+
+#def polar2rect(ang, rad):
+#	return POINTS_FORMAT.format(cos(ang) * rad, sin(ang) * rad )
+
 def ptList2AbsPolylinePath(p_ptlist, mirrory=False, close=False):
 	strcomps = []
 	for pi, pt in enumerate(p_ptlist):
@@ -48,7 +52,6 @@ class _attrs_struct(object):
 		return self
 	def __repr__(self):
 		out = []
-		# print(".. id:", id(self), ".. keys:", self.__dict__.keys())
 		for x in self.__dict__.keys():
 			if not x.startswith('_'):
 				out.append(f"{x}={getattr(self, x)}")
@@ -56,11 +59,17 @@ class _attrs_struct(object):
 	def setXmlAttrs(self, xmlel) -> None:  
 		for f in self._fields:
 			xmlel.set(f, str(getattr(self, f)))
+		return self
+	def getFromXmlAttrs(self, xmlel) -> None:  
+		for f in self._fields:
+			setattr(self, f, xmlel.get(f))
+		return self
 	def cloneFrom(self, p_other):
 		for l in [self._fields, self._subfields]:
 			for fld in l:
 				if hasattr(p_other, fld):
 					setattr(self, fld, getattr(p_other, fld))
+		return self
 
 class _withunits_struct(_attrs_struct):
 	def __init__(self, *args, defaults=None) -> None:
@@ -68,6 +77,8 @@ class _withunits_struct(_attrs_struct):
 		if not "_units" in self._subfields:
 			self._subfields.append("_units")
 		super().__init__(*args, defaults=defaults)
+		if not self._units is None:
+			self._apply_units()
 	def _apply_units(self) -> None:
 		assert not self._units is None
 		assert self._units in ('px', 'pt', 'em', 'rem', '%'), f"invalid units: '{self._units}' not in 'px', 'pt', 'em', 'rem' or '%'"
@@ -171,7 +182,7 @@ class Env(_attrs_struct):
 			self.maxy = pt.y
 		return self
 	def expand(self, ratio):
-		pt = self.getMidPt(pt)
+		pt = self.getMidPt()
 		newhwidth = self.getWidth() * ratio * 0.5
 		newhheight = self.getHeight() * ratio * 0.5
 		self.minx = pt.x - newhwidth 
