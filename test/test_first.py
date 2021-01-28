@@ -14,7 +14,7 @@ def test_Re():
 	reo.setUnits('px')
 	assert str(reo) == "x=1px y=2px width=200px height=300px"
 	ref_dict = {'_units': 'px', 'x': '1px', 'y': '2px', 'width': '200px', 'height': '300px'}
-	shared_items = {k: ref_dict[k] for k in ref_dict.keys() if k in reo.__dict__.keys() and ref_dict[k] == reo.__dict__[k]}
+	shared_items = {k: ref_dict[k] for k in ref_dict.keys() if k in dir(reo) and ref_dict[k] == getattr(reo,k)}
 	assert len(shared_items) == 5
 	assert list(reo.iterUnitsRemoved()) == ['1', '2', '200', '300']
 
@@ -23,7 +23,7 @@ def test_SVGRoot():
 	r = s.addChild(Rect(0,0,30,40))
 	assert str(r.getStruct()) == "x=0 y=0 width=30 height=40", r.getStruct()
 	ref_dict = {'tag': 'rect', 'idprefix': 'Rec'}
-	shared_items = {k: ref_dict[k] for k in ref_dict.keys() if k in r.__dict__.keys() and ref_dict[k] == r.__dict__[k]}
+	shared_items = {k: ref_dict[k] for k in ref_dict.keys() if k in dir(r) and ref_dict[k] == getattr(r,k)}
 	assert len(shared_items) == 2
 	assert str(r.getStruct()) == "x=0 y=0 width=30 height=40"
 	assert etree.tostring(s.getEl()) == b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="2px" y="3px" width="100px" height="200px"><rect x="0" y="0" width="30" height="40"/></svg>'
@@ -86,6 +86,28 @@ def test_styleElement():
 	selectstr = sc.addStyleRule(Sty('stroke', 'red', 'fill', 'blue'), selector=r.getSS(select='class'))
 	condens = re.sub(r"[\s]+"," ", sc.toString())
 	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs> <style type="text/css"><![CDATA[.classz { fill: blue; stroke: red; }]]></style> </defs> <rect x="80" y="100" width="300" height="400" id="Rec0" class="classz"/> </svg> """
+
+#	with capsys.disabled():
+
+def test_similarElement():
+
+	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
+	r = sc.addChild(Rect(80,100,300,400))
+	r2 = sc.addChild(Rect(80,100,300,400))
+	assert set(r.similitudeTo(r2)) == set(('TAG', 'STRUCT','STYLE'))
+
+	r3 = sc.addChild(Rect(80,100,300,400, "px"))
+	assert set(r.similitudeTo(r3)) == set(('TAG', 'STYLE'))
+
+	r4 = sc.addChild(Rect(80,100,300,400))
+	s1 = Sty('fill', 'red', 'stroke', 'green')
+	r4.setStyle(s1)
+	assert set(r.similitudeTo(r4)) == set(('TAG', 'STRUCT'))
+
+	r5 = sc.addChild(Rect(80,10,30,40, "px"))
+	s2 = Sty('stroke', 'blue')
+	r5.setStyle(s1)
+	assert r.similitudeTo(r5) == ['TAG']
 
 		# with open('outtest/testeZZ.svg', 'w') as fl:
 		#	fl.write(sc.toString())

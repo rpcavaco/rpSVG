@@ -1,5 +1,7 @@
 #import json
 
+from typing import Optional, Union
+
 STYLE_ATTRIBS = set([ 
 	'font', 
 	'font-family',
@@ -91,19 +93,26 @@ class Sty(object):
 	def getSelector(self):
 		return self.selector
 
-	def diffDict(self, o: object) -> dict:
+	def diffDict(self, o: object, exclude_selector: Optional[bool] = False) -> dict:
 		ret = {}
-		if self.selector == o.selector:
+		if exclude_selector or self.selector == o.selector:
 			attrs = self.getStyleAttrs()
-			if set(attrs) == set(o.getStyleAttrs()):
+			oattrs = o.getStyleAttrs()
+			if set(attrs) == set(oattrs):
 				for attr in attrs:
 					a = getattr(self, attr)
 					b = getattr(o, attr)
 					if a != b:
 						ret[attr] = (a, b)
+			else:
+				ret = { "attrs": (attrs, oattrs)  }
 		else:
-			ret["selector"] = (self.selector, o.selector)
+			ret = { "selector": (self.selector, o.selector)  }
 		return ret
+
+	def isSimilarTo(self, o: object) -> bool:
+		dd = self.diffDict(o, exclude_selector=True)
+		return len(dd) == 0
 
 	def __eq__(self, o: object) -> bool:
 		dd = self.diffDict(o)

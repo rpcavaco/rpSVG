@@ -122,6 +122,19 @@ class BaseSVGElem(object):
 				out.append(f"{x}={self.el.get(x)}")
 		return ' '.join(out)
 
+	def similitudeTo(self, o: object) -> str:
+		ret = []
+		if self.getTag() == o.getTag():
+			ret.append('TAG')
+			if self.getStruct() == o.getStruct():
+				ret.append('STRUCT')
+			sty = self.getStyle()
+			assert not sty is None
+			if sty.isSimilarTo(o.getStyle()):
+				ret.append('STYLE')
+			# TODO: falta transform
+		return ret
+
 	def setStruct(self, struct: _withunits_struct):
 		self._struct = struct
 		if not self.el is None:
@@ -133,11 +146,6 @@ class BaseSVGElem(object):
 		if not self.el is None:
 			self._struct.getFromXmlAttrs(self.el)
 		return self._struct
-
-	def setStyle(self, style: Sty):
-		if not self.el is None:
-			style.setXmlAttrs(self.el)
-		return self
 
 	def getStyleSelector(self, select='id'):
 		assert select in ("id", "class", "tag")
@@ -162,6 +170,17 @@ class BaseSVGElem(object):
 			ret = Sty(selector=sel)
 			ret.fromXmlAttrs(self.el)
 		return ret
+
+	def setStyle(self, style: Sty):
+		if not self.el is None:
+			style.setXmlAttrs(self.el)
+		return self
+
+	# def __enter__(self):
+	# 	self.getStyle()
+
+	# def __exit__(self):
+	# 	pass
 
 	def hasEl(self):
 		return  not self.el is None

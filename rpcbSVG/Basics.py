@@ -26,10 +26,13 @@ def ptList2AbsPolylinePath(p_ptlist, mirrory=False, close=False):
 	return "".join(strcomps)	
 
 class _attrs_struct(object):
+	
 	_fields = None # Required -- list to be extended in subclasses
 	_subfields = [] # Optional -- list to be extended in subclasses
+	
 	def __init__(self, *args, defaults=None) -> None:
 		self.set(*args, defaults=defaults) 
+
 	def set(self, *args, defaults=None) -> None:
 		for i, fld in enumerate(self._fields):
 			if i < len(args):
@@ -50,20 +53,33 @@ class _attrs_struct(object):
 					idx = j + len(self._fields)
 					setattr(self, sfld, str(args[idx]))
 		return self
+
 	def __repr__(self):
 		out = []
 		for x in self.__dict__.keys():
 			if not x.startswith('_'):
 				out.append(f"{x}={getattr(self, x)}")
 		return ' '.join(out)
+
+	def sharedItems(self, o: object) -> dict:
+		return {f: getattr(self,f) for f in self._fields if f in dir(o) and getattr(self,f) == getattr(o,f)}
+
+	def __eq__(self, o: object) -> bool:
+		return len(self.sharedItems(o)) == len(self._fields)
+
+	def __ne__(self, o: object) -> bool:
+		return len(self.sharedItems(o)) != len(self._fields)
+
 	def setXmlAttrs(self, xmlel) -> None:  
 		for f in self._fields:
 			xmlel.set(f, str(getattr(self, f)))
 		return self
+
 	def getFromXmlAttrs(self, xmlel) -> None:  
 		for f in self._fields:
 			setattr(self, f, xmlel.get(f))
 		return self
+
 	def cloneFrom(self, p_other):
 		for l in [self._fields, self._subfields]:
 			for fld in l:
@@ -72,6 +88,7 @@ class _attrs_struct(object):
 		return self
 
 class _withunits_struct(_attrs_struct):
+
 	def __init__(self, *args, defaults=None) -> None:
 		self._units = None
 		if not "_units" in self._subfields:
@@ -79,6 +96,16 @@ class _withunits_struct(_attrs_struct):
 		super().__init__(*args, defaults=defaults)
 		if not self._units is None:
 			self._apply_units()
+
+	def __eq__(self, o: object) -> bool:
+		ret = False
+		if self._units == o.getUnits():
+			ret = len(self.sharedItems(o)) == len(self._fields)
+		return ret
+
+	def __ne__(self, o: object) -> bool:
+		return not self.__eq__(o)
+
 	def _apply_units(self) -> None:
 		assert not self._units is None
 		assert self._units in ('px', 'pt', 'em', 'rem', '%'), f"invalid units: '{self._units}' not in 'px', 'pt', 'em', 'rem' or '%'"
@@ -94,15 +121,21 @@ class _withunits_struct(_attrs_struct):
 					pass
 			if not numval is None and numval > 0:
 				setattr(self, f, f"{numval}{self._units}")
+
+	def getUnits(self) -> str:
+		return self._units
+
 	def setUnits(self, un: str) -> None:
 		self._units = un
 		self._apply_units()
+
 	def iterUnitsRemoved(self):
 		for f in self._fields:
 			val = getattr(self, f)
 			if not self._units is None:
 				val = val.replace(self._units, '')
 			yield val
+
 	def iterUnitsRemoved(self):
 		for f in self._fields:
 			val = getattr(self, f)
