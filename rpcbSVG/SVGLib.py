@@ -139,18 +139,26 @@ class BaseSVGElem(object):
 			style.setXmlAttrs(self.el)
 		return self
 
+	def getStyleSelector(self, select='id'):
+		assert select in ("id", "class", "tag")
+		sel = None
+		if select == 'id':
+			if self.hasId():
+				sel = '#' + self.getId()
+		elif select == 'class':
+			if self.hasClass():
+				sel = '.' + self.getClass()
+		elif select == 'tag':
+			sel = self.tag
+		return sel
+
+	def getSS(self, select='id'):
+		return self.getStyleSelector(select=select)
+
 	def getStyle(self, select='id'):
 		ret = None
 		if not self.el is None:
-			sel = None
-			if select == 'id':
-				if self.hasId():
-					sel = '#' + self.getId()
-			elif select == 'class':
-				if self.hasClass():
-					sel = '.' + self.getClass()
-			elif select == 'tag':
-				sel = self.tag
+			sel = self.getStyleSelector(select=select)
 			ret = Sty(selector=sel)
 			ret.fromXmlAttrs(self.el)
 		return ret
@@ -169,6 +177,10 @@ class BaseSVGElem(object):
 		if not strct is None:
 			strct.setXmlAttrs(self.el)
 		return self
+
+	def delEl(self):
+		self.el.getparent().remove(self.el)
+		self.el = None
 
 	def setId(self, idval):
 		assert isinstance(idval, str)
@@ -259,6 +271,48 @@ class SVGRoot(SVGContainer):
 		vb.cloneFromRect(self.getStruct(), scale=scale)
 		return self.setViewbox(vb)
 
+class Group(SVGContainer):
+	def __init__(self) -> None:
+		super().__init__('g')
+
+class Defs(SVGContainer):
+	def __init__(self) -> None:
+		super().__init__('defs')
+
+class Style(BaseSVGElem):
+
+	def __init__(self) -> None:
+		super().__init__('style')
+		self.stylerules = {}
+
+	def addRule(self, p_child: Sty, selector: Optional[str] = None) -> str:
+		if not selector is None:
+			p_child.setSelector(selector)
+		assert p_child.hasSelector()
+		ret = p_child.getSelector()
+		self.stylerules[ret] =p_child
+		return ret
+
+	def delRule(self, selector: str) -> bool:
+		ret = False
+		if selector in self.stylerules.keys():
+			del self.stylerules[selector]
+			ret = True
+		return ret
+
+	def render(self, depth=-1) -> bool:
+		ret = False
+		if len(self.stylerules) > 0:
+			outbuf = []
+			assert self.hasEl()
+			self.getEl().set("type", "text/css")
+			for _selector, sty in self.stylerules.items():
+				sty.toCSSRule(outbuf, depth=depth)
+			out = '\n'.join(outbuf)
+			self.getEl().text = etree.CDATA(out)
+			ret = True 
+		return ret
+
 
 class Rect(BaseSVGElem):
 	def __init__(self, *args) -> None:
@@ -268,22 +322,19 @@ class Circle(BaseSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("circle", struct=Ci(*args))
 
-class Group(SVGContainer):
-	def __init__(self) -> None:
-		super().__init__('g')
 
 class SVGContent(SVGRoot):
 
-	forbidden_user_tags = ["defs"]
+	forbidden_user_tags = ["defs", "style"]
 	def __init__(self, rect: Re, tree=None, viewbox: Optional[VBox] = None) -> None:
 		super().__init__(rect, tree=tree, viewbox=viewbox)
-		self.id_serial = 0
-		self.styles = {}
-		self._defs = None
+		self._id_serial = 0
+		self._defs = super().addChild(Defs())
+		self._style = self._defs.addChild(Style())
 
 	def _nextIDSerial(self):
-		ret = self.id_serial
-		self.id_serial = self.id_serial + 1
+		ret = self._id_serial
+		self._id_serial = self._id_serial + 1
 		return ret
 
 	def addChild(self, p_child: BaseSVGElem):
@@ -294,60 +345,33 @@ class SVGContent(SVGRoot):
 			ret.setId(p_child.idprefix + str(self._nextIDSerial()))
 		return ret
 
-	def prepareRendering(self):
-		pass
-		# # only one style child in defs
-		# if len(self.styles.keys()) > 0:
-		# 	if self._defs is None:
-		# 		self._defs = super().addChild(SVGContainer("defs"))
-		# 	else:
-		# 		self._defs.clear()
-		# 	styel = self._defs.addChildTag("style")
-		# 	assert not styel is None and styel.tag == "style", styel
-		# 	styel.set("type", "text/css")
-		# 	outdict = {}
-		# 	for key in self.styles.keys():
-		# 		outdict[key] = {}
-		# 		for st in self.styles[key]:
-		# 			if isinstance(st, dict):
-		# 				outdict[key].update(st)
-		# 			else:
-		# 				st.toCSSDict(outdict[key])
-		# 	styel.text = etree.CDATA(toCSS(outdict))
+	def addStyleRule(self, p_child: Sty, selector: Optional[str] = None) -> str:
+		return self._style.addRule(p_child, selector = selector)
+
+	def delStyleRule(self, selector: str) -> bool:
+		return self._style.delRule(selector)
+
+	def render(self):
+		return self._style.render(depth=-1)
 
 	def toBytes(self, inc_declaration=False, inc_doctype=False, pretty_print=True):
-		self.prepareRendering()
+		nostyles = False
+		if not self.render():
+			nostyles = True
+			self._style.delEl()
+
 		if inc_doctype:
 			ret = etree.tostring(self.getEl(), doctype=DOCTYPE_STR, xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')
 		else:
-			ret = etree.tostring(self.getEl(), xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')			
+			ret = etree.tostring(self.getEl(), xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')	
+
+		if nostyles:
+			self._style.setEl(Style())
+
 		return ret
 
 	def toString(self, inc_declaration=False, inc_doctype=False, pretty_print=True):
 		return self.toBytes(inc_declaration=inc_declaration, inc_doctype=inc_doctype, pretty_print=pretty_print).decode('utf-8')
 
 	
-class Style(SVGContainer):
 
-	def __init__(self) -> None:
-		super().__init__('style')
-		self.rules = []
-
-	def addRule(self, p_child: Sty, select=None):
-		if not select is None:
-			p_child.setSelector(select)
-		assert p_child.hasSelector()
-
-
-if __name__ == "__main__":
-
-	from os.path import join as path_join
-
-	e = Env(-40400, 164400, -39800,  164800)
-
-	s = SVGContent(Re().full()).setViewbox(VBox(e.getRectParams()))
-
-	print(s)
-
-	with open('testeZZ.svg', 'w') as fl:
-		fl.write(s.toString())

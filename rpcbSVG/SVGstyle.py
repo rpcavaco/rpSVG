@@ -71,22 +71,9 @@ def toCSSRule(indict, outbuf, depth=-1):
 		if isinstance(indict[k], dict):
 			outbuf.append('{0}{1} {{'.format(indent, k))
 			toCSSRule(indict[k], outbuf, depth=dp)
-			outbuf.append('{0} }}'.format(indent))
+			outbuf.append('{0}}}'.format(indent))
 		else:
 			outbuf.append('{0}{1}: {2};'.format(indent, k, indict[k]))
-
-
-
-# def toCSSDict(self, outdict):
-# 	idict = self.__dict__
-# 	for k in list(idict.keys()):
-# 		if k in styleattrs_notserializable:
-# 			continue
-# 		if k.lower() == 'csskey':
-# 			continue
-# 		outdict[k.replace('_','-')] = idict[k]
-# 	#outstr = json.dumps(outdict, indent=4, separators=(';', ': '))
-# 	#return outstr.replace('\"','')
 
 class Sty(object):
 
@@ -100,6 +87,9 @@ class Sty(object):
 
 	def hasSelector(self):
 		return not self.selector is None
+
+	def getSelector(self):
+		return self.selector
 
 	def diffDict(self, o: object) -> dict:
 		ret = {}
@@ -124,7 +114,6 @@ class Sty(object):
 
 	def __repr__(self):
 		out = [f"sel={str(self.selector)}"]
-		# print(".. id:", id(self), ".. keys:", self.__dict__.keys())
 		for x in self.getStyleAttrs():
 			out.append(f"{x}={getattr(self, x)}")
 		return ' '.join(out)

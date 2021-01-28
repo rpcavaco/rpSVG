@@ -2,7 +2,7 @@
 import pytest, re
 
 from rpcbSVG.Basics import Pt, Env
-from rpcbSVG.SVGLib import BaseSVGElem, Circle, Group, Re, Rect, SVGContent, SVGRoot, TagOutOfDirectUserManipulation, VBox600x800
+from rpcbSVG.SVGLib import BaseSVGElem, Circle, Group, Re, Rect, Style, SVGContent, SVGRoot, TagOutOfDirectUserManipulation, VBox600x800
 from rpcbSVG.SVGstyle import Sty
 
 from lxml import etree
@@ -49,7 +49,8 @@ def test_Envelope():
 	s = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
 	s.addChild(Rect( Env().centerAndDims(Pt(12,34), 300, 800).getRectParams() ))
 	retstr = s.toString().replace('\n', '')
-	assert retstr ==  '''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000">  <rect x="-138.0" y="-366.0" width="300.0" height="800.0" id="Rec0"/></svg>'''
+	condens = re.sub(r"[\s]+"," ", retstr)
+	assert condens ==  '''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs/> <rect x="-138.0" y="-366.0" width="300.0" height="800.0" id="Rec0"/></svg>'''
 
 def test_Sty():
 	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
@@ -69,6 +70,26 @@ def test_Sty():
 	str(s4) == "sel=.testclass fill=red stroke=green stroke-width=12"
 	s4.addFromDict({'circle': {'stroke-opacity': '0.12'}})
 	str(s4) == "sel=circle fill=red stroke=green stroke-opacity=0.12 stroke-width=12"
+
+def test_styleElement():
+
+	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
+	r = sc.addChild(Rect(80,100,300,400))
+	r.setClass('classz')
+
+	selectstr = sc.addStyleRule(Sty('stroke', 'red', 'fill', 'blue'), selector=r.getSS())
+	condens = re.sub(r"[\s]+"," ", sc.toString())
+	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs> <style type="text/css"><![CDATA[#Rec0 { fill: blue; stroke: red; }]]></style> </defs> <rect x="80" y="100" width="300" height="400" id="Rec0" class="classz"/> </svg> """
+	
+	assert sc.delStyleRule(selectstr)
+
+	selectstr = sc.addStyleRule(Sty('stroke', 'red', 'fill', 'blue'), selector=r.getSS(select='class'))
+	condens = re.sub(r"[\s]+"," ", sc.toString())
+	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs> <style type="text/css"><![CDATA[.classz { fill: blue; stroke: red; }]]></style> </defs> <rect x="80" y="100" width="300" height="400" id="Rec0" class="classz"/> </svg> """
+
+		# with open('outtest/testeZZ.svg', 'w') as fl:
+		#	fl.write(sc.toString())
+
 
 
 
