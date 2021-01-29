@@ -13,7 +13,7 @@ from collections import namedtuple
 from lxml import etree
 
 from rpcbSVG.SVGstyle import CSSSty, Sty
-from rpcbSVG.Basics import Pt, Env, _withunits_struct, _attrs_struct
+from rpcbSVG.Basics import Pt, Env, _withunits_struct
 
 XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
@@ -53,11 +53,11 @@ class TagOutOfDirectUserManipulation(RuntimeError):
 						
 class Re(_withunits_struct):
 	_fields = ("x",  "y", "width", "height") 
-	def __init__(self, *args) -> None:
+	def __init__(self, *args, defaults=["0"]) -> None:
 		if len(args) == 1 and isinstance(args[0], list):
-			super().__init__(*args[0], defaults=["0"])
+			super().__init__(*args[0], defaults=defaults)
 		else:
-			super().__init__(*args, defaults=["0"])
+			super().__init__(*args, defaults=defaults)
 	def fromEnv(self, p_env: Env) -> None:
 		super().set(p_env.getRectParams()) 
 		return self
@@ -100,6 +100,13 @@ class Ci(_withunits_struct):
 	def __init__(self, *args) -> None:
 		super().__init__(*args, defaults=["0"])
 
+class Us(_withunits_struct):
+	_fields = ("x",  "y", "width", "height", f"{{{XLINK_NAMESPACE}}}href") 
+	def __init__(self, *args) -> None:
+		l =  len(args)
+		if len(args) != 5:
+			raise TypeError(f"'Us' element requires exactly 5 argumens, {l} given")
+		super().__init__(*args, defaults=None)
 
 class BaseSVGElem(object):
 
@@ -151,7 +158,7 @@ class BaseSVGElem(object):
 			self._struct.getFromXmlAttrs(self.el)
 		return self._struct
 
-	def getStyleSelector(self, select='id'):
+	def getSelector(self, select='id'):
 		assert select in (None, "id", "class", "tag")
 		sel = None
 		if select == 'id':
@@ -170,6 +177,7 @@ class BaseSVGElem(object):
 		return self
 
 	def setStyle(self, style: Sty):
+		assert isinstance(style, Sty)
 		self._style = style
 		return self.updateStyle()
 
@@ -181,7 +189,7 @@ class BaseSVGElem(object):
 		ret = None
 		if not self._style is None and not self.el is None:
 			self._style.fromXmlAttrs(self.el)
-			sel = self.getStyleSelector(select=select)
+			sel = self.getSelector(select=select)
 			if not sel is None:
 				ret = CSSSty(selector=sel)
 				ret.copyFromSty(self._style)
@@ -193,11 +201,12 @@ class BaseSVGElem(object):
 	 	return (self.getStruct(), self.getStyle())
 
 	def __exit__(self):
-		pass
-		# if self._tmps
+		self.updateStruct()
+		self.updateStyle()
+		# TODO: transform
 
-	def getSS(self, select='id'):
-		return self.getStyleSelector(select=select)
+	def getSel(self, select='id'):
+		return self.getSelector(select=select)
 
 	def hasEl(self):
 		return  not self.el is None
@@ -319,6 +328,10 @@ class Defs(SVGContainer):
 	def __init__(self) -> None:
 		super().__init__('defs')
 
+class Use(BaseSVGElem):
+	def __init__(self, *args) -> None:
+		super().__init__("use", struct=Us(*args))
+
 class Style(BaseSVGElem):
 
 	def __init__(self) -> None:
@@ -336,6 +349,12 @@ class Style(BaseSVGElem):
 		if selector in self.stylerules.keys():
 			del self.stylerules[selector]
 			ret = True
+		return ret
+
+	def getRule(self, selector: str) -> Union[None, CSSSty]:
+		ret = None
+		if selector in self.stylerules.keys():
+			ret = self.stylerules[selector]
 		return ret
 
 	def render(self, depth=-1) -> bool:
@@ -374,10 +393,14 @@ class SVGContent(SVGRoot):
 		self._id_serial = self._id_serial + 1
 		return ret
 
-	def addChild(self, p_child: BaseSVGElem):
+	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False) -> BaseSVGElem:
 		if p_child.tag in self.forbidden_user_tags:
 			raise TagOutOfDirectUserManipulation(p_child.tag)
-		ret = super().addChild(p_child)
+		if todefs:
+			assert not self._defs is None
+			ret = self._defs.addChild(p_child)
+		else:
+			ret = super().addChild(p_child)
 		if not ret.hasId():
 			ret.setId(p_child.idprefix + str(self._nextIDSerial()))
 		return ret

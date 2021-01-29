@@ -36,7 +36,9 @@ class _attrs_struct(object):
 	def set(self, *args, defaults=None) -> None:
 		for i, fld in enumerate(self._fields):
 			if i < len(args):
-				setattr(self, fld, str(args[i]))
+				val = args[i]
+				if not val is None:
+					setattr(self, fld, str(val))
 			else:
 				revi = len(self._fields) - i - 1
 				if not defaults is None:
@@ -44,9 +46,7 @@ class _attrs_struct(object):
 						val = str(defaults[revi])
 					else:
 						val = str(defaults[-1])
-				else:
-					val = None
-				setattr(self, fld, val)
+					setattr(self, fld, val)
 		if len(self._subfields) > 0:
 			if len(self._subfields) == len(args) - len(self._fields):
 				for j, sfld in enumerate(self._subfields):
@@ -72,7 +72,8 @@ class _attrs_struct(object):
 
 	def setXmlAttrs(self, xmlel) -> None:  
 		for f in self._fields:
-			xmlel.set(f, str(getattr(self, f)))
+			if hasattr(self, f):
+				xmlel.set(f, str(getattr(self, f)))
 		return self
 
 	def getFromXmlAttrs(self, xmlel) -> None:  

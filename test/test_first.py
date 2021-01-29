@@ -81,13 +81,13 @@ def test_styleElement():
 	r = sc.addChild(Rect(80,100,300,400))
 	r.setClass('classz')
 
-	selectstr = sc.addStyleRule(CSSSty('stroke', 'red', 'fill', 'blue', selector=r.getSS()))
+	selectstr = sc.addStyleRule(CSSSty('stroke', 'red', 'fill', 'blue', selector=r.getSel()))
 	condens = re.sub(r"[\s]+"," ", sc.toString())
 	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs> <style type="text/css"><![CDATA[#Rec0 { fill: blue; stroke: red; }]]></style> </defs> <rect x="80" y="100" width="300" height="400" id="Rec0" class="classz"/> </svg> """
 	
 	assert sc.delStyleRule(selectstr)
 
-	selectstr = sc.addStyleRule(CSSSty('stroke', 'red', 'fill', 'blue', selector=r.getSS(select='class')))
+	selectstr = sc.addStyleRule(CSSSty('stroke', 'red', 'fill', 'blue', selector=r.getSel(select='class')))
 	condens = re.sub(r"[\s]+"," ", sc.toString())
 	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs> <style type="text/css"><![CDATA[.classz { fill: blue; stroke: red; }]]></style> </defs> <rect x="80" y="100" width="300" height="400" id="Rec0" class="classz"/> </svg> """
 
