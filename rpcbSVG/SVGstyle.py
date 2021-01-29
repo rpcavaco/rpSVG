@@ -133,10 +133,14 @@ class Sty(object):
 				continue
 			attrib, value = val
 			if attrib in STYLE_ATTRIBS:
-				setattr(self, attrib, value)
+				setattr(self, attrib, str(value))
 		if not hasattr(self, 'fill'):
 			setattr(self, 'fill', 'none')
 		return self
+
+	def set(self, attrib: str, value):
+		if attrib in STYLE_ATTRIBS:
+			setattr(self, attrib, str(value))
 
 	def addFromDict(self, in_dict):
 		ld = len(in_dict)
@@ -170,7 +174,8 @@ class Sty(object):
 
 	def setXmlAttrs(self, xmlel) -> None:  
 		for f in self.getStyleAttrs():
-			xmlel.set(f, str(getattr(self, f)))
+			if hasattr(self, f):
+				xmlel.set(f, str(getattr(self, f)))
 		return self
 
 	def fromXmlAttrs(self, xmlel):

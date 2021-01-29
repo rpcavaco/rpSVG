@@ -93,15 +93,15 @@ def test_styleElement():
 
 #	with capsys.disabled():
 
-def _test_similarElement():
+def test_similarElement():
 
 	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
 	r = sc.addChild(Rect(80,100,300,400))
 	r2 = sc.addChild(Rect(80,100,300,400))
-	assert set(r.similitudeTo(r2)) == set(('TAG', 'STRUCT','STYLE'))
+	assert set(r.similitudeTo(r2)) == set(('TAG', 'STRUCT'))
 
 	r3 = sc.addChild(Rect(80,100,300,400, "px"))
-	assert set(r.similitudeTo(r3)) == set(('TAG', 'STYLE'))
+	assert r.similitudeTo(r3) == ['TAG']
 
 	r4 = sc.addChild(Rect(80,100,300,400))
 	s1 = Sty('fill', 'red', 'stroke', 'green')
@@ -112,6 +112,11 @@ def _test_similarElement():
 	s2 = Sty('stroke', 'blue')
 	r5.setStyle(s1)
 	assert r.similitudeTo(r5) == ['TAG']
+
+	r6 = sc.addChild(Rect(90,10,240,320))
+	s1 = Sty('fill', 'red', 'stroke', 'green')
+	r6.setStyle(s1)
+	assert set(r4.similitudeTo(r6)) == set(('TAG', 'STYLE'))
 
 		# with open('outtest/testeZZ.svg', 'w') as fl:
 		#	fl.write(sc.toString())

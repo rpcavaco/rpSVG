@@ -73,7 +73,10 @@ class _attrs_struct(object):
 	def setXmlAttrs(self, xmlel) -> None:  
 		for f in self._fields:
 			if hasattr(self, f):
-				xmlel.set(f, str(getattr(self, f)))
+				val = getattr(self, f)
+				if not val is None:
+					assert not val == "None"
+					xmlel.set(f, str(val))
 		return self
 
 	def getFromXmlAttrs(self, xmlel) -> None:  

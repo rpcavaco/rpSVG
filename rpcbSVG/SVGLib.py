@@ -104,9 +104,19 @@ class Us(_withunits_struct):
 	_fields = ("x",  "y", "width", "height", f"{{{XLINK_NAMESPACE}}}href") 
 	def __init__(self, *args) -> None:
 		l =  len(args)
-		if len(args) != 5:
-			raise TypeError(f"'Us' element requires exactly 5 argumens, {l} given")
-		super().__init__(*args, defaults=None)
+		if l != 5:
+			if l == 2:
+				if isinstance(args[0], Pt) and isinstance(args[1], str):
+					argslist = (args[0].x, args[0].y, None, None, args[1])
+				elif isinstance(args[0], Re) and isinstance(args[1], str):
+					argslist = (args[0].x, args[0].y, args[0].width, args[0].height, args[1])
+				else:
+					raise TypeError(f"'Us' element requires exactly 5 argumens, {l} given")
+			else:
+				raise TypeError(f"'Us' element requires exactly 5 argumens, {l} given")
+		else:
+			argslist = args
+		super().__init__(*argslist, defaults=None)
 
 class BaseSVGElem(object):
 
@@ -137,9 +147,11 @@ class BaseSVGElem(object):
 			if self.getStruct() == o.getStruct():
 				ret.append('STRUCT')
 			sty = self.getStyle()
-			assert not sty is None
-			if sty.isSimilarTo(o.getStyle()):
-				ret.append('STYLE')
+			if not sty is None:
+				osty = o.getStyle()
+				if not osty is None:
+					if sty == osty:
+						ret.append('STYLE')
 			# TODO: falta transform
 		return ret
 
@@ -200,7 +212,7 @@ class BaseSVGElem(object):
 	def __enter__(self):
 	 	return (self.getStruct(), self.getStyle())
 
-	def __exit__(self):
+	def __exit__(self, exc_type, exc_value, traceback):
 		self.updateStruct()
 		self.updateStyle()
 		# TODO: transform
@@ -215,6 +227,10 @@ class BaseSVGElem(object):
 		assert not self.el is None, self.NO_XML_EL
 		return self.el
 
+	def getParent(self):
+		assert not self.el is None, self.NO_XML_EL
+		return self.el.getparent()
+
 	def setEl(self, xmlel) -> None:
 		assert self.el is None
 		self.el = xmlel
@@ -222,6 +238,16 @@ class BaseSVGElem(object):
 		if not strct is None:
 			strct.setXmlAttrs(self.el)
 		return self
+
+	def removeEl(self):
+		assert not self.el is None, self.NO_XML_EL
+		par = self.el.getparent()
+		par.remove(self.el)
+		return par
+
+	def readdElToParent(self, p_parent):
+		assert not self.el is None, self.NO_XML_EL
+		p_parent.append(self.el)
 
 	def delEl(self):
 		self.el.getparent().remove(self.el)
@@ -415,18 +441,17 @@ class SVGContent(SVGRoot):
 		return self._style.render(depth=-1)
 
 	def toBytes(self, inc_declaration=False, inc_doctype=False, pretty_print=True):
-		nostyles = False
+		parelem = None
 		if not self.render():
-			nostyles = True
-			self._style.delEl()
+			parelem = self._style.removeEl()
 
 		if inc_doctype:
 			ret = etree.tostring(self.getEl(), doctype=DOCTYPE_STR, xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')
 		else:
 			ret = etree.tostring(self.getEl(), xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')	
 
-		if nostyles:
-			self._style.setEl(Style())
+		if not parelem is None:
+			self._style.readdElToParent(parelem)
 
 		return ret
 
