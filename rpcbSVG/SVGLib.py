@@ -12,7 +12,7 @@ from collections import namedtuple
 
 from lxml import etree
 
-from rpcbSVG.SVGstyle import Sty
+from rpcbSVG.SVGstyle import CSSSty, Sty
 from rpcbSVG.Basics import Pt, Env, _withunits_struct, _attrs_struct
 
 XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
@@ -109,6 +109,7 @@ class BaseSVGElem(object):
 			struct: Optional[_withunits_struct] = None) -> None:
 		self.tag = tag
 		self._struct = None
+		self._style = None
 		self.idprefix = tag[:3].title()
 		self.el = None
 		self.setStruct(struct)
@@ -135,11 +136,14 @@ class BaseSVGElem(object):
 			# TODO: falta transform
 		return ret
 
-	def setStruct(self, struct: _withunits_struct):
-		self._struct = struct
-		if not self.el is None:
+	def updateStruct(self):
+		if not self._struct is None and not self.el is None:
 			self._struct.setXmlAttrs(self.el)
 		return self
+
+	def setStruct(self, struct: _withunits_struct):
+		self._struct = struct
+		return self.updateStruct()
 
 	def getStruct(self) -> _withunits_struct:
 		assert not self._struct is None
@@ -148,7 +152,7 @@ class BaseSVGElem(object):
 		return self._struct
 
 	def getStyleSelector(self, select='id'):
-		assert select in ("id", "class", "tag")
+		assert select in (None, "id", "class", "tag")
 		sel = None
 		if select == 'id':
 			if self.hasId():
@@ -160,27 +164,40 @@ class BaseSVGElem(object):
 			sel = self.tag
 		return sel
 
-	def getSS(self, select='id'):
-		return self.getStyleSelector(select=select)
-
-	def getStyle(self, select='id'):
-		ret = None
-		if not self.el is None:
-			sel = self.getStyleSelector(select=select)
-			ret = Sty(selector=sel)
-			ret.fromXmlAttrs(self.el)
-		return ret
-
-	def setStyle(self, style: Sty):
-		if not self.el is None:
-			style.setXmlAttrs(self.el)
+	def updateStyle(self):
+		if not self._style is None and not self.el is None:
+			self._style.setXmlAttrs(self.el)
 		return self
 
-	# def __enter__(self):
-	# 	self.getStyle()
+	def setStyle(self, style: Sty):
+		self._style = style
+		return self.updateStyle()
 
-	# def __exit__(self):
-	# 	pass
+	def hasStyle(self):
+		return not self._style is None
+
+	def getStyle(self, select=None) -> Union[Sty, CSSSty]:
+		""" select: None, "id", "class", "tag" """
+		ret = None
+		if not self._style is None and not self.el is None:
+			self._style.fromXmlAttrs(self.el)
+			sel = self.getStyleSelector(select=select)
+			if not sel is None:
+				ret = CSSSty(selector=sel)
+				ret.copyFromSty(self._style)
+			else:
+				ret = self._style
+		return ret
+
+	def __enter__(self):
+	 	return (self.getStruct(), self.getStyle())
+
+	def __exit__(self):
+		pass
+		# if self._tmps
+
+	def getSS(self, select='id'):
+		return self.getStyleSelector(select=select)
 
 	def hasEl(self):
 		return  not self.el is None
@@ -238,6 +255,10 @@ class BaseSVGElem(object):
 		strct = self.getStruct()
 		assert not strct is None
 		strct.setXmlAttrs(xmlel)
+		style = self.getStyle()
+		if not style is None:
+			style.setXmlAttrs(xmlel)
+		# TODO: tranform
 
 class SVGContainer(BaseSVGElem):
 
@@ -304,10 +325,8 @@ class Style(BaseSVGElem):
 		super().__init__('style')
 		self.stylerules = {}
 
-	def addRule(self, p_child: Sty, selector: Optional[str] = None) -> str:
-		if not selector is None:
-			p_child.setSelector(selector)
-		assert p_child.hasSelector()
+	def addRule(self, p_child: CSSSty) -> str:
+		assert isinstance(p_child, CSSSty)
 		ret = p_child.getSelector()
 		self.stylerules[ret] =p_child
 		return ret
@@ -341,7 +360,6 @@ class Circle(BaseSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("circle", struct=Ci(*args))
 
-
 class SVGContent(SVGRoot):
 
 	forbidden_user_tags = ["defs", "style"]
@@ -364,8 +382,8 @@ class SVGContent(SVGRoot):
 			ret.setId(p_child.idprefix + str(self._nextIDSerial()))
 		return ret
 
-	def addStyleRule(self, p_child: Sty, selector: Optional[str] = None) -> str:
-		return self._style.addRule(p_child, selector = selector)
+	def addStyleRule(self, p_child: CSSSty) -> str:
+		return self._style.addRule(p_child)
 
 	def delStyleRule(self, selector: str) -> bool:
 		return self._style.delRule(selector)
