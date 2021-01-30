@@ -96,7 +96,7 @@ class VBox1280x1024(VBox):
 
 
 class Ci(_withunits_struct):
-	_fields = ("cx",  "cy", "rad") 
+	_fields = ("cx",  "cy", "r") 
 	def __init__(self, *args) -> None:
 		super().__init__(*args, defaults=["0"])
 

@@ -37,12 +37,12 @@ def test_GroupCircle():
 	s2 = SVGRoot(Re().full(), viewbox=VBox600x800())
 	g = s2.addChild(Group()).setId("o_grupo")
 	g.addChild(Circle(20, 30, 60))
-	assert etree.tostring(s2.getEl()) == b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 600 800"><g id="o_grupo"><circle cx="20" cy="30" rad="60"/></g></svg>'
+	assert etree.tostring(s2.getEl()) == b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 600 800"><g id="o_grupo"><circle cx="20" cy="30" r="60"/></g></svg>'
 
 def test_IdentVB():
 	s = SVGRoot(Re(0,3,100,200)).setIdentityViewbox(scale=10.0)
 	r = s.addChild(Circle(0,0,30))
-	assert etree.tostring(s.getEl()) == b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="3" width="100" height="200" viewBox="0 30 1000 2000"><circle cx="0" cy="0" rad="30"/></svg>'
+	assert etree.tostring(s.getEl()) == b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="3" width="100" height="200" viewBox="0 30 1000 2000"><circle cx="0" cy="0" r="30"/></svg>'
 
 def test_DirectUserManipulation():
 	s = SVGContent(Re().full())
