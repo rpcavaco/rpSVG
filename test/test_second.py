@@ -2,8 +2,8 @@
 
 import pytest, re
 
-from rpcbSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY #, Env
-from rpcbSVG.SVGLib import Re, SVGContent, Circle, Use 
+from rpcbSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY, WrongValueTransformDef
+from rpcbSVG.SVGLib import Re, SVGContent, Circle, Rect, Use 
 from rpcbSVG.SVGstyle import Sty, CSSSty
 
 #from lxml import etree
@@ -35,8 +35,8 @@ def test_Use_RemoveChange():
 	ue1.setStyle(s)
 
 	# Changing exisitng stroke-witdth to 20
-	with ue1 as str_sty:
-		strct, styl = str_sty
+	with ue1 as triplet:
+		strct, styl, tr_list = triplet
 		styl.set('stroke-width', 20)
 
 	condens = re.sub(r"[\s]+"," ", sc.toString())
@@ -84,4 +84,28 @@ def test_TransformDefinitions():
 	assert sk.get() == "skewX(12)"
 	sk = SkewY(2,36,36)
 	assert sk.get() == "skewY(2)"
+
+def test_Transform(capsys):
+
+	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
+	r = sc.addChild(Rect(200,200,300,400))
+	r.addTransform(Rotate(45,250,300))
+	r.addTransform(Trans(100,0))
+
+	assert sc.toString(pretty_print=False) == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"><defs/><rect x="200" y="200" width="300" height="400" id="Rec0" transform="rotate(45,250,300) translate(100,0)"/></svg>"""
+
+	with r as triplet:
+		strct, styl, tr_list = triplet
+		tr_list[1].setvalue("tx", 150)
+
+	assert sc.toString(pretty_print=False) == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"><defs/><rect x="200" y="200" width="300" height="400" id="Rec0" transform="rotate(45,250,300) translate(150,0)"/></svg>"""
+
+	with r as triplet:
+		strct, styl, tr_list = triplet
+		with pytest.raises(WrongValueTransformDef):		
+			tr_list[1].setvalue("tL", 150)
+
+	#with open('outtest/testeZZ.svg', 'w') as fl:
+	#	fl.write(sc.toString(pretty_print=False))
+
 

@@ -10,6 +10,14 @@ MINCOORD = -MAXCOORD
 #def polar2rect(ang, rad):
 #	return POINTS_FORMAT.format(cos(ang) * rad, sin(ang) * rad )
 
+class WrongValueTransformDef(RuntimeError):
+	def __init__(self, p_class_instance, p_attr):
+		self.classname = p_class_instance.__class__.__name__
+		self.attr = p_attr
+	def __str__(self):
+		return f"Transform definition '{self.classname}' accepts no '{self.attr}' value"
+
+
 def ptList2AbsPolylinePath(p_ptlist, mirrory=False, close=False):
 	strcomps = []
 	for pi, pt in enumerate(p_ptlist):
@@ -240,8 +248,19 @@ class transform_def(_attrs_struct):
 		for f in self._fields:
 			if not hasattr(self, f) and f not in self._optfields:
 				raise TypeError(f"{self._label}, required value '{f}' not provided")
+		return self
 	def get(self):
 		return f"{self._label}({','.join([getattr(self, f) for f in self._fields if hasattr(self, f)])})"
+	def getvalue(self, p_field: str):
+		ret = None
+		if p_field in self._fields and hasattr(self, p_field):
+			ret = getattr(self, p_field)
+		return ret
+	def setvalue(self, p_field: str, p_value):
+		if p_field not in self._fields:
+			raise WrongValueTransformDef(self, p_field)
+		setattr(self, p_field, str(p_value))
+		return self
 
 class Mat(transform_def):
 	_fields = ("a", "b", "c", "d", "e", "f")

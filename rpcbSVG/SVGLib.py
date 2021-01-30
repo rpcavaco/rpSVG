@@ -43,7 +43,6 @@ class TagOutOfDirectUserManipulation(RuntimeError):
 	def __str__(self):
 		return f"Tag '{self.tag}' not to be manipulated by user."
 
-
 # def renderToFile(svgstr, w, h, filename):
 # 	img = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
 # 	ctx = cairo.Context(img)
@@ -218,10 +217,13 @@ class BaseSVGElem(object):
 
 	def updateTransform(self):
 		if len(self._transforms) > 0 and self.hasEl():
-			setattr(self, 'transform', self._getTransform()) 
+			self.getEl().set('transform', self._getTransform()) 
+
+	def getTransformsList(self):
+		return self._transforms
 
 	def __enter__(self):
-	 	return (self.getStruct(), self.getStyle())
+	 	return (self.getStruct(), self.getStyle(), self.getTransformsList())
 
 	def __exit__(self, exc_type, exc_value, traceback):
 		self.updateStruct()
@@ -304,13 +306,19 @@ class BaseSVGElem(object):
 		style = self.getStyle()
 		if not style is None:
 			style.setXmlAttrs(xmlel)
-		# TODO: tranform ???????????????????????????????????? <<<<<<<<<<<<<<<<
+		trtxt = self._getTransform() 
+		if len(trtxt) > 0:
+			xmlel.set('transform', trtxt)
 
 	def clearTransforms(self):
 		del self._transforms[:]
 
-	def addTransf(self, tr: transform_def):
+	def addTransform(self, tr: transform_def):
 		self._transforms.append(tr)
+		trtxt = self._getTransform() 
+		if len(trtxt) > 0:
+			self.getEl().set('transform', trtxt)
+		return tr
 
 
 class SVGContainer(BaseSVGElem):
