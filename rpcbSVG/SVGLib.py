@@ -13,7 +13,7 @@ from collections import namedtuple
 from lxml import etree
 
 from rpcbSVG.SVGstyle import CSSSty, Sty
-from rpcbSVG.Basics import Pt, Env, _withunits_struct
+from rpcbSVG.Basics import Pt, Env, _withunits_struct, transform_def
 
 XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
@@ -128,9 +128,13 @@ class BaseSVGElem(object):
 		self.tag = tag
 		self._struct = None
 		self._style = None
+		self._transforms = []
 		self.idprefix = tag[:3].title()
 		self.el = None
 		self.setStruct(struct)
+
+	def _getTransform(self) -> str:
+		return " ".join([t.get() for t in self._transforms])
 
 	def __repr__(self):
 		out = [
@@ -153,7 +157,9 @@ class BaseSVGElem(object):
 				if not osty is None:
 					if sty == osty:
 						ret.append('STYLE')
-			# TODO: falta transform
+			trtxt = self._getTransform() 
+			if len(trtxt) > 0 and trtxt == o._getTransform():
+				ret.append('TRANS')
 		return ret
 
 	def updateStruct(self):
@@ -185,7 +191,7 @@ class BaseSVGElem(object):
 		return sel
 
 	def updateStyle(self):
-		if not self._style is None and not self.el is None:
+		if not self._style is None and self.hasEl():
 			self._style.setXmlAttrs(self.el)
 		return self
 
@@ -210,13 +216,17 @@ class BaseSVGElem(object):
 				ret = self._style
 		return ret
 
+	def updateTransform(self):
+		if len(self._transforms) > 0 and self.hasEl():
+			setattr(self, 'transform', self._getTransform()) 
+
 	def __enter__(self):
 	 	return (self.getStruct(), self.getStyle())
 
 	def __exit__(self, exc_type, exc_value, traceback):
 		self.updateStruct()
 		self.updateStyle()
-		# TODO: transform
+		self.updateTransform()
 
 	def getSel(self, select='id'):
 		return self.getSelector(select=select)
@@ -294,7 +304,14 @@ class BaseSVGElem(object):
 		style = self.getStyle()
 		if not style is None:
 			style.setXmlAttrs(xmlel)
-		# TODO: tranform
+		# TODO: tranform ???????????????????????????????????? <<<<<<<<<<<<<<<<
+
+	def clearTransforms(self):
+		del self._transforms[:]
+
+	def addTransf(self, tr: transform_def):
+		self._transforms.append(tr)
+
 
 class SVGContainer(BaseSVGElem):
 

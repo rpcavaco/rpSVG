@@ -230,7 +230,7 @@ class Env(_attrs_struct):
 
 # transforms
 
-class _transform_def(_attrs_struct):
+class transform_def(_attrs_struct):
 	_fields = ()
 	_optfields = ()
 	_label = ""
@@ -243,14 +243,14 @@ class _transform_def(_attrs_struct):
 	def get(self):
 		return f"{self._label}({','.join([getattr(self, f) for f in self._fields if hasattr(self, f)])})"
 
-class Mat(_transform_def):
+class Mat(transform_def):
 	_fields = ("a", "b", "c", "d", "e", "f")
 	_label = "matrix"
 	def __init__(self, *args) -> None:
 		super().__init__(*args)
 		self.validate()
 
-class Trans(_transform_def):
+class Trans(transform_def):
 	_fields = ("tx", "ty")
 	_optfields = ("ty",)
 	_label = "translate"
@@ -258,7 +258,7 @@ class Trans(_transform_def):
 		super().__init__(*args)
 		self.validate()
 
-class Scale(_transform_def):
+class Scale(transform_def):
 	_fields = ("sx", "sy")
 	_optfields = ("sy",)
 	_label = "scale"
@@ -266,7 +266,7 @@ class Scale(_transform_def):
 		super().__init__(*args)
 		self.validate()
 
-class Rotate(_transform_def):
+class Rotate(transform_def):
 	_fields = ("rotate-angle", "cx", "cy")
 	_optfields = ("cx", "cy")
 	_label = "rotate"
@@ -274,14 +274,14 @@ class Rotate(_transform_def):
 		super().__init__(*args)
 		self.validate()
 
-class SkewX(_transform_def):
+class SkewX(transform_def):
 	_fields = ("skew-angle",)
 	_label = "skewX"
 	def __init__(self, *args) -> None:
 		super().__init__(*args)
 		self.validate()
 
-class SkewY(_transform_def):
+class SkewY(transform_def):
 	_fields = ("skew-angle",)
 	_label = "skewY"
 	def __init__(self, *args) -> None:
