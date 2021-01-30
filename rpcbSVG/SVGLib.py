@@ -118,6 +118,7 @@ class Us(_withunits_struct):
 			argslist = args
 		super().__init__(*argslist, defaults=None)
 
+
 class BaseSVGElem(object):
 
 	NO_XML_EL = "XML Element not created yet"

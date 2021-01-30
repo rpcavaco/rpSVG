@@ -2,7 +2,7 @@
 
 import pytest, re
 
-from rpcbSVG.Basics import Pt #, Env
+from rpcbSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY #, Env
 from rpcbSVG.SVGLib import Re, SVGContent, Circle, Use 
 from rpcbSVG.SVGstyle import Sty, CSSSty
 
@@ -11,7 +11,7 @@ from rpcbSVG.SVGstyle import Sty, CSSSty
 
 # with capsys.disabled():
 
-def test_Use_RemoveChange(capsys):
+def test_Use_RemoveChange():
 
 	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
 	#sc = SVGContent(Re(10, 10, 600, 400, "px"), viewbox=VBox1280x1024())
@@ -34,6 +34,7 @@ def test_Use_RemoveChange(capsys):
 	s = Sty('stroke', 'blue', 'stroke-width', 10)
 	ue1.setStyle(s)
 
+	# Changing exisitng stroke-witdth to 20
 	with ue1 as str_sty:
 		strct, styl = str_sty
 		styl.set('stroke-width', 20)
@@ -44,4 +45,43 @@ def test_Use_RemoveChange(capsys):
 
 	# with open('outtest/testeZZ.svg', 'w') as fl:
 	# 	fl.write(sc.toString())
+
+def test_TransformDefinitions():
+
+	with pytest.raises(TypeError):
+		mt = Mat()
+
+	with pytest.raises(TypeError):
+		mt = Mat(1, 2,3,4,5)
+
+	mt = Mat(1, 2,30,4,5,6)
+	assert mt.get() == "matrix(1,2,30,4,5,6)"
+
+	with pytest.raises(TypeError):
+		tr = Trans()
+	tr = Trans(12)
+	tr = Trans(12,24)
+	assert tr.get() == "translate(12,24)"
+
+	with pytest.raises(TypeError):
+		x = Scale()
+	sc = Scale(10)
+	sc = Scale(14,34)
+	assert sc.get() == "scale(14,34)"
+
+	with pytest.raises(TypeError):
+		x = Rotate()
+	rt = Rotate(10)
+	rt = Rotate(12,36,36)
+	assert rt.get() == "rotate(12,36,36)"
+
+	with pytest.raises(TypeError):
+		x = SkewX()
+	with pytest.raises(TypeError):
+		x = SkewY()
+
+	sk = SkewX(12,36,36)
+	assert sk.get() == "skewX(12)"
+	sk = SkewY(2,36,36)
+	assert sk.get() == "skewY(2)"
 

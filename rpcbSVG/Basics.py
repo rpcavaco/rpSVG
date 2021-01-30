@@ -228,6 +228,66 @@ class Env(_attrs_struct):
 		self.maxy = pt.y + newhheight 	
 		return self
 
+# transforms
+
+class _transform_def(_attrs_struct):
+	_fields = ()
+	_optfields = ()
+	_label = ""
+	def getFromXmlAttrs(self, xmlel) -> None:  
+		raise NotImplementedError("transform attribs not to translated to xml attribs")
+	def validate(self):
+		for f in self._fields:
+			if not hasattr(self, f) and f not in self._optfields:
+				raise TypeError(f"{self._label}, required value '{f}' not provided")
+	def get(self):
+		return f"{self._label}({','.join([getattr(self, f) for f in self._fields if hasattr(self, f)])})"
+
+class Mat(_transform_def):
+	_fields = ("a", "b", "c", "d", "e", "f")
+	_label = "matrix"
+	def __init__(self, *args) -> None:
+		super().__init__(*args)
+		self.validate()
+
+class Trans(_transform_def):
+	_fields = ("tx", "ty")
+	_optfields = ("ty",)
+	_label = "translate"
+	def __init__(self, *args) -> None:
+		super().__init__(*args)
+		self.validate()
+
+class Scale(_transform_def):
+	_fields = ("sx", "sy")
+	_optfields = ("sy",)
+	_label = "scale"
+	def __init__(self, *args) -> None:
+		super().__init__(*args)
+		self.validate()
+
+class Rotate(_transform_def):
+	_fields = ("rotate-angle", "cx", "cy")
+	_optfields = ("cx", "cy")
+	_label = "rotate"
+	def __init__(self, *args) -> None:
+		super().__init__(*args)
+		self.validate()
+
+class SkewX(_transform_def):
+	_fields = ("skew-angle",)
+	_label = "skewX"
+	def __init__(self, *args) -> None:
+		super().__init__(*args)
+		self.validate()
+
+class SkewY(_transform_def):
+	_fields = ("skew-angle",)
+	_label = "skewY"
+	def __init__(self, *args) -> None:
+		super().__init__(*args)
+		self.validate()
+
 
 if __name__ == "__main__":
 	l = [Pt(0,0), Pt(10,0), Pt(20,12), Pt(6,8)]	
