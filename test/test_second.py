@@ -1,13 +1,10 @@
-
-
-import pytest, re
+import pytest, re, json
 
 from rpcbSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY, WrongValueTransformDef
 from rpcbSVG.SVGLib import Re, SVGContent, Circle, Rect, RectRC, Use 
 from rpcbSVG.SVGstyle import Sty, CSSSty
 
 #from lxml import etree
-
 
 # with capsys.disabled():
 
@@ -42,9 +39,6 @@ def test_Use_RemoveChange():
 	condens = re.sub(r"[\s]+"," ", sc.toString())
 
 	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs> <circle cx="20" cy="30" r="60" id="Cir0" class="batatas"/> </defs> <use x="250" y="140" xlink:href="#Cir0" id="Use1" fill="none" stroke="blue" stroke-width="20"/> </svg> """
-
-	# with open('outtest/testeZZ.svg', 'w') as fl:
-	# 	fl.write(sc.toString())
 
 def test_TransformDefinitions():
 
@@ -114,8 +108,18 @@ def test_RoundRect():
 
 	assert sc.toString(pretty_print=False) == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"><defs/><rect x="200" y="200" width="300" height="400" rx="10" ry="10" id="Rec0" transform="rotate(45,250,300) translate(100,0)"/></svg>"""
 
+def test_JSON():
+
+	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
+	c = sc.addChild(Circle(20, 30, 60), todefs=True)
+	c.setClass("batatas")
+
+	ue1 = sc.addChild(Use(250,140,None,None, c.getSel()))
+	s = Sty('stroke', 'blue', 'stroke-width', 10)
+	ue1.setStyle(s)
+
+	assert sc.toJSON() == {"tag": "svg", "attribs": {"version": "1.1", "x": "0", "y": "0", "width": "100%", "height": "100%", "viewBox": "0 0 1000 1000"}, "content": [{"tag": "defs", "attribs": {}, "content": [{"tag": "style", "attribs": {}}, {"tag": "circle", "attribs": {"cx": "20", "cy": "30", "r": "60", "id": "Cir0", "class": "batatas"}}]}, {"tag": "use", "attribs": {"x": "250", "y": "140", "{http://www.w3.org/1999/xlink}href": "#Cir0", "id": "Use1", "fill": "none", "stroke": "blue", "stroke-width": "10"}}]}
+
 	#with open('outtest/testeZZ.svg', 'w') as fl:
 	#	fl.write(sc.toString(pretty_print=False))
-
-
 

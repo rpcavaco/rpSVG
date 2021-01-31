@@ -132,7 +132,7 @@ class BaseSVGElem(object):
 	NO_XML_EL = "XML Element not created yet"
 
 	def __init__(self, tag: str, 
-			struct: Optional[_withunits_struct] = None) -> None:
+			struct: Optional[_withunits_struct] = None):
 		self.tag = tag
 		self._struct = None
 		self._style = None
@@ -144,14 +144,31 @@ class BaseSVGElem(object):
 	def _getTransform(self) -> str:
 		return " ".join([t.get() for t in self._transforms])
 
+	def hasEl(self):
+		return  not self.el is None
+
+	def getEl(self):
+		assert not self.el is None, self.NO_XML_EL
+		return self.el
+
 	def __repr__(self):
 		out = [
 			f"tag={str(self.tag)}"
 		]
-		if not self.el is None:
-			for x in self.el.keys():
+		if self.hasEl():
+			for x in self.getEl().keys():
 				out.append(f"{x}={self.el.get(x)}")
 		return ' '.join(out)
+
+	def toJSON(self):
+		out = {
+			"tag": str(self.tag),
+			"attribs": {}
+		}
+		if self.hasEl():
+			for x in self.getEl().keys():
+				out["attribs"][x] = self.getEl().get(x)
+		return out
 
 	def similitudeTo(self, o: object) -> str:
 		ret = []
@@ -245,13 +262,6 @@ class BaseSVGElem(object):
 	def getSel(self, select='id'):
 		return self.getSelector(select=select)
 
-	def hasEl(self):
-		return  not self.el is None
-
-	def getEl(self):
-		assert not self.el is None, self.NO_XML_EL
-		return self.el
-
 	def getParent(self):
 		assert not self.el is None, self.NO_XML_EL
 		return self.el.getparent()
@@ -335,10 +345,15 @@ class BaseSVGElem(object):
 
 class SVGContainer(BaseSVGElem):
 
+	def __init__(self, tag: str, struct: Optional[_withunits_struct] = None) -> None:
+		super().__init__(tag, struct=struct)
+		self.content = []
+
 	def addChild(self, p_child: BaseSVGElem):
 		assert self.hasEl()
 		newel = etree.SubElement(self.getEl(), p_child.tag)
 		p_child.setEl(newel)
+		self.content.append(p_child)
 		return p_child
 
 	def addChildTag(self, p_tag: str):
@@ -349,6 +364,14 @@ class SVGContainer(BaseSVGElem):
 	def clear(self):
 		assert self.hasEl()
 		del self.getEl()[:]
+
+	def toJSON(self):
+		out = super().toJSON()
+		if len(self.content) > 0:
+			out["content"] = []
+			for chld in self.content:
+				out["content"].append(chld.toJSON())
+		return out
 
 class SVGRoot(SVGContainer):
 

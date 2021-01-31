@@ -65,9 +65,16 @@ class _attrs_struct(object):
 	def __repr__(self):
 		out = []
 		for x in self.__dict__.keys():
-			if not x.startswith('_'):
+			if x in self._fields:
 				out.append(f"{x}={getattr(self, x)}")
 		return ' '.join(out)
+
+	# def toJSON(self):
+	# 	out = {}
+	# 	for x in self.__dict__.keys():
+	# 		if x in self._fields:
+	# 			out[x] = getattr(self, x)
+	# 	return out
 
 	def sharedItems(self, o: object) -> dict:
 		return {f: getattr(self,f) for f in self._fields if f in dir(o) and hasattr(self,f) and getattr(self,f) == getattr(o,f)}
