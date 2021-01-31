@@ -1,6 +1,8 @@
 
 from collections import namedtuple
 
+from typing import Optional
+
 Pt = namedtuple("Pt", "x y")
 
 MAXCOORD = 99999999999.9
@@ -16,6 +18,13 @@ class WrongValueTransformDef(RuntimeError):
 		self.attr = p_attr
 	def __str__(self):
 		return f"Transform definition '{self.classname}' accepts no '{self.attr}' value"
+
+class WrongValuePathCmd(RuntimeError):
+	def __init__(self, p_class_instance, p_attr):
+		self.classname = p_class_instance.__class__.__name__
+		self.attr = p_attr
+	def __str__(self):
+		return f"Path command '{self.classname}' accepts no '{self.attr}' value"
 
 
 def ptList2AbsPolylinePath(p_ptlist, mirrory=False, close=False):
@@ -263,6 +272,8 @@ class transform_def(_attrs_struct):
 	_label = ""
 	def getFromXmlAttrs(self, xmlel) -> None:  
 		raise NotImplementedError("transform attribs not to translated to xml attribs")
+	def setXmlAttrs(self, xmlel) -> None:  
+		raise NotImplementedError("transform attribs not to translated to xml attribs")
 	def validate(self):
 		for f in self._fields:
 			if not hasattr(self, f) and f not in self._optfields:
@@ -324,6 +335,64 @@ class SkewY(transform_def):
 	_label = "skewY"
 	def __init__(self, *args) -> None:
 		super().__init__(*args)
+		self.validate()
+
+# Path commands
+
+class path_command(_attrs_struct):
+	_fields = ()
+	_letter = ""
+	def getFromXmlAttrs(self, xmlel) -> None:  
+		raise NotImplementedError("transform attribs not to translated to xml attribs")
+	def setXmlAttrs(self, xmlel) -> None:  
+		raise NotImplementedError("transform attribs not to translated to xml attribs")
+	def validate(self):
+		for f in self._fields:
+			if not hasattr(self, f):
+				raise TypeError(f"{self.letter}, required value '{f}' not provided")
+		return self
+	def get(self, isfirst: Optional[bool] = True):
+		buf = []
+		first_is_positive = False
+		vals = [getattr(self, f) for f in self._fields]
+		for i, v in enumerate(vals):
+			if i == 0:
+				buf.append(v)
+				if float(v) >= 0:
+					first_is_positive = True
+			else:
+				if float(v) >= 0:
+					buf.append(' ')
+				buf.append(v)
+		if isfirst:
+			ret = f"{self.letter}{''.join(buf)})"
+		else:
+			if first_is_positive:
+				ret = f" {''.join(buf)}"
+			else:
+				ret = ''.join(buf)
+		return ret
+	def getvalue(self, p_field: str):
+		ret = None
+		if p_field in self._fields and hasattr(self, p_field):
+			ret = getattr(self, p_field)
+		return ret
+	def setvalue(self, p_field: str, p_value):
+		if p_field not in self._fields:
+			raise WrongValuePathCmd(self, p_field)
+		setattr(self, p_field, str(p_value))
+		return self
+
+
+class pM(path_command):
+	_fields = ("x", "y")
+	_letter = "M"
+	def __init__(self, *args, relative: Optional[bool] = False) -> None:
+		super().__init__(*args)
+		if relative:
+			self.letter = self._letter.lower()
+		else:
+			self.letter = self._letter.upper()
 		self.validate()
 
 

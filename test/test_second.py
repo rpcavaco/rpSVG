@@ -1,6 +1,6 @@
 import pytest, re, json
 
-from rpcbSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY, WrongValueTransformDef
+from rpcbSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY, pM, WrongValueTransformDef
 from rpcbSVG.SVGLib import Re, SVGContent, Circle, Rect, RectRC, Use 
 from rpcbSVG.SVGstyle import Sty, CSSSty
 
@@ -122,4 +122,18 @@ def test_JSON():
 
 	#with open('outtest/testeZZ.svg', 'w') as fl:
 	#	fl.write(sc.toString(pretty_print=False))
+
+def test_Paths(capsys):
+
+	with capsys.disabled():
+
+		with pytest.raises(TypeError):
+			p = pM()
+		with pytest.raises(TypeError):
+			p = pM(12)
+
+		p = pM(12, 24, relative=True)	
+		print(p.get())
+
+
 
