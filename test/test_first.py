@@ -2,7 +2,8 @@
 import pytest, re
 
 from rpcbSVG.Basics import Pt, Env
-from rpcbSVG.SVGLib import BaseSVGElem, Circle, Group, Re, Rect, Style, SVGContent, SVGRoot, TagOutOfDirectUserManipulation, VBox600x800
+from rpcbSVG.SVGLib import BaseSVGElem, Circle, Group, Re, ReRC, \
+	Rect, Style, SVGContent, SVGRoot, TagOutOfDirectUserManipulation, VBox600x800
 from rpcbSVG.SVGstyle import Sty, CSSSty
 
 from lxml import etree
@@ -93,12 +94,13 @@ def test_styleElement():
 
 #	with capsys.disabled():
 
-def test_similarElement():
+def test_similarElement(capsys):
 
-	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
+	sc = SVGContent(ReRC().full()).setIdentityViewbox(scale=10.0)
 	r = sc.addChild(Rect(80,100,300,400))
 	r2 = sc.addChild(Rect(80,100,300,400))
-	assert set(r.similitudeTo(r2)) == set(('TAG', 'STRUCT'))
+	with capsys.disabled():
+		assert set(r.similitudeTo(r2)) == set(('TAG', 'STRUCT'))
 
 	r3 = sc.addChild(Rect(80,100,300,400, "px"))
 	assert r.similitudeTo(r3) == ['TAG']

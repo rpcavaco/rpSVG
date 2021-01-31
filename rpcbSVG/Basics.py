@@ -70,13 +70,17 @@ class _attrs_struct(object):
 		return ' '.join(out)
 
 	def sharedItems(self, o: object) -> dict:
-		return {f: getattr(self,f) for f in self._fields if f in dir(o) and getattr(self,f) == getattr(o,f)}
+		return {f: getattr(self,f) for f in self._fields if f in dir(o) and hasattr(self,f) and getattr(self,f) == getattr(o,f)}
+
+	def equality(self, o: object) -> bool:
+		l = len([f for f in self._fields if hasattr(self, f) and not getattr(self, f) is None])
+		return len(self.sharedItems(o)) == l
 
 	def __eq__(self, o: object) -> bool:
-		return len(self.sharedItems(o)) == len(self._fields)
+		return self.equality(o)
 
 	def __ne__(self, o: object) -> bool:
-		return len(self.sharedItems(o)) != len(self._fields)
+		return not self.__eq__(o)
 
 	def setXmlAttrs(self, xmlel) -> None:  
 		for f in self._fields:
@@ -89,7 +93,10 @@ class _attrs_struct(object):
 
 	def getFromXmlAttrs(self, xmlel) -> None:  
 		for f in self._fields:
-			setattr(self, f, xmlel.get(f))
+			if f in xmlel.keys():
+				val = xmlel.get(f)
+				if not val is None:
+					setattr(self, f, xmlel.get(f))
 		return self
 
 	def cloneFrom(self, p_other):
@@ -112,7 +119,8 @@ class _withunits_struct(_attrs_struct):
 	def __eq__(self, o: object) -> bool:
 		ret = False
 		if self._units == o.getUnits():
-			ret = len(self.sharedItems(o)) == len(self._fields)
+			ret = self.equality(o)
+			#ret = len(self.sharedItems(o)) == len(self._fields)
 		return ret
 
 	def __ne__(self, o: object) -> bool:
@@ -122,6 +130,8 @@ class _withunits_struct(_attrs_struct):
 		assert not self._units is None
 		assert self._units in ('px', 'pt', 'em', 'rem', '%'), f"invalid units: '{self._units}' not in 'px', 'pt', 'em', 'rem' or '%'"
 		for f in self._fields:
+			if not hasattr(self, f):
+				continue
 			val = getattr(self, f)
 			numval = None
 			try:
@@ -150,6 +160,8 @@ class _withunits_struct(_attrs_struct):
 
 	def iterUnitsRemoved(self):
 		for f in self._fields:
+			if not hasattr(self, f):
+				continue
 			val = getattr(self, f)
 			if not self._units is None:
 				val = val.replace(self._units, '')

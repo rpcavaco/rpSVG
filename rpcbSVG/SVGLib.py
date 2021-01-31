@@ -83,8 +83,6 @@ class VBox(_withunits_struct):
 			cont = " ".join(list(p_rect.iterUnitsRemoved()))
 		self.viewBox = cont
 
-# clone from Envelope: vb_instance.cloneFromRect(Re().fromEnvelope())
-
 class VBox600x800(VBox):
 	def __init__(self) -> None:
 		super().__init__(0, 0, 600, 800)
@@ -92,6 +90,17 @@ class VBox600x800(VBox):
 class VBox1280x1024(VBox):
 	def __init__(self) -> None:
 		super().__init__(0, 0, 1280, 1024)
+
+class ReRC(Re):
+	_fields = ("x",  "y", "width", "height", "rx", "ry") 
+	def __init__(self, *args) -> None:
+		# l =  len(args)
+		# if l <= 4:
+
+
+		# else:
+		# 	argslist = args
+		super().__init__(*args, defaults=None)
 
 
 class Ci(_withunits_struct):
@@ -148,6 +157,9 @@ class BaseSVGElem(object):
 		ret = []
 		if self.getTag() == o.getTag():
 			ret.append('TAG')
+
+			a = self.getStruct()
+			b = o.getStruct()
 			if self.getStruct() == o.getStruct():
 				ret.append('STRUCT')
 			sty = self.getStyle()
@@ -422,10 +434,14 @@ class Style(BaseSVGElem):
 			ret = True 
 		return ret
 
-
 class Rect(BaseSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("rect", struct=Re(*args))
+
+class RectRC(BaseSVGElem):
+	"Round cornered rectangle"
+	def __init__(self, *args) -> None:
+		super().__init__("rect", struct=ReRC(*args))
 
 class Circle(BaseSVGElem):
 	def __init__(self, *args) -> None:
