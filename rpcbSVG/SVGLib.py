@@ -13,7 +13,7 @@ from collections import namedtuple
 from lxml import etree
 
 from rpcbSVG.SVGstyle import CSSSty, Sty
-from rpcbSVG.Basics import Pt, Env, _withunits_struct, transform_def, path_command, rel_path_command
+from rpcbSVG.Basics import Pt, Env, _withunits_struct, pH, pV, transform_def, path_command, rel_path_command
 
 XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
@@ -58,7 +58,7 @@ class Re(_withunits_struct):
 		else:
 			super().__init__(*args, defaults=defaults)
 	def fromEnv(self, p_env: Env) -> None:
-		super().set(p_env.getRectParams()) 
+		super().setall(p_env.getRectParams()) 
 		return self
 	def full(self):
 		self.y = self.x = "0"
@@ -487,15 +487,22 @@ class AnalyticalPath(Path):
 		prevcmd = None
 		buf = []
 		for cmd in self.cmds:
+			do_omit = False
+			lett = cmd.getLetter()
 			if prevcmd is None:
-				if isinstance(cmd, rel_path_command):
-					cmd.setRelative(False)
-				do_omit = False
+				assert lett.lower() == 'm', cmd.getLetter()	
+				cmd.setRelative(False)			
 			else:
-				do_omit = prevcmd.eqLetter(cmd)
+				prevlett = prevcmd.getLetter()
+				if lett.lower() == 'l':
+					if prevlett.lower() in ('m', 'l') and prevcmd.isRelative() == prevcmd.isRelative():
+						do_omit = True
+				elif lett.lower() != 'm':
+					if lett == prevlett:
+						do_omit = True
 			buf.append(cmd.get(omitletter=do_omit))
 			prevcmd = cmd
-		self.getStruct().set("".join(buf))
+		self.getStruct().setall("".join(buf))
 		self.updateStructAttrs()
 	def addCmd(self, p_cmd: path_command):
 		self.cmds.append(p_cmd)
@@ -506,6 +513,58 @@ class AnalyticalPath(Path):
 	def insCmd(self, p_idx: int, p_cmd: path_command):
 		self.cmds.insert(p_idx, p_cmd)
 		self._refresh()
+	def addPolylinePList(self, p_list: List[Pt]):
+		# prev_pt = None
+		# for pt in p_list:
+		# 	self.addCmd(pM())
+
+
+
+		# 	prev_pt = pt
+		pass
+
+	# def _refresh(self):
+	# 	prevcmd = None
+	# 	buf = []
+	# 	for cmd in self.cmds:
+	# 		newcmd = None
+	# 		if prevcmd is None:
+	# 			if isinstance(cmd, rel_path_command):
+	# 				cmd.setRelative(False)
+	# 			do_omit = False
+	# 		else:
+	# 			if isinstance(prevcmd, point_path_command) and isinstance(cmd, point_path_command):
+	# 				if cmd.getLetter() == 'L':
+	# 					diffX = prevcmd.getXDiff(cmd)
+	# 					diffY = prevcmd.getYDiff(cmd)
+	# 					if diffX == 0 and diffY == 0:
+	# 						# skip this command
+	# 						continue
+	# 					if diffX == 0:
+	# 						if abs(diffY) < abs(cmd.getNumeric('y')):
+	# 							newcmd = pV(diffY)
+	# 							newcmd.setRelative(True)
+	# 						else:
+	# 							newcmd = pV(cmd.getNumeric('y'))
+	# 					elif diffY == 0:
+	# 						if abs(diffX) < abs(cmd.getNumeric('x')):
+	# 							newcmd = pH(diffX)
+	# 							newcmd.setRelative(True)
+	# 						else:
+	# 							newcmd = pH(cmd.getNumeric('x'))
+	# 					else:
+	# 						if abs(diffX) < abs(cmd.getNumeric('x')) and \
+	# 								abs(diffY) < abs(cmd.getNumeric('y')):
+	# 							cmd.set('x', diffX)
+	# 							cmd.set('y', diffY)
+	# 							cmd.setRelative(True)
+	# 			do_omit = prevcmd.eqLetter(cmd)
+	# 		if newcmd is None:
+	# 			newcmd = cmd
+	# 		buf.append(newcmd.get(omitletter=do_omit))			
+	# 		prevcmd = newcmd
+	# 	self.getStruct().setall("".join(buf))
+	# 	self.updateStructAttrs()
 
 class SVGContent(SVGRoot):
 
@@ -514,7 +573,7 @@ class SVGContent(SVGRoot):
 		super().__init__(rect, tree=tree, viewbox=viewbox)
 		self._id_serial = 0
 		self._defs = super().addChild(Defs())
-		self._style = self._defs.addChild(Style())
+		self._styleel = self._defs.addChild(Style())
 
 	def _nextIDSerial(self):
 		ret = self._id_serial
@@ -534,18 +593,18 @@ class SVGContent(SVGRoot):
 		return ret
 
 	def addStyleRule(self, p_child: CSSSty) -> str:
-		return self._style.addRule(p_child)
+		return self._styleel.addRule(p_child)
 
 	def delStyleRule(self, selector: str) -> bool:
-		return self._style.delRule(selector)
+		return self._styleel.delRule(selector)
 
 	def render(self):
-		return self._style.render(depth=-1)
+		return self._styleel.render(depth=-1)
 
 	def toBytes(self, inc_declaration=False, inc_doctype=False, pretty_print=True):
 		parelem = None
 		if not self.render():
-			parelem = self._style.removeEl()
+			parelem = self._styleel.removeEl()
 
 		if inc_doctype:
 			ret = etree.tostring(self.getEl(), doctype=DOCTYPE_STR, xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')
@@ -553,7 +612,7 @@ class SVGContent(SVGRoot):
 			ret = etree.tostring(self.getEl(), xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')	
 
 		if not parelem is None:
-			self._style.readdElToParent(parelem)
+			self._styleel.readdElToParent(parelem)
 
 		return ret
 

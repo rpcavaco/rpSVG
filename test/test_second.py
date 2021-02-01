@@ -1,7 +1,7 @@
 import pytest, re, json
 
-from rpcbSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY, pM, pL, WrongValueTransformDef
-from rpcbSVG.SVGLib import Re, SVGContent, Circle, Rect, RectRC, Use, Path, AnalyticalPath
+from rpcbSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY, pA, pC, pH, pM, pL, WrongValueTransformDef, pQ, pS, pT, pV
+from rpcbSVG.SVGLib import Group, Re, SVGContent, Circle, Rect, RectRC, Use, Path, AnalyticalPath
 from rpcbSVG.SVGstyle import Sty, CSSSty
 
 # from lxml import etree
@@ -123,7 +123,7 @@ def test_JSON():
 	#with open('outtest/testeZZ.svg', 'w') as fl:
 	#	fl.write(sc.toString(pretty_print=False))
 
-def test_Paths(capsys):
+def test_Paths():
 
 	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
 	sc.addStyleRule(CSSSty('fill', 'red', 'stroke', 'green', selector='path'))
@@ -150,15 +150,84 @@ def test_Paths(capsys):
 
 	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"><defs><style type="text/css"><![CDATA[path { fill: red; stroke: green; }]]></style></defs><path d="M10 12" id="Pat0"/><path d="M120 240" id="Pat1"/></svg>"""
 
-	pth.removeEl()
-	del pth
 
-	with capsys.disabled():
-		ap.addCmd(pL(140,260))
+def test_PathCommands():
 
-	with open('outtest/testeZZ.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=False))
+	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
+	sc.addStyleRule(CSSSty('fill', 'none', 'stroke', 'green', 'stroke-width', '10', selector='.cambase'))
 
+	pts = [
+		Pt(120, 140),
+		Pt(290, 160),
+		Pt(400, 160),
+
+		Pt(550, 160),
+		Pt(550, 300),
+		Pt(400, 330),
+
+		Pt(250, 500),
+		Pt(400, 500),
+
+		Pt(500, 600),
+
+		Pt(500, 700),
+		Pt(600, 700),
+
+		Pt(700, 700),
+		Pt(700, 800),
+
+		Pt(900, 740),
+
+		Pt(800, 500)
+	]
+
+	ap = sc.addChild(AnalyticalPath()).setClass("cambase")
+	ap.addCmd(pM(*pts[0]))
+	ap.addCmd(pL(*pts[1]))
+	ap.addCmd(pL(*pts[2]))
+	ap.addCmd(pC(*pts[3], *pts[4], *pts[5]))
+	ap.addCmd(pS(*pts[6], *pts[7]))
+	ap.addCmd(pH(100, relative=True))
+	ap.addCmd(pV(100, relative=True))
+	ap.addCmd(pQ(*pts[9], *pts[10]))
+	ap.addCmd(pT(*pts[12]))
+
+	ap.addCmd(pA(50,80, -14, 0,0, *pts[13]))
+	# "rx", "ry", "x-axis-rotation", "large-arc-flag", "sweep-flag", "x", "y"
+	ap.addCmd(pA(5,8, -14, 0,1, -100, -240, relative=True))
+
+	gr1 = sc.addChild(Group())
+	gr1.setStyle(Sty('fill', 'white', 'stroke', 'green', 'stroke-width', '4'))
+	for pt in pts:
+		gr1.addChild(Circle(*pt,10))
+
+	gr2 = sc.addChild(Group())
+	gr2.setStyle(Sty('stroke', 'grey', 'stroke-width', '2', 'stroke-dasharray', '5,5'))
+
+	ap2 = gr2.addChild(AnalyticalPath())
+	ap2.addCmd(pM(*pts[2]))
+	ap2.addCmd(pL(*pts[3]))
+
+	ap2.addCmd(pM(*pts[4]))
+	ap2.addCmd(pL(*pts[5]))
+
+	ap2.addCmd(pM(*pts[6]))
+	ap2.addCmd(pL(*pts[7]))
+
+	ap2.addCmd(pM(*pts[8]))
+	ap2.addCmd(pL(*pts[9]))
+
+	ap2.addCmd(pM(*pts[9]))
+	ap2.addCmd(pL(*pts[10]))
+
+	ap2.addCmd(pM(*pts[10]))
+	ap2.addCmd(pL(*pts[11]))
+
+	ap2.addCmd(pM(*pts[11]))
+	ap2.addCmd(pL(*pts[12]))
+
+	with open('outtest/test_PathCommands.svg', 'w') as fl:
+		fl.write(sc.toString(pretty_print=True))
 
 	# with capsys.disabled():
 	# 	print("\n>>>>>>>>>>")

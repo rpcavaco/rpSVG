@@ -48,9 +48,9 @@ class _attrs_struct(object):
 	_subfields = [] # Optional -- list to be extended in subclasses
 	
 	def __init__(self, *args, defaults=None) -> None:
-		self.set(*args, defaults=defaults) 
+		self.setall(*args, defaults=defaults) 
 
-	def set(self, *args, defaults=None) -> None:
+	def setall(self, *args, defaults=None) -> None:
 		for i, fld in enumerate(self._fields):
 			if i < len(args):
 				val = args[i]
@@ -70,6 +70,26 @@ class _attrs_struct(object):
 					idx = j + len(self._fields)
 					setattr(self, sfld, str(args[idx]))
 		return self
+
+	def has(self, p_attr: str):
+		return p_attr in self._fields
+
+	def get(self, p_attr: str):
+		ret = None
+		if self.has(p_attr) and hasattr(self, p_attr):
+			ret = getattr(self, p_attr)
+		return ret
+
+	def set(self, p_attr: str, p_value):
+		if self.has(p_attr):
+			setattr(self, p_attr, str(p_value))
+
+	def getNumeric(self, p_attr: str) -> float:
+		ret = None
+		if self.has(p_attr) and hasattr(self, p_attr):
+			val = getattr(self, p_attr)
+			ret = float(val)
+		return ret
 
 	def __repr__(self):
 		out = []
@@ -169,19 +189,21 @@ class _withunits_struct(_attrs_struct):
 
 	def iterUnitsRemoved(self):
 		for f in self._fields:
-			val = getattr(self, f)
-			if not self._units is None:
-				val = val.replace(self._units, '')
-			yield val
-
-	def iterUnitsRemoved(self):
-		for f in self._fields:
 			if not hasattr(self, f):
 				continue
 			val = getattr(self, f)
 			if not self._units is None:
 				val = val.replace(self._units, '')
 			yield val
+
+	def getNumeric(self, p_attr: str) -> float:
+		ret = None
+		if self.has(p_attr) and hasattr(self, p_attr):
+			val = getattr(self, p_attr)
+			if not self._units is None:
+				val = val.replace(self._units, '')
+			ret = float(val)
+		return ret
 
 class Env(_attrs_struct):
 	_fields = ("minx",  "miny", "maxx", "maxy") 
@@ -349,9 +371,9 @@ class path_command(_attrs_struct):
 		self.validate()
 	def getLetter(self):
 		return self.letter
-	def eqLetter(self, o) -> bool:
-		print("\n self:", self.getLetter(), ", other:", o.getLetter())
-		return self.getLetter() == o.getLetter()
+	# def eqLetter(self, o) -> bool:
+	# 	print("\n self:", self.getLetter(), ", other:", o.getLetter())
+	# 	return self.getLetter() == o.getLetter()
 	def getFromXmlAttrs(self, xmlel) -> None:  
 		raise NotImplementedError("transform attribs not to translated to xml attribs")
 	def setXmlAttrs(self, xmlel) -> None:  
@@ -404,7 +426,26 @@ class rel_path_command(path_command):
 			self.letter = self._letter.lower()
 		else:
 			self.letter = self._letter.upper()
+	def isRelative(self):
+		return self.relative
 
+# class point_path_command(rel_path_command):
+# 	def getXDiff(self, o):
+# 		assert o.has('x')
+# 		val = o.getNumeric('x') - self.getNumeric('x')
+# 		if val == int(val):
+# 			ret = int(val)
+# 		else:
+# 			ret = val
+# 		return ret
+# 	def getYDiff(self, o):
+# 		assert o.has('y')
+# 		val =  o.getNumeric('y') - self.getNumeric('y')
+# 		if val == int(val):
+# 			ret = int(val)
+# 		else:
+# 			ret = val
+# 		return ret
 
 class pM(rel_path_command):
 	_fields = ("x", "y")
@@ -417,6 +458,52 @@ class pL(rel_path_command):
 	_letter = "L"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
+
+class pH(rel_path_command):
+	_fields = ("x")
+	_letter = "H"
+	def __init__(self, *args, relative: Optional[bool] = False) -> None:
+		super().__init__(*args, relative=relative)
+
+class pV(rel_path_command):
+	_fields = ("y")
+	_letter = "V"
+	def __init__(self, *args, relative: Optional[bool] = False) -> None:
+		super().__init__(*args, relative=relative)
+
+class pC(rel_path_command):
+	_fields = ("x1", "y1", "x2", "y2", "x", "y")
+	_letter = "C"
+	def __init__(self, *args, relative: Optional[bool] = False) -> None:
+		super().__init__(*args, relative=relative)
+
+class pS(rel_path_command):
+	_fields = ("x2", "y2", "x", "y")
+	_letter = "S"
+	def __init__(self, *args, relative: Optional[bool] = False) -> None:
+		super().__init__(*args, relative=relative)
+
+class pQ(rel_path_command):
+	_fields = ("x1", "y1", "x", "y")
+	_letter = "Q"
+	def __init__(self, *args, relative: Optional[bool] = False) -> None:
+		super().__init__(*args, relative=relative)
+
+class pT(rel_path_command):
+	_fields = ("x", "y")
+	_letter = "T"
+	def __init__(self, *args, relative: Optional[bool] = False) -> None:
+		super().__init__(*args, relative=relative)
+
+class pA(rel_path_command):
+	_fields = ("rx", "ry", "x-axis-rotation", "large-arc-flag", "sweep-flag", "x", "y")
+	_letter = "A"
+	def __init__(self, *args, relative: Optional[bool] = False) -> None:
+		super().__init__(*args, relative=relative)
+
+
+
+
 
 class pClose(path_command):
 	_fields = ()
