@@ -185,10 +185,13 @@ def test_PathCommands():
 	ap.addCmd(pM(*pts[0]))
 	ap.addCmd(pL(*pts[1]))
 	ap.addCmd(pL(*pts[2]))
+	# Bezier
 	ap.addCmd(pC(*pts[3], *pts[4], *pts[5]))
 	ap.addCmd(pS(*pts[6], *pts[7]))
+	# Horizontal e vertical
 	ap.addCmd(pH(100, relative=True))
 	ap.addCmd(pV(100, relative=True))
+	# Quadratic bezier
 	ap.addCmd(pQ(*pts[9], *pts[10]))
 	ap.addCmd(pT(*pts[12]))
 

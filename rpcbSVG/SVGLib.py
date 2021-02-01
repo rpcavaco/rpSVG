@@ -22,9 +22,6 @@ DOCTYPE_STR = """<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">"""
 
 
-MAXCOORD = 99999999999.9
-MINCOORD = -MAXCOORD
-
 SVG_ROOT = """<svg 
 	 xmlns="{0}" 
 	 xmlns:xlink="{1}" />
@@ -33,9 +30,7 @@ SVG_ROOT = """<svg
 DECLARATION_ROOT = """<?xml version="1.0" standalone="no"?>
 {0}""".format(SVG_ROOT)
 	 
-POINTS_FORMAT = "{0:.2f},{1:.2f}"
-
-SPECIAL_ATTRS = ('x','y','width','height','id','class')
+PSPECIAL_ATTRS = ('x','y','width','height','id','class')
 
 class TagOutOfDirectUserManipulation(RuntimeError):
 	def __init__(self, p_tag):
@@ -94,14 +89,7 @@ class VBox1280x1024(VBox):
 class ReRC(Re):
 	_fields = ("x",  "y", "width", "height", "rx", "ry") 
 	def __init__(self, *args) -> None:
-		# l =  len(args)
-		# if l <= 4:
-
-
-		# else:
-		# 	argslist = args
 		super().__init__(*args, defaults=None)
-
 
 class Ci(_withunits_struct):
 	_fields = ("cx",  "cy", "r") 
@@ -346,18 +334,33 @@ class BaseSVGElem(object):
 			self.getEl().set('transform', trtxt)
 		return tr
 
-
 class SVGContainer(BaseSVGElem):
 
 	def __init__(self, tag: str, struct: Optional[_withunits_struct] = None) -> None:
 		super().__init__(tag, struct=struct)
 		self.content = []
+		self.genIDMethod = None
+
+	def setGenIdMethod(self, p_method):
+		self.genIDMethod = p_method
+
+	def genNextId(self):
+		ret = None
+		if not self.genIDMethod is None:
+			ret = self.genIDMethod()
+		return ret
 
 	def addChild(self, p_child: BaseSVGElem):
 		assert self.hasEl()
 		newel = etree.SubElement(self.getEl(), p_child.tag)
 		p_child.setEl(newel)
 		self.content.append(p_child)
+		
+		if not p_child.hasId():
+			idval = self.genNextId()
+			if not idval is None:
+				p_child.setId(p_child.idprefix + str(idval))
+
 		return p_child
 
 	def addChildTag(self, p_tag: str):
@@ -575,7 +578,7 @@ class SVGContent(SVGRoot):
 		self._defs = super().addChild(Defs())
 		self._styleel = self._defs.addChild(Style())
 
-	def _nextIDSerial(self):
+	def nextIDSerial(self):
 		ret = self._id_serial
 		self._id_serial = self._id_serial + 1
 		return ret
@@ -589,7 +592,9 @@ class SVGContent(SVGRoot):
 		else:
 			ret = super().addChild(p_child)
 		if not ret.hasId():
-			ret.setId(p_child.idprefix + str(self._nextIDSerial()))
+			ret.setId(p_child.idprefix + str(self.nextIDSerial()))
+		if isinstance(ret, SVGContainer):
+			ret.setGenIdMethod(self.nextIDSerial)
 		return ret
 
 	def addStyleRule(self, p_child: CSSSty) -> str:
