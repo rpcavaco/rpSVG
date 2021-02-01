@@ -365,7 +365,7 @@ class path_command(_attrs_struct):
 					buf.append(' ')
 				buf.append(v)
 		if isfirst:
-			ret = f"{self.letter}{''.join(buf)})"
+			ret = f"{self.letter}{''.join(buf)}"
 		else:
 			if first_is_positive:
 				ret = f" {''.join(buf)}"

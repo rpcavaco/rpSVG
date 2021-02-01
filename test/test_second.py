@@ -18,12 +18,12 @@ def test_Use_RemoveChange():
 	ue1 = sc.addChild(Use(250,140,None,None, c.getSel()))
 	condens = re.sub(r"[\s]+"," ", sc.toString())
 
-	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs> <circle cx="20" cy="30" r="60" id="Cir0" class="batatas"/> </defs> <use x="250" y="140" xlink:href="#Cir0" id="Use1"/> </svg> """
+	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs> <circle cx="20" cy="30" r="60" id="Cir0" class="batatas"/> </defs> <use x="250" y="140" xlink:href="#Cir0" id="Use1"/> </svg> """
 
 	ue2 = sc.addChild(Use(Pt(20,12), c.getSel(select='class')))
 	condens = re.sub(r"[\s]+"," ", sc.toString())
 
-	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs> <circle cx="20" cy="30" r="60" id="Cir0" class="batatas"/> </defs> <use x="250" y="140" xlink:href="#Cir0" id="Use1"/> <use x="20" y="12" xlink:href=".batatas" id="Use2"/> </svg> """
+	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs> <circle cx="20" cy="30" r="60" id="Cir0" class="batatas"/> </defs> <use x="250" y="140" xlink:href="#Cir0" id="Use1"/> <use x="20" y="12" xlink:href=".batatas" id="Use2"/> </svg> """
 
 	ue2.removeEl()
 	del ue2
@@ -38,7 +38,7 @@ def test_Use_RemoveChange():
 
 	condens = re.sub(r"[\s]+"," ", sc.toString())
 
-	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs> <circle cx="20" cy="30" r="60" id="Cir0" class="batatas"/> </defs> <use x="250" y="140" xlink:href="#Cir0" id="Use1" fill="none" stroke="blue" stroke-width="20"/> </svg> """
+	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs> <circle cx="20" cy="30" r="60" id="Cir0" class="batatas"/> </defs> <use x="250" y="140" xlink:href="#Cir0" id="Use1" fill="none" stroke="blue" stroke-width="20"/> </svg> """
 
 def test_TransformDefinitions():
 
@@ -86,13 +86,13 @@ def test_Transform():
 	r.addTransform(Rotate(45,250,300))
 	r.addTransform(Trans(100,0))
 
-	assert sc.toString(pretty_print=False) == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"><defs/><rect x="200" y="200" width="300" height="400" id="Rec0" transform="rotate(45,250,300) translate(100,0)"/></svg>"""
+	assert sc.toString(pretty_print=False) == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"><defs/><rect x="200" y="200" width="300" height="400" id="Rec0" transform="rotate(45,250,300) translate(100,0)"/></svg>"""
 
 	with r as triplet:
 		strct, styl, tr_list = triplet
 		tr_list[1].setvalue("tx", 150)
 
-	assert sc.toString(pretty_print=False) == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"><defs/><rect x="200" y="200" width="300" height="400" id="Rec0" transform="rotate(45,250,300) translate(150,0)"/></svg>"""
+	assert sc.toString(pretty_print=False) == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"><defs/><rect x="200" y="200" width="300" height="400" id="Rec0" transform="rotate(45,250,300) translate(150,0)"/></svg>"""
 
 	with r as triplet:
 		strct, styl, tr_list = triplet
@@ -106,7 +106,7 @@ def test_RoundRect():
 	r.addTransform(Rotate(45,250,300))
 	r.addTransform(Trans(100,0))
 
-	assert sc.toString(pretty_print=False) == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"><defs/><rect x="200" y="200" width="300" height="400" rx="10" ry="10" id="Rec0" transform="rotate(45,250,300) translate(100,0)"/></svg>"""
+	assert sc.toString(pretty_print=False) == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"><defs/><rect x="200" y="200" width="300" height="400" rx="10" ry="10" id="Rec0" transform="rotate(45,250,300) translate(100,0)"/></svg>"""
 
 def test_JSON():
 
@@ -118,7 +118,7 @@ def test_JSON():
 	s = Sty('stroke', 'blue', 'stroke-width', 10)
 	ue1.setStyle(s)
 
-	assert sc.toJSON() == {"tag": "svg", "attribs": {"version": "1.1", "x": "0", "y": "0", "width": "100%", "height": "100%", "viewBox": "0 0 1000 1000"}, "content": [{"tag": "defs", "attribs": {}, "content": [{"tag": "style", "attribs": {}}, {"tag": "circle", "attribs": {"cx": "20", "cy": "30", "r": "60", "id": "Cir0", "class": "batatas"}}]}, {"tag": "use", "attribs": {"x": "250", "y": "140", "{http://www.w3.org/1999/xlink}href": "#Cir0", "id": "Use1", "fill": "none", "stroke": "blue", "stroke-width": "10"}}]}
+	assert sc.toJSON() == {"tag": "svg", "attribs": {"x": "0", "y": "0", "width": "100%", "height": "100%", "viewBox": "0 0 1000 1000"}, "content": [{"tag": "defs", "attribs": {}, "content": [{"tag": "style", "attribs": {}}, {"tag": "circle", "attribs": {"cx": "20", "cy": "30", "r": "60", "id": "Cir0", "class": "batatas"}}]}, {"tag": "use", "attribs": {"x": "250", "y": "140", "{http://www.w3.org/1999/xlink}href": "#Cir0", "id": "Use1", "fill": "none", "stroke": "blue", "stroke-width": "10"}}]}
 
 	#with open('outtest/testeZZ.svg', 'w') as fl:
 	#	fl.write(sc.toString(pretty_print=False))

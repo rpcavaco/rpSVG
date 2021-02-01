@@ -25,7 +25,7 @@ DOCTYPE_STR = """<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
 MAXCOORD = 99999999999.9
 MINCOORD = -MAXCOORD
 
-SVG_ROOT = """<svg version="1.1"
+SVG_ROOT = """<svg 
 	 xmlns="{0}" 
 	 xmlns:xlink="{1}" />
 	 """.format(SVG_NAMESPACE, XLINK_NAMESPACE)
