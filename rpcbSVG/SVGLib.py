@@ -13,7 +13,7 @@ from collections import namedtuple
 from lxml import etree
 
 from rpcbSVG.SVGstyle import CSSSty, Sty
-from rpcbSVG.Basics import Pt, Env, _withunits_struct, transform_def
+from rpcbSVG.Basics import Pt, Env, _withunits_struct, transform_def, path_command, rel_path_command
 
 XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
@@ -126,10 +126,14 @@ class Us(_withunits_struct):
 			argslist = args
 		super().__init__(*argslist, defaults=None)
 
+class Pth(_withunits_struct):
+	_fields = ("d") 
+	def __init__(self, *args) -> None:
+		super().__init__(*args, defaults=None)
 
 class BaseSVGElem(object):
 
-	NO_XML_EL = "XML Element not created yet"
+	NO_XML_EL = "XML Element not created yet. Must add this to SVGContainer to auto create it."
 
 	def __init__(self, tag: str, 
 			struct: Optional[_withunits_struct] = None):
@@ -190,14 +194,14 @@ class BaseSVGElem(object):
 				ret.append('TRANS')
 		return ret
 
-	def updateStruct(self):
+	def updateStructAttrs(self):
 		if not self._struct is None and not self.el is None:
 			self._struct.setXmlAttrs(self.el)
 		return self
 
 	def setStruct(self, struct: _withunits_struct):
 		self._struct = struct
-		return self.updateStruct()
+		return self.updateStructAttrs()
 
 	def getStruct(self) -> _withunits_struct:
 		assert not self._struct is None
@@ -218,7 +222,7 @@ class BaseSVGElem(object):
 			sel = self.tag
 		return sel
 
-	def updateStyle(self):
+	def updateStyleAttrs(self):
 		if not self._style is None and self.hasEl():
 			self._style.setXmlAttrs(self.el)
 		return self
@@ -226,7 +230,7 @@ class BaseSVGElem(object):
 	def setStyle(self, style: Sty):
 		assert isinstance(style, Sty)
 		self._style = style
-		return self.updateStyle()
+		return self.updateStyleAttrs()
 
 	def hasStyle(self):
 		return not self._style is None
@@ -244,7 +248,7 @@ class BaseSVGElem(object):
 				ret = self._style
 		return ret
 
-	def updateTransform(self):
+	def updateTransformAttr(self):
 		if len(self._transforms) > 0 and self.hasEl():
 			self.getEl().set('transform', self._getTransform()) 
 
@@ -255,9 +259,9 @@ class BaseSVGElem(object):
 	 	return (self.getStruct(), self.getStyle(), self.getTransformsList())
 
 	def __exit__(self, exc_type, exc_value, traceback):
-		self.updateStruct()
-		self.updateStyle()
-		self.updateTransform()
+		self.updateStructAttrs()
+		self.updateStyleAttrs()
+		self.updateTransformAttr()
 
 	def getSel(self, select='id'):
 		return self.getSelector(select=select)
@@ -458,6 +462,7 @@ class Style(BaseSVGElem):
 		return ret
 
 class Rect(BaseSVGElem):
+	"Plain rectangle, no round corners"
 	def __init__(self, *args) -> None:
 		super().__init__("rect", struct=Re(*args))
 
@@ -469,6 +474,38 @@ class RectRC(BaseSVGElem):
 class Circle(BaseSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("circle", struct=Ci(*args))
+
+class Path(BaseSVGElem):
+	def __init__(self, *args) -> None:
+		super().__init__("path", struct=Pth(*args))
+
+class AnalyticalPath(Path):
+	def __init__(self) -> None:
+		super().__init__("")
+		self.cmds = []
+	def _refresh(self):
+		prevcmd = None
+		buf = []
+		for cmd in self.cmds:
+			if prevcmd is None:
+				if isinstance(cmd, rel_path_command):
+					cmd.setRelative(False)
+				do_omit = False
+			else:
+				do_omit = prevcmd.eqLetter(cmd)
+			buf.append(cmd.get(omitletter=do_omit))
+			prevcmd = cmd
+		self.getStruct().set("".join(buf))
+		self.updateStructAttrs()
+	def addCmd(self, p_cmd: path_command):
+		self.cmds.append(p_cmd)
+		self._refresh()
+	def delCmd(self, p_idx: int):
+		del self.cmds[p_idx]
+		self._refresh()
+	def insCmd(self, p_idx: int, p_cmd: path_command):
+		self.cmds.insert(p_idx, p_cmd)
+		self._refresh()
 
 class SVGContent(SVGRoot):
 

@@ -1,10 +1,10 @@
 import pytest, re, json
 
-from rpcbSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY, pM, WrongValueTransformDef
-from rpcbSVG.SVGLib import Re, SVGContent, Circle, Rect, RectRC, Use 
+from rpcbSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY, pM, pL, WrongValueTransformDef
+from rpcbSVG.SVGLib import Re, SVGContent, Circle, Rect, RectRC, Use, Path, AnalyticalPath
 from rpcbSVG.SVGstyle import Sty, CSSSty
 
-#from lxml import etree
+# from lxml import etree
 
 # with capsys.disabled():
 
@@ -125,15 +125,47 @@ def test_JSON():
 
 def test_Paths(capsys):
 
+	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
+	sc.addStyleRule(CSSSty('fill', 'red', 'stroke', 'green', selector='path'))
+	pth = sc.addChild(Path("M10 12"))
+
+	condens = re.sub(r"[\s]+"," ", sc.toString(pretty_print=False))
+
+	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"><defs><style type="text/css"><![CDATA[path { fill: red; stroke: green; }]]></style></defs><path d="M10 12" id="Pat0"/></svg>"""
+
+	with pytest.raises(TypeError):
+		p = pM()
+	with pytest.raises(TypeError):
+		p = pM(12)
+
+	p1 = pM(12, 24, 33, relative=True)	
+	assert p1.get() == "m12 24"
+
+	# relative=True will be ignored as it is first path command
+	p2 = pM(120, 240, relative=True)	
+	ap = sc.addChild(AnalyticalPath())
+	ap.addCmd(p2)
+
+	condens = re.sub(r"[\s]+"," ", sc.toString(pretty_print=False))
+
+	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"><defs><style type="text/css"><![CDATA[path { fill: red; stroke: green; }]]></style></defs><path d="M10 12" id="Pat0"/><path d="M120 240" id="Pat1"/></svg>"""
+
+	pth.removeEl()
+	del pth
+
 	with capsys.disabled():
+		ap.addCmd(pL(140,260))
 
-		with pytest.raises(TypeError):
-			p = pM()
-		with pytest.raises(TypeError):
-			p = pM(12)
+	with open('outtest/testeZZ.svg', 'w') as fl:
+		fl.write(sc.toString(pretty_print=False))
 
-		p = pM(12, 24, relative=True)	
-		print(p.get())
+
+	# with capsys.disabled():
+	# 	print("\n>>>>>>>>>>")
+	# 	print("\n<<<<<<<<<<")
+
+	# with capsys.disabled():
+	# 	print(condens)
 
 
 

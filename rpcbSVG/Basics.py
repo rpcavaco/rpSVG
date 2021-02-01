@@ -342,6 +342,16 @@ class SkewY(transform_def):
 class path_command(_attrs_struct):
 	_fields = ()
 	_letter = ""
+	
+	def __init__(self, *args) -> None:
+		super().__init__(*args, defaults=None)
+		self.letter = self._letter
+		self.validate()
+	def getLetter(self):
+		return self.letter
+	def eqLetter(self, o) -> bool:
+		print("\n self:", self.getLetter(), ", other:", o.getLetter())
+		return self.getLetter() == o.getLetter()
 	def getFromXmlAttrs(self, xmlel) -> None:  
 		raise NotImplementedError("transform attribs not to translated to xml attribs")
 	def setXmlAttrs(self, xmlel) -> None:  
@@ -351,7 +361,7 @@ class path_command(_attrs_struct):
 			if not hasattr(self, f):
 				raise TypeError(f"{self.letter}, required value '{f}' not provided")
 		return self
-	def get(self, isfirst: Optional[bool] = True):
+	def get(self, omitletter: Optional[bool] = False):
 		buf = []
 		first_is_positive = False
 		vals = [getattr(self, f) for f in self._fields]
@@ -364,13 +374,13 @@ class path_command(_attrs_struct):
 				if float(v) >= 0:
 					buf.append(' ')
 				buf.append(v)
-		if isfirst:
-			ret = f"{self.letter}{''.join(buf)}"
-		else:
+		if omitletter:
 			if first_is_positive:
 				ret = f" {''.join(buf)}"
 			else:
 				ret = ''.join(buf)
+		else:
+			ret = f"{self.letter}{''.join(buf)}"
 		return ret
 	def getvalue(self, p_field: str):
 		ret = None
@@ -383,17 +393,40 @@ class path_command(_attrs_struct):
 		setattr(self, p_field, str(p_value))
 		return self
 
-
-class pM(path_command):
-	_fields = ("x", "y")
-	_letter = "M"
+class rel_path_command(path_command):
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args)
-		if relative:
+		self.setRelative(relative)
+		self.validate()
+	def setRelative(self, is_relative: bool):
+		self.relative = is_relative
+		if self.relative:
 			self.letter = self._letter.lower()
 		else:
 			self.letter = self._letter.upper()
-		self.validate()
+
+
+class pM(rel_path_command):
+	_fields = ("x", "y")
+	_letter = "M"
+	def __init__(self, *args, relative: Optional[bool] = False) -> None:
+		super().__init__(*args, relative=relative)
+
+class pL(rel_path_command):
+	_fields = ("x", "y")
+	_letter = "L"
+	def __init__(self, *args, relative: Optional[bool] = False) -> None:
+		super().__init__(*args, relative=relative)
+
+class pClose(path_command):
+	_fields = ()
+	_letter = "z"
+	def __init__(self, *args) -> None:
+		super().__init__(*args)
+
+
+
+
 
 
 if __name__ == "__main__":
