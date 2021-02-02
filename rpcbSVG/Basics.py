@@ -7,7 +7,31 @@ Pt = namedtuple("Pt", "x y")
 
 MAXCOORD = 99999999999.9
 MINCOORD = -MAXCOORD
+MINDELTA = 0.001
+NANODELTA = 0.000001
 
+def ptCoincidence(pa: Pt, pb: Pt, mindelta=MINDELTA):
+	return abs(pa.x - pb.x) < mindelta and abs(pa.y - pb.y)  < mindelta
+
+def removeDecsep(p_val):
+	r = round(p_val)
+	if r == p_val:
+		ret = r
+	else:
+		ret = p_val
+	return ret
+
+def ptEnsureStrings(p_pt: Pt):
+	ret = Pt(None, None)
+	if not isinstance(p_pt.x, str):
+		ret = ret._replace(x=str(removeDecsep(p_pt.x)))
+	else:
+		ret = ret._replace(x=p_pt.x)
+	if not isinstance(p_pt.y, str):
+		ret = ret._replace(y=str(removeDecsep(p_pt.y)))
+	else:
+		ret = ret._replace(y=p_pt.y)
+	return ret
 
 #def polar2rect(ang, rad):
 #	return POINTS_FORMAT.format(cos(ang) * rad, sin(ang) * rad )
@@ -27,20 +51,20 @@ class WrongValuePathCmd(RuntimeError):
 		return f"Path command '{self.classname}' accepts no '{self.attr}' value"
 
 
-def ptList2AbsPolylinePath(p_ptlist, mirrory=False, close=False):
-	strcomps = []
-	for pi, pt in enumerate(p_ptlist):
-		if mirrory:
-			pt.y = -pt.y
-		if pi == 0:
-			strcomps.append("M{0:.4f} {1:.4f}".format(*pt))
-		elif pi == 1:
-			strcomps.append("L{0:.4f} {1:.4f}".format(*pt))
-		else:
-			strcomps.append(" {0:.4f} {1:.4f}".format(*pt))
-	if close:
-		strcomps.append(" z")
-	return "".join(strcomps)	
+# def ptList2AbsPolylinePath(p_ptlist, mirrory=False, close=False):
+# 	strcomps = []
+# 	for pi, pt in enumerate(p_ptlist):
+# 		if mirrory:
+# 			pt.y = -pt.y
+# 		if pi == 0:
+# 			strcomps.append("M{0:.4f} {1:.4f}".format(*pt))
+# 		elif pi == 1:
+# 			strcomps.append("L{0:.4f} {1:.4f}".format(*pt))
+# 		else:
+# 			strcomps.append(" {0:.4f} {1:.4f}".format(*pt))
+# 	if close:
+# 		strcomps.append(" z")
+# 	return "".join(strcomps)	
 
 class _attrs_struct(object):
 	
@@ -429,73 +453,64 @@ class rel_path_command(path_command):
 	def isRelative(self):
 		return self.relative
 
-# class point_path_command(rel_path_command):
-# 	def getXDiff(self, o):
-# 		assert o.has('x')
-# 		val = o.getNumeric('x') - self.getNumeric('x')
-# 		if val == int(val):
-# 			ret = int(val)
-# 		else:
-# 			ret = val
-# 		return ret
-# 	def getYDiff(self, o):
-# 		assert o.has('y')
-# 		val =  o.getNumeric('y') - self.getNumeric('y')
-# 		if val == int(val):
-# 			ret = int(val)
-# 		else:
-# 			ret = val
-# 		return ret
-
 class pM(rel_path_command):
+	"Move to"
 	_fields = ("x", "y")
 	_letter = "M"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
 
 class pL(rel_path_command):
+	"Line to"
 	_fields = ("x", "y")
 	_letter = "L"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
 
 class pH(rel_path_command):
+	"Horizontal line to"
 	_fields = ("x")
 	_letter = "H"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
 
 class pV(rel_path_command):
+	"Vertical line to"
 	_fields = ("y")
 	_letter = "V"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
 
 class pC(rel_path_command):
+	"Cubic Bézier"
 	_fields = ("x1", "y1", "x2", "y2", "x", "y")
 	_letter = "C"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
 
 class pS(rel_path_command):
+	"Shorthand cubic Bézier"
 	_fields = ("x2", "y2", "x", "y")
 	_letter = "S"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
 
 class pQ(rel_path_command):
+	"Quadratic Bézier"
 	_fields = ("x1", "y1", "x", "y")
 	_letter = "Q"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
 
 class pT(rel_path_command):
+	"Shorthand quadratic Bézier"
 	_fields = ("x", "y")
 	_letter = "T"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
 
 class pA(rel_path_command):
+	"Eliptical arc"
 	_fields = ("rx", "ry", "x-axis-rotation", "large-arc-flag", "sweep-flag", "x", "y")
 	_letter = "A"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
@@ -514,10 +529,5 @@ class pClose(path_command):
 
 
 
-
-
-if __name__ == "__main__":
-	l = [Pt(0,0), Pt(10,0), Pt(20,12), Pt(6,8)]	
-	print(ptList2AbsPolylinePath(l))
 
 	

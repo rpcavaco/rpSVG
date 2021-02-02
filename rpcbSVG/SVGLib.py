@@ -1,6 +1,3 @@
-'''
-Construção de um documento SVG
-'''
 
 #import cairo
 #import rsvg
@@ -13,7 +10,7 @@ from collections import namedtuple
 from lxml import etree
 
 from rpcbSVG.SVGstyle import CSSSty, Sty
-from rpcbSVG.Basics import Pt, Env, _withunits_struct, pH, pV, transform_def, path_command, rel_path_command
+from rpcbSVG.Basics import MINDELTA, Pt, Env, _withunits_struct, pClose, pH, pL, pM, pV, transform_def, path_command, rel_path_command, ptCoincidence, removeDecsep, ptEnsureStrings
 
 XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
@@ -30,8 +27,6 @@ SVG_ROOT = """<svg
 DECLARATION_ROOT = """<?xml version="1.0" standalone="no"?>
 {0}""".format(SVG_ROOT)
 	 
-PSPECIAL_ATTRS = ('x','y','width','height','id','class')
-
 class TagOutOfDirectUserManipulation(RuntimeError):
 	def __init__(self, p_tag):
 		self.tag = p_tag
@@ -96,6 +91,16 @@ class Ci(_withunits_struct):
 	def __init__(self, *args) -> None:
 		super().__init__(*args, defaults=["0"])
 
+class Elli(_withunits_struct):
+	_fields = ("cx",  "cy", "rx", "ry") 
+	def __init__(self, *args) -> None:
+		super().__init__(*args, defaults=["0"])
+
+class Li(_withunits_struct):
+	_fields = ("x1",  "y1", "x2", "y2") 
+	def __init__(self, *args) -> None:
+		super().__init__(*args, defaults=["0"])
+
 class Us(_withunits_struct):
 	_fields = ("x",  "y", "width", "height", f"{{{XLINK_NAMESPACE}}}href") 
 	def __init__(self, *args) -> None:
@@ -116,6 +121,11 @@ class Us(_withunits_struct):
 
 class Pth(_withunits_struct):
 	_fields = ("d") 
+	def __init__(self, *args) -> None:
+		super().__init__(*args, defaults=None)
+
+class Pl(_withunits_struct):
+	_fields = ("points",) 
 	def __init__(self, *args) -> None:
 		super().__init__(*args, defaults=None)
 
@@ -478,6 +488,14 @@ class Circle(BaseSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("circle", struct=Ci(*args))
 
+class Ellipse(BaseSVGElem):
+	def __init__(self, *args) -> None:
+		super().__init__("ellipse", struct=Elli(*args))
+
+class Line(BaseSVGElem):
+	def __init__(self, *args) -> None:
+		super().__init__("line", struct=Li(*args))
+
 class Path(BaseSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("path", struct=Pth(*args))
@@ -498,7 +516,7 @@ class AnalyticalPath(Path):
 			else:
 				prevlett = prevcmd.getLetter()
 				if lett.lower() == 'l':
-					if prevlett.lower() in ('m', 'l') and prevcmd.isRelative() == prevcmd.isRelative():
+					if prevlett.lower() in ('m', 'l') and prevcmd.isRelative() == cmd.isRelative():
 						do_omit = True
 				elif lett.lower() != 'm':
 					if lett == prevlett:
@@ -517,63 +535,70 @@ class AnalyticalPath(Path):
 		self.cmds.insert(p_idx, p_cmd)
 		self._refresh()
 	def addPolylinePList(self, p_list: List[Pt]):
-		# prev_pt = None
-		# for pt in p_list:
-		# 	self.addCmd(pM())
+		l = len(p_list)
+		for pi, pt in enumerate(p_list):
+			cmd_added = False
+			if pi == 0: # first point
+				self.cmds.append(pM(*pt))
+				cmd_added = True
+			elif pi == l-1: # last point
+				frstpt = p_list[0]
+				diffX = float(frstpt.x) - float(pt.x)
+				diffY = float(frstpt.y) - float(pt.y)
+				if diffX == 0 and diffY == 0:
+					self.cmds.append(pClose())
+					cmd_added = True
+			if not cmd_added:
+				prevpt = p_list[pi -1]
+				diffX = float(pt.x) - float(prevpt.x)
+				diffY = float(pt.y) - float(prevpt.y)
+				if diffX == 0 and diffY == 0:
+					# skip this point
+					continue
+				if diffX == 0:
+					self.cmds.append(pV(removeDecsep(diffY), relative=True))
+				elif diffY == 0:
+					self.cmds.append(pH(removeDecsep(diffX), relative=True))
+				else:
+					if abs(diffX) < abs(float(pt.x)) and abs(diffY) < abs(float(pt.y)):
+						self.cmds.append(pL(removeDecsep(diffX), removeDecsep(diffY), relative=True))
+					else:
+						self.cmds.append(pL(*pt))
+		self._refresh()
 
+class _pointsElement(BaseSVGElem):
+	def __init__(self, tag, *args) -> None:
+		super().__init__(tag, struct=Pl(*args))
+		self.initialpoint = None
+		self.omitclosingpoint = False
+	def addPList(self, p_list: List[Pt], mindelta=MINDELTA):
+		l = len(p_list)
+		buf = []
+		for pi, pt in enumerate(p_list):
+			if pi == 0 and self.initialpoint is None: # first point
+				self.initialpoint = pt
+			elif pi == l-1 and not self.initialpoint is None: 
+				if ptCoincidence(pt, self.initialpoint, mindelta=mindelta) and self.omitclosingpoint:
+					continue
+			buf.append("{0},{1}".format(*ptEnsureStrings(pt)))
+		self.getStruct().setall(" ".join(buf))
+		self.updateStructAttrs()
 
+class Polyline(_pointsElement):
+	def __init__(self, *args) -> None:
+		super().__init__("polyline", *args)
 
-		# 	prev_pt = pt
-		pass
+class Polygon(_pointsElement):
+	def __init__(self, *args) -> None:
+		super().__init__("polygon", *args)
+		self.omitclosingpoint = True
 
-	# def _refresh(self):
-	# 	prevcmd = None
-	# 	buf = []
-	# 	for cmd in self.cmds:
-	# 		newcmd = None
-	# 		if prevcmd is None:
-	# 			if isinstance(cmd, rel_path_command):
-	# 				cmd.setRelative(False)
-	# 			do_omit = False
-	# 		else:
-	# 			if isinstance(prevcmd, point_path_command) and isinstance(cmd, point_path_command):
-	# 				if cmd.getLetter() == 'L':
-	# 					diffX = prevcmd.getXDiff(cmd)
-	# 					diffY = prevcmd.getYDiff(cmd)
-	# 					if diffX == 0 and diffY == 0:
-	# 						# skip this command
-	# 						continue
-	# 					if diffX == 0:
-	# 						if abs(diffY) < abs(cmd.getNumeric('y')):
-	# 							newcmd = pV(diffY)
-	# 							newcmd.setRelative(True)
-	# 						else:
-	# 							newcmd = pV(cmd.getNumeric('y'))
-	# 					elif diffY == 0:
-	# 						if abs(diffX) < abs(cmd.getNumeric('x')):
-	# 							newcmd = pH(diffX)
-	# 							newcmd.setRelative(True)
-	# 						else:
-	# 							newcmd = pH(cmd.getNumeric('x'))
-	# 					else:
-	# 						if abs(diffX) < abs(cmd.getNumeric('x')) and \
-	# 								abs(diffY) < abs(cmd.getNumeric('y')):
-	# 							cmd.set('x', diffX)
-	# 							cmd.set('y', diffY)
-	# 							cmd.setRelative(True)
-	# 			do_omit = prevcmd.eqLetter(cmd)
-	# 		if newcmd is None:
-	# 			newcmd = cmd
-	# 		buf.append(newcmd.get(omitletter=do_omit))			
-	# 		prevcmd = newcmd
-	# 	self.getStruct().setall("".join(buf))
-	# 	self.updateStructAttrs()
 
 class SVGContent(SVGRoot):
 
 	forbidden_user_tags = ["defs", "style"]
-	def __init__(self, rect: Re, tree=None, viewbox: Optional[VBox] = None) -> None:
-		super().__init__(rect, tree=tree, viewbox=viewbox)
+	def __init__(self, rect: Re, viewbox: Optional[VBox] = None) -> None:
+		super().__init__(rect, viewbox=viewbox)
 		self._id_serial = 0
 		self._defs = super().addChild(Defs())
 		self._styleel = self._defs.addChild(Style())

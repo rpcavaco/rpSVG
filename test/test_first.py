@@ -2,7 +2,7 @@
 import pytest, re
 
 from rpcbSVG.Basics import Pt, Env
-from rpcbSVG.SVGLib import BaseSVGElem, Circle, Group, Re, ReRC, \
+from rpcbSVG.SVGLib import BaseSVGElem, Circle, Ellipse, Group, Line, Re, ReRC, \
 	Rect, Style, SVGContent, SVGRoot, TagOutOfDirectUserManipulation, VBox600x800
 from rpcbSVG.SVGstyle import Sty, CSSSty
 
@@ -34,11 +34,13 @@ def test_SVGRoot():
 	assert str(r.getStruct()) == "x=0 y=0 width=30 height=40"
 	assert etree.tostring(s.getEl()) == b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="2px" y="3px" width="100px" height="200px"><rect x="0" y="0" width="30" height="40"/></svg>'
 
-def test_GroupCircle():
+def test_GroupSomeBasicShapes():
 	s2 = SVGRoot(Re().full(), viewbox=VBox600x800())
 	g = s2.addChild(Group()).setId("o_grupo")
 	g.addChild(Circle(20, 30, 60))
-	assert etree.tostring(s2.getEl()) == b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 600 800"><g id="o_grupo"><circle cx="20" cy="30" r="60"/></g></svg>'
+	g.addChild(Ellipse(20, 30, 70, 80))
+	g.addChild(Line(20, 30, 80, 90))
+	assert etree.tostring(s2.getEl()) == b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 600 800"><g id="o_grupo"><circle cx="20" cy="30" r="60"/><ellipse cx="20" cy="30" rx="70" ry="80"/><line x1="20" y1="30" x2="80" y2="90"/></g></svg>'
 
 def test_IdentVB():
 	s = SVGRoot(Re(0,3,100,200)).setIdentityViewbox(scale=10.0)

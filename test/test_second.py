@@ -1,13 +1,12 @@
 import pytest, re, json
 
-from rpcbSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY, pA, pC, pH, pM, pL, WrongValueTransformDef, pQ, pS, pT, pV
-from rpcbSVG.SVGLib import Group, Re, SVGContent, Circle, Rect, RectRC, Use, Path, AnalyticalPath
+from rpcbSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY, pA, pC, pClose, pH, pM, pL, WrongValueTransformDef, pQ, pS, pT, pV
+from rpcbSVG.SVGLib import Group, Polygon, Re, SVGContent, Circle, Rect, RectRC, Use, Path, AnalyticalPath, Polyline
 from rpcbSVG.SVGstyle import Sty, CSSSty
 
 # from lxml import etree
 
 # with capsys.disabled():
-
 def test_Use_RemoveChange():
 
 	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
@@ -232,12 +231,74 @@ def test_PathCommands():
 	with open('outtest/test_PathCommands.svg', 'w') as fl:
 		fl.write(sc.toString(pretty_print=True))
 
+def test_PolylinePath():
+
+	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
+	sc.addStyleRule(CSSSty('fill', 'none', 'stroke', 'green', 'stroke-width', '10', selector='.cambase'))
+
+	pts = [
+		Pt(120, 140), Pt(290, 160), Pt(400, 160),
+
+		Pt(550, 160), Pt(550, 300), Pt(400, 330),
+
+		Pt(250, 500), Pt(400, 500), Pt(500, 600),
+
+		Pt(500, 700), Pt(600, 700), Pt(700, 700),
+		Pt(700, 800), Pt(900, 740), Pt(800, 500),
+		Pt(800,100), Pt(200,100)
+	]
+
+	ap = sc.addChild(AnalyticalPath()).setClass("cambase")
+	ap.addPolylinePList(pts)
+
+	ap.addCmd(pClose())
+
+	gr1 = sc.addChild(Group())
+	gr1.setStyle(Sty('fill', 'white', 'stroke', 'green', 'stroke-width', '4'))
+	for pt in pts:
+		gr1.addChild(Circle(*pt,10))
+
+	with open('outtest/test_PolylinePath.svg', 'w') as fl:
+		fl.write(sc.toString(pretty_print=True))
+
+def test_PolylinePoligon():
+
+	sc = SVGContent(Re(0,0,1024,1000)).setIdentityViewbox()
+	sc.addStyleRule(CSSSty('fill', 'darksalmon', 'fill-opacity', 0.6, 'stroke', 'darkmagenta', 'stroke-width', 2, selector='polygon'))
+	sc.addStyleRule(CSSSty('fill', 'none', 'stroke', 'darkgoldenrod', 'stroke-width', 4, selector='polyline'))
+
+	pts = [
+		Pt(120, 140), Pt(290, 160), Pt(400, 160),
+
+		Pt(550, 160), Pt(550, 300), Pt(400, 330),
+
+		Pt(250, 500), Pt(400, 500), Pt(500, 600),
+
+		Pt(500, 700), Pt(600, 700), Pt(700, 700),
+		Pt(700, 800), Pt(900, 740), Pt(800, 500),
+		Pt(800,100), Pt(200,100), Pt(120, 140)
+	]
+
+	pl = sc.addChild(Polygon())
+	pl.addPList(pts)
+
+	gr1 = sc.addChild(Group())
+	gr1.setStyle(Sty('fill', 'white', 'stroke', 'green', 'stroke-width', '3'))
+	for pt in pts:
+		gr1.addChild(Circle(*pt,6))
+
+	gr2 = sc.addChild(Group())
+	gr2.addTransform(Trans(10,30))
+	plg = gr2.addChild(Polyline())
+	plg.addPList(pts[1:-1])
+
+	with open('outtest/test_PolylinePoligon.svg', 'w') as fl:
+		fl.write(sc.toString(pretty_print=True))
+
 	# with capsys.disabled():
 	# 	print("\n>>>>>>>>>>")
 	# 	print("\n<<<<<<<<<<")
 
 	# with capsys.disabled():
 	# 	print(condens)
-
-
 
