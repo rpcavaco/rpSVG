@@ -261,7 +261,7 @@ def test_PolylinePath():
 	with open('outtest/test_PolylinePath.svg', 'w') as fl:
 		fl.write(sc.toString(pretty_print=True))
 
-def test_PolylinePoligon():
+def test_PolylinePolygon():
 
 	sc = SVGContent(Re(0,0,1024,1000)).setIdentityViewbox()
 	sc.addStyleRule(CSSSty('fill', 'darksalmon', 'fill-opacity', 0.6, 'stroke', 'darkmagenta', 'stroke-width', 2, selector='polygon'))

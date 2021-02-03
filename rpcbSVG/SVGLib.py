@@ -141,6 +141,7 @@ class BaseSVGElem(object):
 		self._transforms = []
 		self.idprefix = tag[:3].title()
 		self.el = None
+		self._pendingXMLDependentOps = []
 		self.setStruct(struct)
 
 	def _getTransform(self) -> str:
@@ -152,6 +153,54 @@ class BaseSVGElem(object):
 	def getEl(self):
 		assert not self.el is None, self.NO_XML_EL
 		return self.el
+
+	def setEl(self, xmlel) -> None:
+		assert self.el is None
+		self.el = xmlel
+		strct = self._struct
+		if not strct is None:
+			strct.setXmlAttrs(self.el)
+		# Things waiting to XML el to be de
+		if len(self._pendingXMLDependentOps) > 0:
+			op = self._pendingXMLDependentOps.pop(0)
+			while op:
+				meth, args, kwargs = op
+				if args is None:
+					if kwargs is None:
+						meth()
+					else:
+						meth(**kwargs)
+				else:
+					if kwargs is None:
+						meth(*args)
+					else:
+						meth(*args, **kwargs)
+				try:
+					op = self._pendingXMLDependentOps.pop(0)
+				except IndexError:
+					op = None
+		return self
+
+	def removeEl(self):
+		assert not self.el is None, self.NO_XML_EL
+		par = self.el.getparent()
+		par.remove(self.el)
+		return par
+
+	def dispatchXMLDependentOp(self, method, args=None, kwargs=None):
+		if self.hasEl():
+			if args is None:
+				if kwargs is None:
+					method()
+				else:
+					method(**kwargs)
+			else:
+				if kwargs is None:
+					method(*args)
+				else:
+					method(*args, **kwargs)
+		else:
+			self._pendingXMLDependentOps.append((method, args, kwargs))
 
 	def __repr__(self):
 		out = [
@@ -176,7 +225,6 @@ class BaseSVGElem(object):
 		ret = []
 		if self.getTag() == o.getTag():
 			ret.append('TAG')
-
 			a = self.getStruct()
 			b = o.getStruct()
 			if self.getStruct() == o.getStruct():
@@ -192,9 +240,14 @@ class BaseSVGElem(object):
 				ret.append('TRANS')
 		return ret
 
-	def updateStructAttrs(self):
-		if not self._struct is None and not self.el is None:
+	def _updateStructAttrs(self):
+		if not self._struct is None:
 			self._struct.setXmlAttrs(self.el)
+		return self
+
+	def updateStructAttrs(self):
+		if not self._struct is None:
+			self.dispatchXMLDependentOp(self._updateStructAttrs)
 		return self
 
 	def setStruct(self, struct: _withunits_struct):
@@ -203,7 +256,7 @@ class BaseSVGElem(object):
 
 	def getStruct(self) -> _withunits_struct:
 		assert not self._struct is None
-		if not self.el is None:
+		if self.hasEl():
 			self._struct.getFromXmlAttrs(self.el)
 		return self._struct
 
@@ -220,9 +273,14 @@ class BaseSVGElem(object):
 			sel = self.tag
 		return sel
 
-	def updateStyleAttrs(self):
+	def _updateStyleAttrs(self):
 		if not self._style is None and self.hasEl():
 			self._style.setXmlAttrs(self.el)
+		return self
+
+	def updateStyleAttrs(self):
+		if not self._struct is None:
+			self.dispatchXMLDependentOp(self._updateStyleAttrs)
 		return self
 
 	def setStyle(self, style: Sty):
@@ -246,9 +304,15 @@ class BaseSVGElem(object):
 				ret = self._style
 		return ret
 
-	def updateTransformAttr(self):
+	def _updateTransformAttr(self):
 		if len(self._transforms) > 0 and self.hasEl():
 			self.getEl().set('transform', self._getTransform()) 
+		return self
+
+	def updateTransformAttr(self):
+		if len(self._transforms) > 0:
+			self.dispatchXMLDependentOp(self._updateTransformAttr)
+		return self
 
 	def getTransformsList(self):
 		return self._transforms
@@ -268,20 +332,6 @@ class BaseSVGElem(object):
 		assert not self.el is None, self.NO_XML_EL
 		return self.el.getparent()
 
-	def setEl(self, xmlel) -> None:
-		assert self.el is None
-		self.el = xmlel
-		strct = self._struct
-		if not strct is None:
-			strct.setXmlAttrs(self.el)
-		return self
-
-	def removeEl(self):
-		assert not self.el is None, self.NO_XML_EL
-		par = self.el.getparent()
-		par.remove(self.el)
-		return par
-
 	def readdElToParent(self, p_parent):
 		assert not self.el is None, self.NO_XML_EL
 		p_parent.append(self.el)
@@ -290,10 +340,14 @@ class BaseSVGElem(object):
 		self.el.getparent().remove(self.el)
 		self.el = None
 
-	def setId(self, idval):
+	def _setId(self, idval):
 		assert isinstance(idval, str)
 		assert not self.el is None, self.NO_XML_EL
 		self.el.set('id', idval)
+		return self
+
+	def setId(self, idval):
+		self.dispatchXMLDependentOp(self._setId, args=(idval,))
 		return self
 
 	def getId(self):
@@ -305,10 +359,14 @@ class BaseSVGElem(object):
 		assert not self.el is None, self.NO_XML_EL
 		return "id" in self.el.keys()
 
-	def setClass(self, clsval):
+	def _setClass(self, clsval):
 		assert isinstance(clsval, str)
 		assert not self.el is None, self.NO_XML_EL
 		self.el.set('class', clsval)
+		return self
+
+	def setClass(self, clsval):
+		self.dispatchXMLDependentOp(self._setClass, args=(clsval,))
 		return self
 
 	def getClass(self):
@@ -323,17 +381,6 @@ class BaseSVGElem(object):
 	def getTag(self):
 		return self.tag
 
-	def setXmlAttrs(self, xmlel) -> None:  
-		strct = self.getStruct()
-		assert not strct is None
-		strct.setXmlAttrs(xmlel)
-		style = self.getStyle()
-		if not style is None:
-			style.setXmlAttrs(xmlel)
-		trtxt = self._getTransform() 
-		if len(trtxt) > 0:
-			xmlel.set('transform', trtxt)
-
 	def clearTransforms(self):
 		del self._transforms[:]
 
@@ -344,21 +391,11 @@ class BaseSVGElem(object):
 			self.getEl().set('transform', trtxt)
 		return tr
 
-class SVGContainer(BaseSVGElem):
+class GenericSVGElem(BaseSVGElem):
 
 	def __init__(self, tag: str, struct: Optional[_withunits_struct] = None) -> None:
-		super().__init__(tag, struct=struct)
 		self.content = []
-		self.genIDMethod = None
-
-	def setGenIdMethod(self, p_method):
-		self.genIDMethod = p_method
-
-	def genNextId(self):
-		ret = None
-		if not self.genIDMethod is None:
-			ret = self.genIDMethod()
-		return ret
+		super().__init__(tag, struct=struct)
 
 	def addChild(self, p_child: BaseSVGElem):
 		assert self.hasEl()
@@ -390,10 +427,45 @@ class SVGContainer(BaseSVGElem):
 				out["content"].append(chld.toJSON())
 		return out
 
+class SVGContainer(GenericSVGElem):
+
+	def __init__(self, tag: str, struct: Optional[_withunits_struct] = None, viewbox: Optional[VBox] = None) -> None:
+		super().__init__(tag, struct=struct)
+		# self.content = []
+		self.genIDMethod = None
+		if not viewbox is None:
+			self.setViewbox(viewbox)
+
+	def setGenIdMethod(self, p_method):
+		self.genIDMethod = p_method
+
+	def genNextId(self):
+		ret = None
+		if not self.genIDMethod is None:
+			ret = self.genIDMethod()
+		return ret
+
+	def _setViewbox(self, p_viewbox: VBox):
+		assert isinstance(p_viewbox, VBox)
+		p_viewbox.setXmlAttrs(self.el)
+		return self
+
+	def setViewbox(self, p_viewbox: VBox):
+		self.dispatchXMLDependentOp(self._setViewbox, args=(p_viewbox,))
+		return self
+
+	def setIdentityViewbox(self, scale: Optional[float] = None):
+		strct = self.getStruct()
+		assert not strct is None
+		vb = VBox()
+		vb.cloneFromRect(self.getStruct(), scale=scale)
+		return self.setViewbox(vb)
+
+
 class SVGRoot(SVGContainer):
 
 	def __init__(self, rect: Re, tree = None, viewbox: Optional[VBox] = None) -> None:
-		super().__init__("svg", struct=rect)
+		super().__init__("svg", struct=rect, viewbox=viewbox)
 		if tree is None:
 			self.tree = etree.parse(StringIO(SVG_ROOT))
 		elif hasattr(tree, 'getroot'):
@@ -403,6 +475,8 @@ class SVGRoot(SVGContainer):
 		assert not self.tree is None
 		self.el = self.tree.getroot()
 		self.setRect(rect)
+		# Viewbox must be (re)inited here: in SVGContainer __init__ , 
+		# 	setViewbox finds no XML Element, is not yet created)
 		if not viewbox is None:
 			self.setViewbox(viewbox)
 
@@ -411,18 +485,6 @@ class SVGRoot(SVGContainer):
 		self.setStruct(p_rect)
 		p_rect.setXmlAttrs(self.el)
 		return self
-
-	def setViewbox(self, p_viewbox: VBox):
-		assert isinstance(p_viewbox, VBox)
-		p_viewbox.setXmlAttrs(self.el)
-		return self
-
-	def setIdentityViewbox(self, scale: Optional[float] = None):
-		strct = self.getStruct()
-		assert not strct is None
-		vb = VBox()
-		vb.cloneFromRect(self.getStruct(), scale=scale)
-		return self.setViewbox(vb)
 
 class Group(SVGContainer):
 	def __init__(self) -> None:
@@ -474,29 +536,29 @@ class Style(BaseSVGElem):
 			ret = True 
 		return ret
 
-class Rect(BaseSVGElem):
+class Rect(GenericSVGElem):
 	"Plain rectangle, no round corners"
 	def __init__(self, *args) -> None:
 		super().__init__("rect", struct=Re(*args))
 
-class RectRC(BaseSVGElem):
+class RectRC(GenericSVGElem):
 	"Round cornered rectangle"
 	def __init__(self, *args) -> None:
 		super().__init__("rect", struct=ReRC(*args))
 
-class Circle(BaseSVGElem):
+class Circle(GenericSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("circle", struct=Ci(*args))
 
-class Ellipse(BaseSVGElem):
+class Ellipse(GenericSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("ellipse", struct=Elli(*args))
 
-class Line(BaseSVGElem):
+class Line(GenericSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("line", struct=Li(*args))
 
-class Path(BaseSVGElem):
+class Path(GenericSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("path", struct=Pth(*args))
 
@@ -566,7 +628,7 @@ class AnalyticalPath(Path):
 						self.cmds.append(pL(*pt))
 		self._refresh()
 
-class _pointsElement(BaseSVGElem):
+class _pointsElement(GenericSVGElem):
 	def __init__(self, tag, *args) -> None:
 		super().__init__(tag, struct=Pl(*args))
 		self.initialpoint = None

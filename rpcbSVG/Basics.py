@@ -143,6 +143,7 @@ class _attrs_struct(object):
 		return not self.__eq__(o)
 
 	def setXmlAttrs(self, xmlel) -> None:  
+		assert not xmlel is None
 		for f in self._fields:
 			if hasattr(self, f):
 				val = getattr(self, f)
@@ -152,6 +153,7 @@ class _attrs_struct(object):
 		return self
 
 	def getFromXmlAttrs(self, xmlel) -> None:  
+		assert not xmlel is None
 		for f in self._fields:
 			if f in xmlel.keys():
 				val = xmlel.get(f)
