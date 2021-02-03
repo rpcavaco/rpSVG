@@ -1,7 +1,7 @@
 import pytest, re, json
 
 from rpcbSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY, pA, pC, pClose, pH, pM, pL, WrongValueTransformDef, pQ, pS, pT, pV
-from rpcbSVG.SVGLib import Group, Polygon, Re, SVGContent, Circle, Rect, RectRC, Use, Path, AnalyticalPath, Polyline
+from rpcbSVG.SVGLib import Desc, Group, Polygon, Re, SVGContent, Circle, Rect, RectRC, Title, Use, Path, AnalyticalPath, Polyline
 from rpcbSVG.SVGstyle import Sty, CSSSty
 
 # from lxml import etree
@@ -295,10 +295,33 @@ def test_PolylinePolygon():
 	with open('outtest/test_PolylinePoligon.svg', 'w') as fl:
 		fl.write(sc.toString(pretty_print=True))
 
+def test_GroupDefsTitleDesc():
+
+	sc = SVGContent(Re(0,0,1024,1000)).setIdentityViewbox()
+	sc.addChild(Title("El teste de title, desc, etc ..."))
+	desc = sc.addChild(Desc(), nsmap={"mydoc": "http://example.org/mydoc"})
+	desc.addChildTag("{http://example.org/mydoc}bibtitle").text = "El simpático teste"
+	desc.addChildTag("{http://example.org/mydoc}descr").text = "Eso es de un teste de puta madre!"
+
+	gr1 = sc.addChild(Group())
+	gr1.addTransform(Rotate(45,250,300))
+	re = gr1.addChild(RectRC(200,200,600,400,10,20), todefs=True)
+	gr1.addChild(Use(Pt(20,12), re.getSel()))
+	re.setStyle(Sty('fill', 'white', 'stroke', 'green', 'stroke-width', '3'))
+
+	assert sc.toString(pretty_print=False) == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="1024" height="1000" viewBox="0 0 1024 1000"><defs/><title id="Tit0">El teste de title, desc, etc ...</title><desc xmlns:mydoc="http://example.org/mydoc" id="Des1"><mydoc:bibtitle>El simpático teste</mydoc:bibtitle><mydoc:descr>Eso es de un teste de puta madre!</mydoc:descr></desc><g id="G2" transform="rotate(45,250,300)"><defs id="Def3"><rect x="200" y="200" width="600" height="400" rx="10" ry="20" id="Rec4" fill="white" stroke="green" stroke-width="3"/></defs><use x="20" y="12" xlink:href="#Rec4" id="Use5"/></g></svg>"""
+
+	with open('outtest/test_GroupDefsTitleDesc.svg', 'w') as fl:
+		fl.write(sc.toString(pretty_print=True))
+
+
+
+
 	# with capsys.disabled():
 	# 	print("\n>>>>>>>>>>")
 	# 	print("\n<<<<<<<<<<")
 
 	# with capsys.disabled():
 	# 	print(condens)
+
 

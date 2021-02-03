@@ -68,8 +68,9 @@ def test_Sty():
 	out = s2.toCSSString()
 	condens = re.sub(r"[\s]+"," ", out)
 	assert condens == "#Rec0 { fill: red; stroke: green; }", condens
-	s3 = r.getStyle(select='class')
-	assert s1 == s3, s1.diffDict(s3)
+	with pytest.raises(AssertionError):
+		s3 = r.getStyle(select='class')
+
 	r.setClass("testclass")
 	s4 = r.getStyle(select='class')
 	assert s1.diffDict(s4) == {'selector': (None, '.testclass')}

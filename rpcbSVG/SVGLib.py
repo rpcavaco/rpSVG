@@ -112,9 +112,9 @@ class Us(_withunits_struct):
 				elif isinstance(args[0], Re) and isinstance(args[1], str):
 					argslist = (args[0].x, args[0].y, args[0].width, args[0].height, args[1])
 				else:
-					raise TypeError(f"'Us' element requires exactly 5 argumens, {l} given")
+					raise TypeError(f"'Us' element requires exactly 2 (Pt and str) or 5 argumens, 2 given with types ({str(type(args[0]))},{str(type(args[1]))})")
 			else:
-				raise TypeError(f"'Us' element requires exactly 5 argumens, {l} given")
+				raise TypeError(f"'Us' element requires exactly 2 or 5 argumens, {l} given")
 		else:
 			argslist = args
 		super().__init__(*argslist, defaults=None)
@@ -151,7 +151,7 @@ class BaseSVGElem(object):
 		return  not self.el is None
 
 	def getEl(self):
-		assert not self.el is None, self.NO_XML_EL
+		assert self.hasEl(), self.NO_XML_EL
 		return self.el
 
 	def setEl(self, xmlel) -> None:
@@ -182,10 +182,20 @@ class BaseSVGElem(object):
 		return self
 
 	def removeEl(self):
-		assert not self.el is None, self.NO_XML_EL
+		assert self.hasEl(), self.NO_XML_EL
 		par = self.el.getparent()
 		par.remove(self.el)
 		return par
+
+	def setText(self, p_text: str) -> None:
+		assert self.hasEl(), self.NO_XML_EL
+		self.getEl().text = p_text
+		return self
+
+	def setAttr(self, p_attr: str, p_value):
+		assert self.hasEl(), self.NO_XML_EL
+		self.getEl().set(p_attr, p_value)
+		return self
 
 	def dispatchXMLDependentOp(self, method, args=None, kwargs=None):
 		if self.hasEl():
@@ -264,11 +274,11 @@ class BaseSVGElem(object):
 		assert select in (None, "id", "class", "tag")
 		sel = None
 		if select == 'id':
-			if self.hasId():
-				sel = '#' + self.getId()
+			assert self.hasId()
+			sel = '#' + self.getId()
 		elif select == 'class':
-			if self.hasClass():
-				sel = '.' + self.getClass()
+			assert self.hasClass()
+			sel = '.' + self.getClass()
 		elif select == 'tag':
 			sel = self.tag
 		return sel
@@ -279,7 +289,7 @@ class BaseSVGElem(object):
 		return self
 
 	def updateStyleAttrs(self):
-		if not self._struct is None:
+		if not self._style is None:
 			self.dispatchXMLDependentOp(self._updateStyleAttrs)
 		return self
 
@@ -294,7 +304,7 @@ class BaseSVGElem(object):
 	def getStyle(self, select=None) -> Union[Sty, CSSSty]:
 		""" select: None, "id", "class", "tag" """
 		ret = None
-		if not self._style is None and not self.el is None:
+		if not self._style is None and self.hasEl():
 			self._style.fromXmlAttrs(self.el)
 			sel = self.getSelector(select=select)
 			if not sel is None:
@@ -329,11 +339,11 @@ class BaseSVGElem(object):
 		return self.getSelector(select=select)
 
 	def getParent(self):
-		assert not self.el is None, self.NO_XML_EL
+		assert self.hasEl(), self.NO_XML_EL
 		return self.el.getparent()
 
 	def readdElToParent(self, p_parent):
-		assert not self.el is None, self.NO_XML_EL
+		assert self.hasEl(), self.NO_XML_EL
 		p_parent.append(self.el)
 
 	def delEl(self):
@@ -342,7 +352,7 @@ class BaseSVGElem(object):
 
 	def _setId(self, idval):
 		assert isinstance(idval, str)
-		assert not self.el is None, self.NO_XML_EL
+		assert self.hasEl(), self.NO_XML_EL
 		self.el.set('id', idval)
 		return self
 
@@ -351,17 +361,17 @@ class BaseSVGElem(object):
 		return self
 
 	def getId(self):
-		assert not self.el is None, self.NO_XML_EL
+		assert self.hasEl(), self.NO_XML_EL
 		assert "id" in self.el.keys()
 		return self.el.get('id')
 
 	def hasId(self) -> bool:
-		assert not self.el is None, self.NO_XML_EL
+		assert self.hasEl(), self.NO_XML_EL
 		return "id" in self.el.keys()
 
 	def _setClass(self, clsval):
 		assert isinstance(clsval, str)
-		assert not self.el is None, self.NO_XML_EL
+		assert self.hasEl(), self.NO_XML_EL
 		self.el.set('class', clsval)
 		return self
 
@@ -370,12 +380,12 @@ class BaseSVGElem(object):
 		return self
 
 	def getClass(self):
-		assert not self.el is None, self.NO_XML_EL
+		assert self.hasEl(), self.NO_XML_EL
 		assert "class" in self.el.keys()
 		return self.el.get('class')
 
 	def hasClass(self) -> bool:
-		assert not self.el is None, self.NO_XML_EL
+		assert self.hasEl(), self.NO_XML_EL
 		return "class" in self.el.keys()
 
 	def getTag(self):
@@ -397,9 +407,20 @@ class GenericSVGElem(BaseSVGElem):
 		self.content = []
 		super().__init__(tag, struct=struct)
 
-	def addChild(self, p_child: BaseSVGElem):
-		assert self.hasEl()
-		newel = etree.SubElement(self.getEl(), p_child.tag)
+	def addChild(self, p_child: BaseSVGElem, parent: Optional[Union[etree.Element, BaseSVGElem]] =None, nsmap=None):
+		if parent is None:
+			assert self.hasEl()
+			if nsmap is None:
+				newel = etree.SubElement(self.getEl(), p_child.tag)
+			else:
+				newel = etree.SubElement(self.getEl(), p_child.tag, nsmap=nsmap)
+		else:
+			if isinstance(parent, type(etree.Element)):
+				newel = etree.SubElement(parent, p_child.tag)
+			else:
+				assert isinstance(parent, BaseSVGElem), str(type(parent))
+				assert self.hasEl()
+				newel = etree.SubElement(parent.getEl(), p_child.tag)
 		p_child.setEl(newel)
 		self.content.append(p_child)
 		
@@ -431,13 +452,22 @@ class SVGContainer(GenericSVGElem):
 
 	def __init__(self, tag: str, struct: Optional[_withunits_struct] = None, viewbox: Optional[VBox] = None) -> None:
 		super().__init__(tag, struct=struct)
-		# self.content = []
+		self._defs = None
 		self.genIDMethod = None
 		if not viewbox is None:
 			self.setViewbox(viewbox)
 
 	def setGenIdMethod(self, p_method):
 		self.genIDMethod = p_method
+
+	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None) -> BaseSVGElem:
+		if todefs:
+			if self._defs is None:
+				self._defs = super().addChild(Defs())
+			ret = super().addChild(p_child, parent=self._defs, nsmap=nsmap)
+		else:
+			ret = super().addChild(p_child, nsmap=nsmap)
+		return ret
 
 	def genNextId(self):
 		ret = None
@@ -497,6 +527,17 @@ class Defs(SVGContainer):
 class Use(BaseSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("use", struct=Us(*args))
+
+class Desc(SVGContainer):
+	def __init__(self) -> None:
+		super().__init__("desc")
+
+class Title(BaseSVGElem):
+	def __init__(self, p_titletext: str) -> None:
+		super().__init__("title")
+		self.dispatchXMLDependentOp(self.setText, args=(p_titletext,))
+
+
 
 class Style(BaseSVGElem):
 
@@ -670,14 +711,14 @@ class SVGContent(SVGRoot):
 		self._id_serial = self._id_serial + 1
 		return ret
 
-	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False) -> BaseSVGElem:
+	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None) -> BaseSVGElem:
 		if p_child.tag in self.forbidden_user_tags:
 			raise TagOutOfDirectUserManipulation(p_child.tag)
 		if todefs:
 			assert not self._defs is None
-			ret = self._defs.addChild(p_child)
+			ret = self._defs.addChild(p_child, nsmap=nsmap)
 		else:
-			ret = super().addChild(p_child)
+			ret = super().addChild(p_child, nsmap=nsmap)
 		if not ret.hasId():
 			ret.setId(p_child.idprefix + str(self.nextIDSerial()))
 		if isinstance(ret, SVGContainer):
