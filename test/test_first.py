@@ -18,7 +18,7 @@ def test_CSSSty():
 def test_Re():
 	reo = Re(1, 2, 200, 300)
 	reo.setUnits('px')
-	assert str(reo) == "x=1px y=2px width=200px height=300px"
+	assert str(reo) == "Re x=1px y=2px width=200px height=300px"
 	ref_dict = {'_units': 'px', 'x': '1px', 'y': '2px', 'width': '200px', 'height': '300px'}
 	shared_items = {k: ref_dict[k] for k in ref_dict.keys() if k in dir(reo) and ref_dict[k] == getattr(reo,k)}
 	assert len(shared_items) == 5
@@ -27,11 +27,11 @@ def test_Re():
 def test_SVGRoot():
 	s = SVGRoot(Re(2,3,100,200, "px"))
 	r = s.addChild(Rect(0,0,30,40))
-	assert str(r.getStruct()) == "x=0 y=0 width=30 height=40", r.getStruct()
+	assert str(r.getStruct()) == "Re x=0 y=0 width=30 height=40", r.getStruct()
 	ref_dict = {'tag': 'rect', 'idprefix': 'Rec'}
 	shared_items = {k: ref_dict[k] for k in ref_dict.keys() if k in dir(r) and ref_dict[k] == getattr(r,k)}
 	assert len(shared_items) == 2
-	assert str(r.getStruct()) == "x=0 y=0 width=30 height=40"
+	assert str(r.getStruct()) == "Re x=0 y=0 width=30 height=40"
 	assert etree.tostring(s.getEl()) == b'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="2px" y="3px" width="100px" height="200px"><rect x="0" y="0" width="30" height="40"/></svg>'
 
 def test_GroupSomeBasicShapes():

@@ -3,6 +3,8 @@ from collections import namedtuple
 
 from typing import Optional
 
+from math import atan, cos, sin, radians, degrees
+
 Pt = namedtuple("Pt", "x y")
 
 MAXCOORD = 99999999999.9
@@ -12,6 +14,9 @@ NANODELTA = 0.000001
 
 def ptCoincidence(pa: Pt, pb: Pt, mindelta=MINDELTA):
 	return abs(pa.x - pb.x) < mindelta and abs(pa.y - pb.y)  < mindelta
+
+def ptAdd(pa: Pt, pb: Pt):
+	return Pt(pa.x + pb.x, pa.y + pb.y)
 
 def removeDecsep(p_val):
 	r = round(p_val)
@@ -33,8 +38,29 @@ def ptEnsureStrings(p_pt: Pt):
 		ret = ret._replace(y=p_pt.y)
 	return ret
 
-#def polar2rect(ang, rad):
-#	return POINTS_FORMAT.format(cos(ang) * rad, sin(ang) * rad )
+def ptGetAngle(p_pt1: Pt, p_pt2: Pt):
+	ret = None
+	dx = float(p_pt2.x) - float(p_pt1.x)
+	dy = float(p_pt2.y) - float(p_pt1.y)
+	if dx < MINDELTA:
+		if dy > MINDELTA:
+			ret = 90
+		if dy < MINDELTA:
+			ret = 270
+	else:
+		ret = degrees(atan(dy/dx))
+	return ret
+
+def polar2rect(ang, rad):
+	return Pt(cos(radians(ang)) * rad, sin(radians(ang)) * rad)
+
+def isNumeric(p_val):
+	try:
+		float(p_val)
+		ret = True
+	except ValueError:
+		ret = False
+	return ret
 
 class WrongValueTransformDef(RuntimeError):
 	def __init__(self, p_class_instance, p_attr):
@@ -50,38 +76,30 @@ class WrongValuePathCmd(RuntimeError):
 	def __str__(self):
 		return f"Path command '{self.classname}' accepts no '{self.attr}' value"
 
-
-# def ptList2AbsPolylinePath(p_ptlist, mirrory=False, close=False):
-# 	strcomps = []
-# 	for pi, pt in enumerate(p_ptlist):
-# 		if mirrory:
-# 			pt.y = -pt.y
-# 		if pi == 0:
-# 			strcomps.append("M{0:.4f} {1:.4f}".format(*pt))
-# 		elif pi == 1:
-# 			strcomps.append("L{0:.4f} {1:.4f}".format(*pt))
-# 		else:
-# 			strcomps.append(" {0:.4f} {1:.4f}".format(*pt))
-# 	if close:
-# 		strcomps.append(" z")
-# 	return "".join(strcomps)	
-
 class _attrs_struct(object):
 	
 	_fields = None # Required -- list to be extended in subclasses
 	_subfields = [] # Optional -- list to be extended in subclasses
 	
 	def __init__(self, *args, defaults=None) -> None:
+		self._unusedattrs = []
 		self.setall(*args, defaults=defaults) 
 
+	def getfields(self):
+		return ",".join(self._fields)
+
 	def setall(self, *args, defaults=None) -> None:
+		used_fldindexes = set()
+		lf = len(self._fields)
+		la = len(args)
 		for i, fld in enumerate(self._fields):
-			if i < len(args):
+			if i < la:
 				val = args[i]
 				if not val is None:
 					setattr(self, fld, str(val))
+					used_fldindexes.add(i)
 			else:
-				revi = len(self._fields) - i - 1
+				revi = lf - i - 1
 				if not defaults is None:
 					if len(defaults) > revi:
 						val = str(defaults[revi])
@@ -89,11 +107,19 @@ class _attrs_struct(object):
 						val = str(defaults[-1])
 					setattr(self, fld, val)
 		if len(self._subfields) > 0:
-			if len(self._subfields) == len(args) - len(self._fields):
+			if len(self._subfields) == la - lf:
 				for j, sfld in enumerate(self._subfields):
-					idx = j + len(self._fields)
+					idx = j + lf
 					setattr(self, sfld, str(args[idx]))
+					used_fldindexes.add(idx)
+		l = len(used_fldindexes)
+		if l > 0 and l < la:
+			for idx in range(l, la):
+				self._unusedattrs.append(args[idx])
 		return self
+
+	def getUnusedAttrs(self):
+		return self._unusedattrs
 
 	def has(self, p_attr: str):
 		return p_attr in self._fields
@@ -116,7 +142,7 @@ class _attrs_struct(object):
 		return ret
 
 	def __repr__(self):
-		out = []
+		out = [self.__class__.__name__]
 		for x in self.__dict__.keys():
 			if x in self._fields:
 				out.append(f"{x}={getattr(self, x)}")
@@ -172,6 +198,7 @@ class _withunits_struct(_attrs_struct):
 
 	def __init__(self, *args, defaults=None) -> None:
 		self._units = None
+		self._strictparsing = True # False enables non-strict parsing of additional attribs, stops rasing exception for non-units attributes
 		if not "_units" in self._subfields:
 			self._subfields.append("_units")
 		super().__init__(*args, defaults=defaults)
@@ -190,21 +217,26 @@ class _withunits_struct(_attrs_struct):
 
 	def _apply_units(self) -> None:
 		assert not self._units is None
-		assert self._units in ('px', 'pt', 'em', 'rem', '%'), f"invalid units: '{self._units}' not in 'px', 'pt', 'em', 'rem' or '%'"
-		for f in self._fields:
-			if not hasattr(self, f):
-				continue
-			val = getattr(self, f)
-			numval = None
-			try:
-				numval = int(val)
-			except ValueError:
+		if self._strictparsing:
+			assert self._units in ('px', 'pt', 'em', 'rem', '%'), f"invalid units: '{self._units}' not in 'px', 'pt', 'em', 'rem' or '%'"
+		if self._units in ('px', 'pt', 'em', 'rem', '%'):
+			for f in self._fields:
+				if not hasattr(self, f):
+					continue
+				val = getattr(self, f)
+				numval = None
 				try:
-					numval = float(val)
+					numval = int(val)
 				except ValueError:
-					pass
-			if not numval is None and numval > 0:
-				setattr(self, f, f"{numval}{self._units}")
+					try:
+						numval = float(val)
+					except ValueError:
+						pass
+				if not numval is None and numval > 0:
+					setattr(self, f, f"{numval}{self._units}")
+		else:
+			self._unusedattrs.append(self._units)
+			self._units = None
 
 	def getUnits(self) -> str:
 		return self._units
@@ -230,6 +262,41 @@ class _withunits_struct(_attrs_struct):
 				val = val.replace(self._units, '')
 			ret = float(val)
 		return ret
+
+class _kwarg_attrs_struct(object):
+	
+	_fields = None # Required -- list to be extended in subclasses
+	_funciris = None
+	
+	def __init__(self, **kwargs) -> None:
+		for f in self._fields:
+			safekey = f.replace('-', '_')
+			if safekey in kwargs.keys():
+				if not kwargs[safekey] is None:
+					preval = kwargs[safekey]
+					if f in self._funciris and preval != 'inherit':
+						val = f"url(#{preval})"
+					else:
+						val = preval
+					setattr(self, f, val)
+
+	def __repr__(self):
+		out = [self.__class__.__name__]
+		for x in self.__dict__.keys():
+			if x in self._fields:
+				out.append(f"{x}={getattr(self, x)}")
+		return ' '.join(out)
+
+	def setXmlAttrs(self, xmlel) -> None:  
+		assert not xmlel is None
+		for f in self._fields:
+			if hasattr(self, f):
+				val = getattr(self, f)
+				if not val is None:
+					assert not val == "None"
+					xmlel.set(f, str(val))
+		return self
+
 
 class Env(_attrs_struct):
 	_fields = ("minx",  "miny", "maxx", "maxy") 
@@ -518,18 +585,9 @@ class pA(rel_path_command):
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
 
-
-
-
-
 class pClose(path_command):
 	_fields = ()
 	_letter = "z"
 	def __init__(self, *args) -> None:
 		super().__init__(*args)
 
-
-
-
-
-	

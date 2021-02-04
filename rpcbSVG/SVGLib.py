@@ -2,15 +2,18 @@
 #import cairo
 #import rsvg
 
+
 from io import StringIO
-from math import pi, sin, cos, sqrt, pow
+from math import atan, degrees
 from typing import Optional, List, Union
 from collections import namedtuple
 
 from lxml import etree
 
 from rpcbSVG.SVGstyle import CSSSty, Sty
-from rpcbSVG.Basics import MINDELTA, Pt, Env, _withunits_struct, pClose, pH, pL, pM, pV, transform_def, path_command, rel_path_command, ptCoincidence, removeDecsep, ptEnsureStrings
+from rpcbSVG.Basics import MINDELTA, Pt, Env, _attrs_struct, _withunits_struct, \
+	_kwarg_attrs_struct, pClose, pH, pL, pM, pV, transform_def, path_command, \
+	ptCoincidence, removeDecsep, ptEnsureStrings, isNumeric
 
 XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
@@ -99,7 +102,24 @@ class Elli(_withunits_struct):
 class Li(_withunits_struct):
 	_fields = ("x1",  "y1", "x2", "y2") 
 	def __init__(self, *args) -> None:
-		super().__init__(*args, defaults=["0"])
+		l =  len(args)
+		if l == 2 and isinstance(args[0], Pt) and isinstance(args[1], Pt):
+			argslist = (args[0].x, args[0].y, args[1].x, args[1].y)
+		else:
+			argslist = args
+		super().__init__(*argslist, defaults=["0"])
+	def getAngle(self):
+		ret = None
+		dx = float(getattr(self, "x2")) - float(getattr(self, "x1"))
+		dy = float(getattr(self, "y2")) - float(getattr(self, "y1"))
+		if dx < MINDELTA:
+			if dy > MINDELTA:
+				ret = 90
+			if dy < MINDELTA:
+				ret = 270
+		else:
+			ret = degrees(atan(dy/dx))
+		return ret
 
 class Us(_withunits_struct):
 	_fields = ("x",  "y", "width", "height", f"{{{XLINK_NAMESPACE}}}href") 
@@ -114,7 +134,7 @@ class Us(_withunits_struct):
 				else:
 					raise TypeError(f"'Us' element requires exactly 2 (Pt and str) or 5 argumens, 2 given with types ({str(type(args[0]))},{str(type(args[1]))})")
 			else:
-				raise TypeError(f"'Us' element requires exactly 2 or 5 argumens, {l} given")
+				raise TypeError(f"'Us' element requires exactly 2 or 5 arguments, {l} given")
 		else:
 			argslist = args
 		super().__init__(*argslist, defaults=None)
@@ -128,6 +148,23 @@ class Pl(_withunits_struct):
 	_fields = ("points",) 
 	def __init__(self, *args) -> None:
 		super().__init__(*args, defaults=None)
+
+class Mrk(_withunits_struct):
+	_fields = ("refX", "refY", "markerWidth", "markerHeight", "orient", "markerUnits") 
+	def __init__(self, *args) -> None:
+		l = len(args)
+		assert l >= 4, f"Mrk needs at least 4 arguments, {l} given"
+		if l > 5:
+			assert l[4] in (None, "strokeWidth", "userSpaceOnUse")
+		if l > 6:
+			assert isNumeric(l[5]) or l[5] == "auto"
+		super().__init__(*args, defaults=None)
+
+class MrkProps(_kwarg_attrs_struct):
+	_fields = ("marker-start", "marker-mid", "marker-end")
+	_funciris = _fields
+	def __init__(self, marker_start: Optional[str] = None, marker_mid: Optional[str] = None, marker_end: Optional[str] = None) -> None:
+		super().__init__(marker_start = marker_start, marker_mid = marker_mid, marker_end = marker_end)
 
 class BaseSVGElem(object):
 
@@ -144,6 +181,9 @@ class BaseSVGElem(object):
 		self._pendingXMLDependentOps = []
 		self.setStruct(struct)
 
+	def clone(self):
+		return BaseSVGElem(self.tag, struct=self.getStruct())
+
 	def _getTransform(self) -> str:
 		return " ".join([t.get() for t in self._transforms])
 
@@ -155,11 +195,11 @@ class BaseSVGElem(object):
 		return self.el
 
 	def setEl(self, xmlel) -> None:
-		assert self.el is None
+		assert not self.hasEl()
 		self.el = xmlel
 		strct = self._struct
 		if not strct is None:
-			strct.setXmlAttrs(self.el)
+			strct.setXmlAttrs(self.getEl())
 		# Things waiting to XML el to be de
 		if len(self._pendingXMLDependentOps) > 0:
 			op = self._pendingXMLDependentOps.pop(0)
@@ -183,8 +223,8 @@ class BaseSVGElem(object):
 
 	def removeEl(self):
 		assert self.hasEl(), self.NO_XML_EL
-		par = self.el.getparent()
-		par.remove(self.el)
+		par = self.getEl().getparent()
+		par.remove(self.getEl())
 		return par
 
 	def setText(self, p_text: str) -> None:
@@ -218,7 +258,7 @@ class BaseSVGElem(object):
 		]
 		if self.hasEl():
 			for x in self.getEl().keys():
-				out.append(f"{x}={self.el.get(x)}")
+				out.append(f"{x}={self.getEl().get(x)}")
 		return ' '.join(out)
 
 	def toJSON(self):
@@ -252,7 +292,7 @@ class BaseSVGElem(object):
 
 	def _updateStructAttrs(self):
 		if not self._struct is None:
-			self._struct.setXmlAttrs(self.el)
+			self._struct.setXmlAttrs(self.getEl())
 		return self
 
 	def updateStructAttrs(self):
@@ -267,7 +307,7 @@ class BaseSVGElem(object):
 	def getStruct(self) -> _withunits_struct:
 		assert not self._struct is None
 		if self.hasEl():
-			self._struct.getFromXmlAttrs(self.el)
+			self._struct.getFromXmlAttrs(self.getEl())
 		return self._struct
 
 	def getSelector(self, select='id'):
@@ -285,7 +325,7 @@ class BaseSVGElem(object):
 
 	def _updateStyleAttrs(self):
 		if not self._style is None and self.hasEl():
-			self._style.setXmlAttrs(self.el)
+			self._style.setXmlAttrs(self.getEl())
 		return self
 
 	def updateStyleAttrs(self):
@@ -305,7 +345,7 @@ class BaseSVGElem(object):
 		""" select: None, "id", "class", "tag" """
 		ret = None
 		if not self._style is None and self.hasEl():
-			self._style.fromXmlAttrs(self.el)
+			self._style.fromXmlAttrs(self.getEl())
 			sel = self.getSelector(select=select)
 			if not sel is None:
 				ret = CSSSty(selector=sel)
@@ -340,20 +380,20 @@ class BaseSVGElem(object):
 
 	def getParent(self):
 		assert self.hasEl(), self.NO_XML_EL
-		return self.el.getparent()
+		return self.getEl().getparent()
 
 	def readdElToParent(self, p_parent):
 		assert self.hasEl(), self.NO_XML_EL
-		p_parent.append(self.el)
+		p_parent.append(self.getEl())
 
 	def delEl(self):
-		self.el.getparent().remove(self.el)
+		self.getEl().getparent().remove(self.getEl())
 		self.el = None
 
 	def _setId(self, idval):
 		assert isinstance(idval, str)
 		assert self.hasEl(), self.NO_XML_EL
-		self.el.set('id', idval)
+		self.getEl().set('id', idval)
 		return self
 
 	def setId(self, idval):
@@ -362,17 +402,17 @@ class BaseSVGElem(object):
 
 	def getId(self):
 		assert self.hasEl(), self.NO_XML_EL
-		assert "id" in self.el.keys()
-		return self.el.get('id')
+		assert "id" in self.getEl().keys()
+		return self.getEl().get('id')
 
 	def hasId(self) -> bool:
 		assert self.hasEl(), self.NO_XML_EL
-		return "id" in self.el.keys()
+		return "id" in self.getEl().keys()
 
 	def _setClass(self, clsval):
 		assert isinstance(clsval, str)
 		assert self.hasEl(), self.NO_XML_EL
-		self.el.set('class', clsval)
+		self.getEl().set('class', clsval)
 		return self
 
 	def setClass(self, clsval):
@@ -381,12 +421,12 @@ class BaseSVGElem(object):
 
 	def getClass(self):
 		assert self.hasEl(), self.NO_XML_EL
-		assert "class" in self.el.keys()
-		return self.el.get('class')
+		assert "class" in self.getEl().keys()
+		return self.getEl().get('class')
 
 	def hasClass(self) -> bool:
 		assert self.hasEl(), self.NO_XML_EL
-		return "class" in self.el.keys()
+		return "class" in self.getEl().keys()
 
 	def getTag(self):
 		return self.tag
@@ -467,6 +507,8 @@ class SVGContainer(GenericSVGElem):
 			ret = super().addChild(p_child, parent=self._defs, nsmap=nsmap)
 		else:
 			ret = super().addChild(p_child, nsmap=nsmap)
+		if not self.genIDMethod is None and hasattr(ret, 'setGenIdMethod'):
+			ret.setGenIdMethod(self.genIDMethod)
 		return ret
 
 	def genNextId(self):
@@ -477,7 +519,7 @@ class SVGContainer(GenericSVGElem):
 
 	def _setViewbox(self, p_viewbox: VBox):
 		assert isinstance(p_viewbox, VBox)
-		p_viewbox.setXmlAttrs(self.el)
+		p_viewbox.setXmlAttrs(self.getEl())
 		return self
 
 	def setViewbox(self, p_viewbox: VBox):
@@ -491,7 +533,6 @@ class SVGContainer(GenericSVGElem):
 		vb.cloneFromRect(self.getStruct(), scale=scale)
 		return self.setViewbox(vb)
 
-
 class SVGRoot(SVGContainer):
 
 	def __init__(self, rect: Re, tree = None, viewbox: Optional[VBox] = None) -> None:
@@ -503,7 +544,7 @@ class SVGRoot(SVGContainer):
 		else:
 			raise RuntimeError("object supplied is not ElementTree")
 		assert not self.tree is None
-		self.el = self.tree.getroot()
+		self.setEl(self.tree.getroot())
 		self.setRect(rect)
 		# Viewbox must be (re)inited here: in SVGContainer __init__ , 
 		# 	setViewbox finds no XML Element, is not yet created)
@@ -513,7 +554,7 @@ class SVGRoot(SVGContainer):
 	def setRect(self, p_rect: Re):
 		assert isinstance(p_rect, Re)
 		self.setStruct(p_rect)
-		p_rect.setXmlAttrs(self.el)
+		p_rect.setXmlAttrs(self.getEl())
 		return self
 
 class Group(SVGContainer):
@@ -523,6 +564,10 @@ class Group(SVGContainer):
 class Defs(SVGContainer):
 	def __init__(self) -> None:
 		super().__init__('defs')
+
+class Marker(SVGContainer):
+	def __init__(self, *args) -> None:
+		super().__init__("marker", struct=Mrk(*args))
 
 class Use(BaseSVGElem):
 	def __init__(self, *args) -> None:
@@ -536,8 +581,6 @@ class Title(BaseSVGElem):
 	def __init__(self, p_titletext: str) -> None:
 		super().__init__("title")
 		self.dispatchXMLDependentOp(self.setText, args=(p_titletext,))
-
-
 
 class Style(BaseSVGElem):
 
@@ -595,9 +638,38 @@ class Ellipse(GenericSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("ellipse", struct=Elli(*args))
 
-class Line(GenericSVGElem):
-	def __init__(self, *args) -> None:
-		super().__init__("line", struct=Li(*args))
+class MarkeableSVGElem(GenericSVGElem):
+	def __init__(self, tag: str, struct: Optional[_withunits_struct] = None, marker_props: Optional[MrkProps] = None) -> None:
+		super().__init__(tag, struct=struct)
+		if not marker_props is None:
+			self.setMrkProps(marker_props)
+		else:
+			self._markerprops = None
+
+	def _updateMarkerAttrs(self):
+		if not self._markerprops is None and self.hasEl():
+			self._markerprops.setXmlAttrs(self.getEl())
+		return self
+
+	def updateMarkerAttrs(self):
+		if not self._markerprops is None:
+			self.dispatchXMLDependentOp(self._updateMarkerAttrs)
+		return self
+
+	def setMrkProps(self, mrkprp: MrkProps):
+		assert isinstance(mrkprp, MrkProps)
+		self._markerprops = mrkprp
+		return self.updateMarkerAttrs()
+
+	def hasMarkerProps(self):
+		return not self._markerprops is None
+
+	def getMrkProps(self) -> Union[None, MrkProps]:
+		return self._markerprops
+
+class Line(MarkeableSVGElem):
+	def __init__(self, *args, marker_props: Optional[MrkProps] = None) -> None:
+		super().__init__("line", struct=Li(*args), marker_props=marker_props)
 
 class Path(GenericSVGElem):
 	def __init__(self, *args) -> None:
@@ -669,9 +741,9 @@ class AnalyticalPath(Path):
 						self.cmds.append(pL(*pt))
 		self._refresh()
 
-class _pointsElement(GenericSVGElem):
-	def __init__(self, tag, *args) -> None:
-		super().__init__(tag, struct=Pl(*args))
+class _pointsElement(MarkeableSVGElem):
+	def __init__(self, tag, *args, marker_props: Optional[MrkProps] = None) -> None:
+		super().__init__(tag, struct=Pl(*args), marker_props=marker_props)
 		self.initialpoint = None
 		self.omitclosingpoint = False
 	def addPList(self, p_list: List[Pt], mindelta=MINDELTA):
@@ -686,14 +758,15 @@ class _pointsElement(GenericSVGElem):
 			buf.append("{0},{1}".format(*ptEnsureStrings(pt)))
 		self.getStruct().setall(" ".join(buf))
 		self.updateStructAttrs()
+		return self
 
 class Polyline(_pointsElement):
-	def __init__(self, *args) -> None:
-		super().__init__("polyline", *args)
+	def __init__(self, *args, marker_props: Optional[MrkProps] = None) -> None:
+		super().__init__("polyline", *args, marker_props=marker_props)
 
 class Polygon(_pointsElement):
-	def __init__(self, *args) -> None:
-		super().__init__("polygon", *args)
+	def __init__(self, *args, marker_props: Optional[MrkProps] = None) -> None:
+		super().__init__("polygon", *args, marker_props=marker_props)
 		self.omitclosingpoint = True
 
 
