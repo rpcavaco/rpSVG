@@ -198,6 +198,7 @@ class _withunits_struct(_attrs_struct):
 
 	def __init__(self, *args, defaults=None) -> None:
 		self._units = None
+		self._maxattrnum_to_applyunits = 4
 		self._strictparsing = True # False enables non-strict parsing of additional attribs, stops rasing exception for non-units attributes
 		if not "_units" in self._subfields:
 			self._subfields.append("_units")
@@ -220,7 +221,9 @@ class _withunits_struct(_attrs_struct):
 		if self._strictparsing:
 			assert self._units in ('px', 'pt', 'em', 'rem', '%'), f"invalid units: '{self._units}' not in 'px', 'pt', 'em', 'rem' or '%'"
 		if self._units in ('px', 'pt', 'em', 'rem', '%'):
-			for f in self._fields:
+			for fi, f in enumerate(self._fields):
+				if fi >= self._maxattrnum_to_applyunits:
+					break
 				if not hasattr(self, f):
 					continue
 				val = getattr(self, f)

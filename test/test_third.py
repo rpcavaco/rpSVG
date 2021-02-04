@@ -4,11 +4,11 @@ import pytest
 
 from rpcbSVG.Basics import Pt, Rotate, polar2rect, ptAdd, ptGetAngle
 from rpcbSVG.SVGstyle import CSSSty, Sty
-from rpcbSVG.SVGLib import Circle, Group, Line, Marker, Mrk, MrkProps, Polygon, Polyline, Re, SVGContent
+from rpcbSVG.SVGLib import Circle, GradientStop, Group, Line, LinearGradient, Marker, Mrk, MrkProps, Polygon, Polyline, RadialGradient, Re, RectRC, SVGContent
 
 #	with capsys.disabled():
 
-def test_Marker(capsys):
+def test_Marker():
 
 	def pttrans(p_pt, p_ang):
 		return (p_pt, ptAdd(p_pt, polar2rect(p_ang, 30)))
@@ -30,6 +30,7 @@ def test_Marker(capsys):
 	gr.addChild(pol.clone().setStyle(Sty('fill', 'blue')))
 	gr.addTransform(Rotate(180,5,3.5))
 
+	# node vertices marker
 	mr3 = sc.addChild(Marker(3,3,6,6, 0), todefs=True)
 	c = mr3.addChild(Circle(3,3,2)).setStyle(Sty('fill', 'powderblue', 'fill-opacity', '0.8'))
 
@@ -69,16 +70,36 @@ def test_Marker(capsys):
 	sc.addChild(Line( *pttrans(pts[0], ang1) ).setClass('aids'))
 	sc.addChild(Line( *pttrans(pts[5], ang2) ).setClass('aids'))
 
-
-
-
-
-
-	
-
 	with open('outtest/test_Marker.svg', 'w') as fl:
 		fl.write(sc.toString(pretty_print=True))
 
+
+def test_Gradient():
+
+	sc = SVGContent(Re(0,0,1600,1000)).setIdentityViewbox()
+
+	gr1 = sc.addChild(LinearGradient().setId("the_grad"), todefs=True)   
+	st1 = gr1.addChild(GradientStop("20%", "navy"))
+	gr1.addChild(GradientStop("80%", "aqua"))
+	gr1.addChild(GradientStop("95%", "blanchedalmond"))
+	gr1.addChild(GradientStop("100%", "white"))
+
+	assert st1.getStruct().getfields() == "offset,stop-color,stop-opacity"
+
+	gr2 = sc.addChild(RadialGradient(1150,700,200,1150,700, None, 'userSpaceOnUse').setId("the_rgrad"), todefs=True)   
+	gr2.addChild(GradientStop("0%", "mediumblue"))
+	gr2.addChild(GradientStop("60%", "white"))
+	gr2.addChild(GradientStop("80%", "white"))
+	gr2.addChild(GradientStop("100%", "navy"))
+
+	assert gr2.getStruct().getfields() == "cx,cy,r,fx,fy,{http://www.w3.org/1999/xlink}href,gradientUnits,spreadMethod,gradientTransform"
+
+	sc.addChild(RectRC(200,50,500,400,10,20)).setStyle(Sty('fill', 'url(#the_grad)', 'stroke', 'black'))
+	
+	sc.addChild(RectRC(850,500,600,400,10,20)).setStyle(Sty('fill', 'url(#the_rgrad)', 'stroke', 'black'))
+
+	with open('outtest/test_Gradient.svg', 'w') as fl:
+		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
 	#with capsys.disabled():
 	#	print("\nmr:", mr)

@@ -166,6 +166,37 @@ class MrkProps(_kwarg_attrs_struct):
 	def __init__(self, marker_start: Optional[str] = None, marker_mid: Optional[str] = None, marker_end: Optional[str] = None) -> None:
 		super().__init__(marker_start = marker_start, marker_mid = marker_mid, marker_end = marker_end)
 
+class GraSt(_attrs_struct):
+	_fields = ("offset", "stop-color", "stop-opacity") 
+	def __init__(self, *args) -> None:
+		super().__init__(*args, defaults=None)
+
+class LiGra(_withunits_struct):
+	_fields = ("x1",  "y1", "x2", "y2", f"{{{XLINK_NAMESPACE}}}href", "gradientUnits", "spreadMethod", "gradientTransform") 
+	def __init__(self, *args) -> None:
+		l =  len(args)
+		if l >= 2 and isinstance(args[0], Pt) and isinstance(args[1], Pt):
+			argslist = [args[0].x, args[0].y, args[1].x, args[1].y]
+			argslist.extend(args[2:])
+		else:
+			argslist = args
+		l2 = len(argslist)
+		if l2 > 5:
+			assert argslist[5] in ("userSpaceOnUse", "objectBoundingBox")
+		if l2 > 6:
+			assert argslist[6] in ("pad", "reflect", "repeat")
+		super().__init__(*argslist)
+
+class RaGra(_withunits_struct):
+	_fields = ("cx",  "cy", "r", "fx", "fy", f"{{{XLINK_NAMESPACE}}}href", "gradientUnits", "spreadMethod", "gradientTransform") 
+	def __init__(self, *args) -> None:
+		l =  len(args)
+		if l > 6:
+			assert args[6] in ("userSpaceOnUse", "objectBoundingBox")
+		if l > 7:
+			assert args[7] in ("pad", "reflect", "repeat")
+		super().__init__(*args)
+
 class BaseSVGElem(object):
 
 	NO_XML_EL = "XML Element not created yet. Must add this to SVGContainer to auto create it."
@@ -464,7 +495,7 @@ class GenericSVGElem(BaseSVGElem):
 		p_child.setEl(newel)
 		self.content.append(p_child)
 		
-		if not p_child.hasId():
+		if not p_child.hasId() and hasattr(self, 'genNextId'):
 			idval = self.genNextId()
 			if not idval is None:
 				p_child.setId(p_child.idprefix + str(idval))
@@ -768,6 +799,18 @@ class Polygon(_pointsElement):
 	def __init__(self, *args, marker_props: Optional[MrkProps] = None) -> None:
 		super().__init__("polygon", *args, marker_props=marker_props)
 		self.omitclosingpoint = True
+
+class GradientStop(BaseSVGElem):
+	def __init__(self, *args) -> None:
+		super().__init__("stop", struct=GraSt(*args))
+
+class LinearGradient(GenericSVGElem):
+	def __init__(self, *args) -> None:
+		super().__init__("linearGradient", struct=LiGra(*args))
+
+class RadialGradient(GenericSVGElem):
+	def __init__(self, *args) -> None:
+		super().__init__("radialGradient", struct=RaGra(*args))
 
 
 class SVGContent(SVGRoot):
