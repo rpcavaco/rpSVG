@@ -4,7 +4,7 @@ import pytest
 
 from rpcbSVG.Basics import Pt, Rotate, polar2rect, ptAdd, ptGetAngle
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.SVGLib import Circle, GradientStop, Group, Line, LinearGradient, Marker, Mrk, MrkProps, Polygon, Polyline, RadialGradient, Re, RectRC, SVGContent, TRef, TSpan, Text
+from rpcbSVG.SVGLib import AnalyticalPath, Circle, GradientStop, Group, Image, Line, LinearGradient, Marker, Mrk, MrkProps, Polygon, Polyline, RadialGradient, Re, RectRC, SVGContent, TRef, TSpan, Text, TextPath, Use
 
 #	with capsys.disabled():
 
@@ -103,8 +103,20 @@ def test_Gradient():
 
 def test_Text():
 
+	plist= [
+		Pt(100,900),
+		Pt(280,990),
+		Pt(460,820),
+		Pt(640,930),
+		Pt(820,890),
+		Pt(1000,1100)
+	]
+
 	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
 	td = sc.addChild(Text(), todefs=True).setText("Gatos ao ataque")
+
+	ap = sc.addChild(AnalyticalPath(), todefs=True)
+	ap.addPolylinePList(plist)
 
 	p = Pt(800,600)
 
@@ -113,21 +125,48 @@ def test_Text():
 	tx.setText("Aproveitar para fazer um ")
 
 	# gliphs dont rotate on gnome implementation
-	ts = tx.addChild(TSpan(None, None, None, None, -20).setStyle(Sty('fill', 'red')).setText("grande")  )
+
+	# Option 1 to rotate grlyphs, uglier
+	#ts = tx.addChild(TSpan(None, None, None, None, -20).setStyle(Sty('fill', 'red')).setText("grande")  )
+
+	ts = tx.addChild(TSpan().setStyle(Sty('fill', 'red')).setText("grande")  )
+	assert ts.getStruct().getfields() == "x,y,dx,dy,rotate,textLength,lengthAdjust"
+	
+	# Option 2 to rotate grlyphs, prettier
+	ts.setStructAttr("rotate", -20)
+
 	ts.tailText(" anúncio")
 
 	tx.addTransform(Rotate(45,*p))
 
 	assert tx.getStruct().getfields() == "x,y,dx,dy,rotate,textLength,lengthAdjust"
 
-
+	# browsers dont display this, gnome does
 	tx2 = sc.addChild(Text(200,900))   
 	tx2.setStyle(Sty('fill', 'green', 'font-size', 90))
 	tx2.addChild(TRef(td.getId()))
 
+	# along path - Gnome implementatio doesn't displays
+
+	tx3 = sc.addChild(Text().setStructAttr("dy", 10))   
+	tx3.setStyle(Sty('fill', '#6A5ACD', 'font-size', '30pt', 'font-family', 'Helvetica', 'text-anchor', 'middle'))
+	tp = tx3.addChild(TextPath(ap.getId(), '48%'))
+	tp.setText("Muito e muito texto espalhado ao longo deste caminho ...")
+
+	us = sc.addChild(Use().setStyle(Sty('stroke', 'grey', 'stroke-width', 2, 'stroke-linejoin', 'round')))
+	us.setHREFAttr(ap.getSel())
+
 	with open('outtest/test_Text.svg', 'w') as fl:
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
+def test_Image():
+
+	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
+
+	sc.addChild(Image(100,100,1400,916,"test_image.jpg"))
+
+	with open('outtest/test_Image.svg', 'w') as fl:
+		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
 	#with capsys.disabled():
 	#	print("\nmr:", mr)

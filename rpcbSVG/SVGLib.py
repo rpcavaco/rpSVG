@@ -14,7 +14,7 @@ from rpcbSVG.SVGStyleText import CSSSty, Sty
 from rpcbSVG.Basics import MINDELTA, Pt, XLINK_NAMESPACE, _withunits_struct, \
 	pClose, pH, pL, pM, pV, transform_def, path_command, \
 	ptCoincidence, removeDecsep, ptEnsureStrings
-from rpcbSVG.Structs import Ci, Elli, GraSt, Li, LiGra, Mrk, MrkProps, Pl, Pth, RaGra, Re, ReRC, Tx, TxRf, Us, VBox
+from rpcbSVG.Structs import Ci, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Pl, Pth, RaGra, Re, ReRC, Tx, TxPth, TxRf, Us, VBox
 
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
 
@@ -122,7 +122,7 @@ class BaseSVGElem(object):
 		self.dispatchXMLDependentOp(self._tailText, args=(p_text,))
 		return self
 
-	def setAttr(self, p_attr: str, p_value):
+	def _setDirectAttr(self, p_attr: str, p_value):
 		assert self.hasEl(), self.NO_XML_EL
 		self.getEl().set(p_attr, p_value)
 		return self
@@ -200,6 +200,18 @@ class BaseSVGElem(object):
 		if self.hasEl():
 			self._struct.getFromXmlAttrs(self.getEl())
 		return self._struct
+
+	def setStructAttr(self, p_attr: str, p_value):
+		stru = self.getStruct()
+		stru.set(p_attr, p_value)
+		self.updateStructAttrs()
+		return self
+
+	def setHREFAttr(self, p_value):
+		stru = self.getStruct()
+		stru.setHREF(p_value)
+		self.updateStructAttrs()
+		return self
 
 	def getSelector(self, select='id'):
 		assert select in (None, "id", "class", "tag")
@@ -737,4 +749,12 @@ class TSpan(GenericSVGElem):
 class TRef(GenericSVGElem):
 	def __init__(self, p_text: str) -> None:
 		super().__init__("tref", struct=TxRf(p_text))
+
+class TextPath(GenericSVGElem):
+	def __init__(self, *args) -> None:
+		super().__init__("textPath", struct=TxPth(*args))
+
+class Image(GenericSVGElem):
+	def __init__(self, *args) -> None:
+		super().__init__("image", struct=Img(*args))
 

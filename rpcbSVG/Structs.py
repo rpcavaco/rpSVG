@@ -2,7 +2,7 @@
 from typing import Optional
 from math import atan, degrees
 
-from rpcbSVG.Basics import MINDELTA, Pt, Env, XLINK_NAMESPACE, _attrs_struct, _withunits_struct, _kwarg_attrs_struct, isNumeric
+from rpcbSVG.Basics import MINDELTA, Pt, Env, XLINK_NAMESPACE, _attrs_struct, _withunits_struct, _kwarg_attrs_struct, hashed_href, isNumeric
 
 
 class Re(_withunits_struct):
@@ -87,6 +87,7 @@ class Us(_withunits_struct):
 	_fields = ("x",  "y", "width", "height", f"{{{XLINK_NAMESPACE}}}href") 
 	def __init__(self, *args) -> None:
 		l =  len(args)
+		argslist = None
 		if l != 5:
 			if l == 2:
 				if isinstance(args[0], Pt) and isinstance(args[1], str):
@@ -94,10 +95,8 @@ class Us(_withunits_struct):
 				elif isinstance(args[0], Re) and isinstance(args[1], str):
 					argslist = (args[0].x, args[0].y, args[0].width, args[0].height, args[1])
 				else:
-					raise TypeError(f"'Us' element requires exactly 2 (Pt and str) or 5 argumens, 2 given with types ({str(type(args[0]))},{str(type(args[1]))})")
-			else:
-				raise TypeError(f"'Us' element requires exactly 2 or 5 arguments, {l} given")
-		else:
+					raise TypeError(f"'Us' element was given 2 arguments with types ({str(type(args[0]))},{str(type(args[1]))}), expected Pt+str or Re+str")
+		if argslist is None:
 			argslist = args
 		super().__init__(*argslist, defaults=None)
 
@@ -152,6 +151,7 @@ class LiGra(_withunits_struct):
 class RaGra(_withunits_struct):
 	_fields = ("cx",  "cy", "r", "fx", "fy", f"{{{XLINK_NAMESPACE}}}href", "gradientUnits", "spreadMethod", "gradientTransform") 
 	def __init__(self, *args) -> None:
+		#argslist = list(args)
 		l =  len(args)
 		if l > 6:
 			assert args[6] in ("userSpaceOnUse", "objectBoundingBox")
@@ -162,16 +162,43 @@ class RaGra(_withunits_struct):
 class Tx(_withunits_struct):
 	_fields = ("x",  "y", "dx", "dy", "rotate", "textLength", "lengthAdjust") 
 	def __init__(self, *args) -> None:
-		super().__init__(*args)
 		l =  len(args)
 		if l > 6:
 			assert args[6] in ("spacing", "spacingAndGlyphs")
+		super().__init__(*args)
 
 class TxRf(_attrs_struct):
 	_fields = (f"{{{XLINK_NAMESPACE}}}href",) 
 	def __init__(self, p_text: str) -> None:
-		if not p_text.startswith('#'):
-			v_text = f"#{p_text}"
-		else:
-			v_text = p_text
-		super().__init__(v_text)
+		super().__init__(hashed_href(p_text))
+
+class TxPth(_withunits_struct):
+	_fields = (f"{{{XLINK_NAMESPACE}}}href", "startOffset",  "method", "spacing") 
+	def __init__(self, *args) -> None:
+		argslist = list(args)
+		l =  len(argslist)
+		if l > 0:
+			argslist[0] = hashed_href(argslist[0])
+		if l > 2:
+			assert argslist[2] in ("align", "stretch")
+		if l > 3:
+			assert argslist[3] in ("auto", "exact")
+		super().__init__(*argslist)
+
+class Img(_withunits_struct):
+	_fields = ("x",  "y", "width", "height", f"{{{XLINK_NAMESPACE}}}href", "preserveAspectRatio") 
+	def __init__(self, *args) -> None:
+		l =  len(args)
+		argslist = None
+		if l != 6:
+			if l == 2:
+				if isinstance(args[0], Pt) and isinstance(args[1], str):
+					argslist = (args[0].x, args[0].y, None, None, args[1])
+				elif isinstance(args[0], Re) and isinstance(args[1], str):
+					argslist = (args[0].x, args[0].y, args[0].width, args[0].height, args[1])
+				else:
+					raise TypeError(f"'Img' element was given 2 arguments with types ({str(type(args[0]))},{str(type(args[1]))}), expected Pt+str or Re+str")
+		if argslist is None:
+			argslist = args
+		super().__init__(*argslist, defaults=None)
+

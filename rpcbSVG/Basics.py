@@ -64,6 +64,23 @@ def isNumeric(p_val):
 		ret = False
 	return ret
 
+def url_href(p_text):
+	if not p_text.startswith('url'):
+		if not p_text.startswith('#'):
+			v_text = f"url(#{p_text})"
+		else:
+			v_text = f"url({p_text})"
+	else:
+		v_text = p_text
+	return v_text
+
+def hashed_href(p_text):
+	if not p_text.startswith('#'):
+		v_text = f"#{p_text}"
+	else:
+		v_text = p_text
+	return v_text
+
 class WrongValueTransformDef(RuntimeError):
 	def __init__(self, p_class_instance, p_attr):
 		self.classname = p_class_instance.__class__.__name__
@@ -126,6 +143,14 @@ class _attrs_struct(object):
 	def has(self, p_attr: str):
 		return p_attr in self._fields
 
+	def hasHREF(self):
+		ret = False
+		for f in self._fields:
+			if f.endswith("href"):
+				ret = True
+				break
+		return ret
+
 	def get(self, p_attr: str):
 		ret = None
 		if self.has(p_attr) and hasattr(self, p_attr):
@@ -135,6 +160,14 @@ class _attrs_struct(object):
 	def set(self, p_attr: str, p_value):
 		if self.has(p_attr):
 			setattr(self, p_attr, str(p_value))
+		return self
+
+	def setHREF(self, p_value):
+		for f in self._fields:
+			if f.endswith("href"):
+				setattr(self, f, str(p_value))
+				break
+		return self
 
 	def getNumeric(self, p_attr: str) -> float:
 		ret = None
