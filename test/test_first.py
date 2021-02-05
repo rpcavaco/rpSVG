@@ -2,9 +2,10 @@
 import pytest, re
 
 from rpcbSVG.Basics import Pt, Env
-from rpcbSVG.SVGLib import BaseSVGElem, Circle, Ellipse, Group, Line, Re, ReRC, \
-	Rect, Style, SVGContent, SVGRoot, TagOutOfDirectUserManipulation, VBox600x800
-from rpcbSVG.SVGstyle import Sty, CSSSty
+from rpcbSVG.Structs import Re, ReRC, VBox600x800
+from rpcbSVG.SVGLib import BaseSVGElem, Circle, Ellipse, Group, Line,  \
+	Rect, SVGContent, SVGRoot, TagOutOfDirectUserManipulation
+from rpcbSVG.SVGStyleText import Sty, CSSSty
 
 from lxml import etree
 

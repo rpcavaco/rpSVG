@@ -4,18 +4,18 @@
 
 
 from io import StringIO
-from math import atan, degrees
+
 from typing import Optional, List, Union
-from collections import namedtuple
+
 
 from lxml import etree
 
-from rpcbSVG.SVGstyle import CSSSty, Sty
-from rpcbSVG.Basics import MINDELTA, Pt, Env, _attrs_struct, _withunits_struct, \
-	_kwarg_attrs_struct, pClose, pH, pL, pM, pV, transform_def, path_command, \
-	ptCoincidence, removeDecsep, ptEnsureStrings, isNumeric
+from rpcbSVG.SVGStyleText import CSSSty, Sty
+from rpcbSVG.Basics import MINDELTA, Pt, XLINK_NAMESPACE, _withunits_struct, \
+	pClose, pH, pL, pM, pV, transform_def, path_command, \
+	ptCoincidence, removeDecsep, ptEnsureStrings
+from rpcbSVG.Structs import Ci, Elli, GraSt, Li, LiGra, Mrk, MrkProps, Pl, Pth, RaGra, Re, ReRC, Tx, TxRf, Us, VBox
 
-XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
 
 DOCTYPE_STR = """<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
@@ -43,160 +43,6 @@ class TagOutOfDirectUserManipulation(RuntimeError):
 # 	svg.render_cairo(ctx)
 # 	img.write_to_png(filename)
 						
-class Re(_withunits_struct):
-	_fields = ("x",  "y", "width", "height") 
-	def __init__(self, *args, defaults=["0"]) -> None:
-		if len(args) == 1 and isinstance(args[0], list):
-			super().__init__(*args[0], defaults=defaults)
-		else:
-			super().__init__(*args, defaults=defaults)
-	def fromEnv(self, p_env: Env) -> None:
-		super().setall(p_env.getRectParams()) 
-		return self
-	def full(self):
-		self.y = self.x = "0"
-		self.width = self.height = "100"
-		self.setUnits('%')
-		return self
-
-class VBox(_withunits_struct):
-	_fields = ("viewBox",)
-	def __init__(self, *args) -> None:
-		if len(args) == 1 and isinstance(args[0], list):
-			super().__init__(*args[0], defaults=["0"])
-		else:
-			super().__init__(*args, defaults=["0"])
-		rect = Re(*args)
-		cont = " ".join(list(rect.iterUnitsRemoved()))
-		super().__init__(cont)
-	def cloneFromRect(self, p_rect: Re, scale: Optional[float] = None):
-		if not scale is None:
-			cont = " ".join([str(round(float(at) * scale)) for at in p_rect.iterUnitsRemoved()])
-		else:
-			cont = " ".join(list(p_rect.iterUnitsRemoved()))
-		self.viewBox = cont
-
-class VBox600x800(VBox):
-	def __init__(self) -> None:
-		super().__init__(0, 0, 600, 800)
-
-class VBox1280x1024(VBox):
-	def __init__(self) -> None:
-		super().__init__(0, 0, 1280, 1024)
-
-class ReRC(Re):
-	_fields = ("x",  "y", "width", "height", "rx", "ry") 
-	def __init__(self, *args) -> None:
-		super().__init__(*args, defaults=None)
-
-class Ci(_withunits_struct):
-	_fields = ("cx",  "cy", "r") 
-	def __init__(self, *args) -> None:
-		super().__init__(*args, defaults=["0"])
-
-class Elli(_withunits_struct):
-	_fields = ("cx",  "cy", "rx", "ry") 
-	def __init__(self, *args) -> None:
-		super().__init__(*args, defaults=["0"])
-
-class Li(_withunits_struct):
-	_fields = ("x1",  "y1", "x2", "y2") 
-	def __init__(self, *args) -> None:
-		l =  len(args)
-		if l == 2 and isinstance(args[0], Pt) and isinstance(args[1], Pt):
-			argslist = (args[0].x, args[0].y, args[1].x, args[1].y)
-		else:
-			argslist = args
-		super().__init__(*argslist, defaults=["0"])
-	def getAngle(self):
-		ret = None
-		dx = float(getattr(self, "x2")) - float(getattr(self, "x1"))
-		dy = float(getattr(self, "y2")) - float(getattr(self, "y1"))
-		if dx < MINDELTA:
-			if dy > MINDELTA:
-				ret = 90
-			if dy < MINDELTA:
-				ret = 270
-		else:
-			ret = degrees(atan(dy/dx))
-		return ret
-
-class Us(_withunits_struct):
-	_fields = ("x",  "y", "width", "height", f"{{{XLINK_NAMESPACE}}}href") 
-	def __init__(self, *args) -> None:
-		l =  len(args)
-		if l != 5:
-			if l == 2:
-				if isinstance(args[0], Pt) and isinstance(args[1], str):
-					argslist = (args[0].x, args[0].y, None, None, args[1])
-				elif isinstance(args[0], Re) and isinstance(args[1], str):
-					argslist = (args[0].x, args[0].y, args[0].width, args[0].height, args[1])
-				else:
-					raise TypeError(f"'Us' element requires exactly 2 (Pt and str) or 5 argumens, 2 given with types ({str(type(args[0]))},{str(type(args[1]))})")
-			else:
-				raise TypeError(f"'Us' element requires exactly 2 or 5 arguments, {l} given")
-		else:
-			argslist = args
-		super().__init__(*argslist, defaults=None)
-
-class Pth(_withunits_struct):
-	_fields = ("d") 
-	def __init__(self, *args) -> None:
-		super().__init__(*args, defaults=None)
-
-class Pl(_withunits_struct):
-	_fields = ("points",) 
-	def __init__(self, *args) -> None:
-		super().__init__(*args, defaults=None)
-
-class Mrk(_withunits_struct):
-	_fields = ("refX", "refY", "markerWidth", "markerHeight", "orient", "markerUnits") 
-	def __init__(self, *args) -> None:
-		l = len(args)
-		assert l >= 4, f"Mrk needs at least 4 arguments, {l} given"
-		if l > 5:
-			assert l[4] in (None, "strokeWidth", "userSpaceOnUse")
-		if l > 6:
-			assert isNumeric(l[5]) or l[5] == "auto"
-		super().__init__(*args, defaults=None)
-
-class MrkProps(_kwarg_attrs_struct):
-	_fields = ("marker-start", "marker-mid", "marker-end")
-	_funciris = _fields
-	def __init__(self, marker_start: Optional[str] = None, marker_mid: Optional[str] = None, marker_end: Optional[str] = None) -> None:
-		super().__init__(marker_start = marker_start, marker_mid = marker_mid, marker_end = marker_end)
-
-class GraSt(_attrs_struct):
-	_fields = ("offset", "stop-color", "stop-opacity") 
-	def __init__(self, *args) -> None:
-		super().__init__(*args, defaults=None)
-
-class LiGra(_withunits_struct):
-	_fields = ("x1",  "y1", "x2", "y2", f"{{{XLINK_NAMESPACE}}}href", "gradientUnits", "spreadMethod", "gradientTransform") 
-	def __init__(self, *args) -> None:
-		l =  len(args)
-		if l >= 2 and isinstance(args[0], Pt) and isinstance(args[1], Pt):
-			argslist = [args[0].x, args[0].y, args[1].x, args[1].y]
-			argslist.extend(args[2:])
-		else:
-			argslist = args
-		l2 = len(argslist)
-		if l2 > 5:
-			assert argslist[5] in ("userSpaceOnUse", "objectBoundingBox")
-		if l2 > 6:
-			assert argslist[6] in ("pad", "reflect", "repeat")
-		super().__init__(*argslist)
-
-class RaGra(_withunits_struct):
-	_fields = ("cx",  "cy", "r", "fx", "fy", f"{{{XLINK_NAMESPACE}}}href", "gradientUnits", "spreadMethod", "gradientTransform") 
-	def __init__(self, *args) -> None:
-		l =  len(args)
-		if l > 6:
-			assert args[6] in ("userSpaceOnUse", "objectBoundingBox")
-		if l > 7:
-			assert args[7] in ("pad", "reflect", "repeat")
-		super().__init__(*args)
-
 class BaseSVGElem(object):
 
 	NO_XML_EL = "XML Element not created yet. Must add this to SVGContainer to auto create it."
@@ -258,9 +104,22 @@ class BaseSVGElem(object):
 		par.remove(self.getEl())
 		return par
 
-	def setText(self, p_text: str) -> None:
+	def _setText(self, p_text: str) -> None:
+		assert isinstance(p_text, str)
 		assert self.hasEl(), self.NO_XML_EL
 		self.getEl().text = p_text
+
+	def setText(self, p_text: str):
+		self.dispatchXMLDependentOp(self._setText, args=(p_text,))
+		return self
+
+	def _tailText(self, p_text: str) -> None:
+		assert isinstance(p_text, str)
+		assert self.hasEl(), self.NO_XML_EL
+		self.getEl().tail = p_text
+
+	def tailText(self, p_text: str):
+		self.dispatchXMLDependentOp(self._tailText, args=(p_text,))
 		return self
 
 	def setAttr(self, p_attr: str, p_value):
@@ -322,6 +181,7 @@ class BaseSVGElem(object):
 		return ret
 
 	def _updateStructAttrs(self):
+		assert self.hasEl()
 		if not self._struct is None:
 			self._struct.setXmlAttrs(self.getEl())
 		return self
@@ -425,9 +285,9 @@ class BaseSVGElem(object):
 		assert isinstance(idval, str)
 		assert self.hasEl(), self.NO_XML_EL
 		self.getEl().set('id', idval)
-		return self
 
 	def setId(self, idval):
+		assert isinstance(idval, str)
 		self.dispatchXMLDependentOp(self._setId, args=(idval,))
 		return self
 
@@ -444,7 +304,6 @@ class BaseSVGElem(object):
 		assert isinstance(clsval, str)
 		assert self.hasEl(), self.NO_XML_EL
 		self.getEl().set('class', clsval)
-		return self
 
 	def setClass(self, clsval):
 		self.dispatchXMLDependentOp(self._setClass, args=(clsval,))
@@ -587,6 +446,61 @@ class SVGRoot(SVGContainer):
 		self.setStruct(p_rect)
 		p_rect.setXmlAttrs(self.getEl())
 		return self
+
+class SVGContent(SVGRoot):
+
+	forbidden_user_tags = ["defs", "style"]
+	def __init__(self, rect: Re, viewbox: Optional[VBox] = None) -> None:
+		super().__init__(rect, viewbox=viewbox)
+		self._id_serial = 0
+		self._defs = super().addChild(Defs())
+		self._styleel = self._defs.addChild(Style())
+
+	def nextIDSerial(self):
+		ret = self._id_serial
+		self._id_serial = self._id_serial + 1
+		return ret
+
+	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None) -> BaseSVGElem:
+		if p_child.tag in self.forbidden_user_tags:
+			raise TagOutOfDirectUserManipulation(p_child.tag)
+		if todefs:
+			assert not self._defs is None
+			ret = self._defs.addChild(p_child, nsmap=nsmap)
+		else:
+			ret = super().addChild(p_child, nsmap=nsmap)
+		if not ret.hasId():
+			ret.setId(p_child.idprefix + str(self.nextIDSerial()))
+		if isinstance(ret, SVGContainer):
+			ret.setGenIdMethod(self.nextIDSerial)
+		return ret
+
+	def addStyleRule(self, p_child: CSSSty) -> str:
+		return self._styleel.addRule(p_child)
+
+	def delStyleRule(self, selector: str) -> bool:
+		return self._styleel.delRule(selector)
+
+	def render(self):
+		return self._styleel.render(depth=-1)
+
+	def toBytes(self, inc_declaration=False, inc_doctype=False, pretty_print=True):
+		parelem = None
+		if not self.render():
+			parelem = self._styleel.removeEl()
+
+		if inc_doctype:
+			ret = etree.tostring(self.getEl(), doctype=DOCTYPE_STR, xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')
+		else:
+			ret = etree.tostring(self.getEl(), xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')	
+
+		if not parelem is None:
+			self._styleel.readdElToParent(parelem)
+
+		return ret
+
+	def toString(self, inc_declaration=False, inc_doctype=False, pretty_print=True):
+		return self.toBytes(inc_declaration=inc_declaration, inc_doctype=inc_doctype, pretty_print=pretty_print).decode('utf-8')
 
 class Group(SVGContainer):
 	def __init__(self) -> None:
@@ -812,61 +726,15 @@ class RadialGradient(GenericSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("radialGradient", struct=RaGra(*args))
 
+class Text(GenericSVGElem):
+	def __init__(self, *args) -> None:
+		super().__init__("text", struct=Tx(*args))
 
-class SVGContent(SVGRoot):
+class TSpan(GenericSVGElem):
+	def __init__(self, *args) -> None:
+		super().__init__("tspan", struct=Tx(*args))
 
-	forbidden_user_tags = ["defs", "style"]
-	def __init__(self, rect: Re, viewbox: Optional[VBox] = None) -> None:
-		super().__init__(rect, viewbox=viewbox)
-		self._id_serial = 0
-		self._defs = super().addChild(Defs())
-		self._styleel = self._defs.addChild(Style())
-
-	def nextIDSerial(self):
-		ret = self._id_serial
-		self._id_serial = self._id_serial + 1
-		return ret
-
-	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None) -> BaseSVGElem:
-		if p_child.tag in self.forbidden_user_tags:
-			raise TagOutOfDirectUserManipulation(p_child.tag)
-		if todefs:
-			assert not self._defs is None
-			ret = self._defs.addChild(p_child, nsmap=nsmap)
-		else:
-			ret = super().addChild(p_child, nsmap=nsmap)
-		if not ret.hasId():
-			ret.setId(p_child.idprefix + str(self.nextIDSerial()))
-		if isinstance(ret, SVGContainer):
-			ret.setGenIdMethod(self.nextIDSerial)
-		return ret
-
-	def addStyleRule(self, p_child: CSSSty) -> str:
-		return self._styleel.addRule(p_child)
-
-	def delStyleRule(self, selector: str) -> bool:
-		return self._styleel.delRule(selector)
-
-	def render(self):
-		return self._styleel.render(depth=-1)
-
-	def toBytes(self, inc_declaration=False, inc_doctype=False, pretty_print=True):
-		parelem = None
-		if not self.render():
-			parelem = self._styleel.removeEl()
-
-		if inc_doctype:
-			ret = etree.tostring(self.getEl(), doctype=DOCTYPE_STR, xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')
-		else:
-			ret = etree.tostring(self.getEl(), xml_declaration=inc_declaration, pretty_print=pretty_print, encoding='utf-8')	
-
-		if not parelem is None:
-			self._styleel.readdElToParent(parelem)
-
-		return ret
-
-	def toString(self, inc_declaration=False, inc_doctype=False, pretty_print=True):
-		return self.toBytes(inc_declaration=inc_declaration, inc_doctype=inc_doctype, pretty_print=pretty_print).decode('utf-8')
-
-	
+class TRef(GenericSVGElem):
+	def __init__(self, p_text: str) -> None:
+		super().__init__("tref", struct=TxRf(p_text))
 

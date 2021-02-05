@@ -3,8 +3,8 @@
 import pytest
 
 from rpcbSVG.Basics import Pt, Rotate, polar2rect, ptAdd, ptGetAngle
-from rpcbSVG.SVGstyle import CSSSty, Sty
-from rpcbSVG.SVGLib import Circle, GradientStop, Group, Line, LinearGradient, Marker, Mrk, MrkProps, Polygon, Polyline, RadialGradient, Re, RectRC, SVGContent
+from rpcbSVG.SVGStyleText import CSSSty, Sty
+from rpcbSVG.SVGLib import Circle, GradientStop, Group, Line, LinearGradient, Marker, Mrk, MrkProps, Polygon, Polyline, RadialGradient, Re, RectRC, SVGContent, TRef, TSpan, Text
 
 #	with capsys.disabled():
 
@@ -100,6 +100,34 @@ def test_Gradient():
 
 	with open('outtest/test_Gradient.svg', 'w') as fl:
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+
+def test_Text():
+
+	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
+	td = sc.addChild(Text(), todefs=True).setText("Gatos ao ataque")
+
+	p = Pt(800,600)
+
+	tx = sc.addChild(Text(*p))   
+	tx.setStyle(Sty('fill', 'teal', 'font-size', 70, 'text-anchor', 'middle'))
+	tx.setText("Aproveitar para fazer um ")
+
+	# gliphs dont rotate on gnome implementation
+	ts = tx.addChild(TSpan(None, None, None, None, -20).setStyle(Sty('fill', 'red')).setText("grande")  )
+	ts.tailText(" anúncio")
+
+	tx.addTransform(Rotate(45,*p))
+
+	assert tx.getStruct().getfields() == "x,y,dx,dy,rotate,textLength,lengthAdjust"
+
+
+	tx2 = sc.addChild(Text(200,900))   
+	tx2.setStyle(Sty('fill', 'green', 'font-size', 90))
+	tx2.addChild(TRef(td.getId()))
+
+	with open('outtest/test_Text.svg', 'w') as fl:
+		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+
 
 	#with capsys.disabled():
 	#	print("\nmr:", mr)

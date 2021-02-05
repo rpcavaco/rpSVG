@@ -7,6 +7,8 @@ from math import atan, cos, sin, radians, degrees
 
 Pt = namedtuple("Pt", "x y")
 
+XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
+
 MAXCOORD = 99999999999.9
 MINCOORD = -MAXCOORD
 MINDELTA = 0.001
