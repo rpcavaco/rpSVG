@@ -58,7 +58,7 @@ def test_Envelope():
 	s.addChild(Rect( Env().centerAndDims(Pt(12,34), 300, 800).getRectParams() ))
 	retstr = s.toString().replace('\n', '')
 	condens = re.sub(r"[\s]+"," ", retstr)
-	assert condens ==  '''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs/> <rect x="-138.0" y="-366.0" width="300.0" height="800.0" id="Rec0"/></svg>'''
+	assert condens ==  '''<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs/> <rect x="-138" y="-366" width="300" height="800" id="Rec0"/></svg>'''
 
 def test_Sty():
 	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)

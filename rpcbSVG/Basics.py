@@ -21,11 +21,45 @@ def ptAdd(pa: Pt, pb: Pt):
 	return Pt(pa.x + pb.x, pa.y + pb.y)
 
 def removeDecsep(p_val):
-	r = round(p_val)
+	r = int(p_val)
 	if r == p_val:
 		ret = r
 	else:
 		ret = p_val
+	return ret
+
+def toNumberAndUnit(p_val):
+	base = str(p_val)
+	numchars = []
+	unitchars = []
+	for c in base:
+		if str.isdigit(c) or c in ('.', ',', '-'):
+			numchars.append(c)
+		else:
+			unitchars.append(c)
+	if len(unitchars) > 0:
+		un = ''.join(unitchars)
+	else:
+		un = None
+	return removeDecsep(float(''.join(numchars))), un
+
+def getUnit(p_val):
+	base = str(p_val)
+	unitchars = []
+	for c in base:
+		if not str.isdigit(c) and not c in ('.', ',', '-'):
+			unitchars.append(c)
+	if len(unitchars) > 0:
+		un = ''.join(unitchars)
+	else:
+		un = None
+	return un
+
+def fromNumberAndUnit(p_num, p_unit):
+	if p_unit is None:
+		ret = str(removeDecsep(p_num))
+	else:
+		ret = f"{p_num}{p_unit}"
 	return ret
 
 def ptEnsureStrings(p_pt: Pt):
@@ -348,26 +382,34 @@ class Env(_attrs_struct):
 		changed = False
 		for pt in p_ptlist:
 			changed = True
-			if pt.x < minx:
-				minx = pt.x
-			if pt.y < miny:
-				miny = pt.y
-			if pt.x > maxx:
-				maxx = pt.x
-			if pt.y > maxy:
-				maxy = pt.y
+			vx,u = toNumberAndUnit(pt.x)
+			if vx < minx:
+				minx = vx
+			vy,u = toNumberAndUnit(pt.y)
+			if vy < miny:
+				miny = vy
+			if vx > maxx:
+				maxx = vx
+			if vy > maxy:
+				maxy = vy
 		if changed:
-			self.minx = minx
-			self.miny = miny
-			self.maxx = maxx
-			self.maxy = maxy
+			self.minx = fromNumberAndUnit(minx, getUnit(self.minx))
+			self.miny = fromNumberAndUnit(miny, getUnit(self.miny))
+			self.maxx = fromNumberAndUnit(maxx, getUnit(self.maxx))
+			self.maxy = fromNumberAndUnit(maxy, getUnit(self.maxy))
 	def getWidth(self):
-		return float(self.maxx) - float(self.minx)
+		a,u = toNumberAndUnit(self.maxx)
+		b,u = toNumberAndUnit(self.minx)
+		return a - b
 	def getHeight(self):
-		return float(self.maxy) - float(self.miny)
+		a,u = toNumberAndUnit(self.maxy)
+		b,u = toNumberAndUnit(self.miny)
+		return a - b
 	def getMidPt(self) -> Pt:
-		return Pt(self.minx + (self.getWidth() / 2.0),
-					self.miny + (self.getHeight() / 2.0))
+		a,u = toNumberAndUnit(self.minx)
+		b,u = toNumberAndUnit(self.miny)
+		return Pt(a + (self.getWidth() / 2.0),
+					b + (self.getHeight() / 2.0))
 	def getRectParams(self):
 		outlist = []
 		outlist.append(self.minx)
@@ -382,29 +424,41 @@ class Env(_attrs_struct):
 		self.maxy = other.maxy
 		return self
 	def centerAndDims(self, cntPt, dimx, dimy):
-		self.minx = cntPt.x - dimx/2.0
-		self.miny = cntPt.y - dimy/2.0
-		self.maxx = cntPt.x + dimx/2.0
-		self.maxy = cntPt.y + dimy/2.0
+		self.minx = removeDecsep(float(cntPt.x) - dimx/2.0)
+		self.miny = removeDecsep(float(cntPt.y) - dimy/2.0)
+		self.maxx = removeDecsep(float(cntPt.x) + dimx/2.0)
+		self.maxy = removeDecsep(float(cntPt.y) + dimy/2.0)
 		return self
 	def expandFromOther(self, other):
-		if other.minx < self.minx:
-			self.minx = other.minx
-		if other.miny < self.miny:
-			self.miny = other.miny
-		if other.maxx > self.maxx:
-			self.maxx = other.maxx
-		if other.maxy > self.maxy:
-			self.maxy = other.maxy
+		a,u = toNumberAndUnit(self.minx)
+		b,u = toNumberAndUnit(self.miny)
+		c,u = toNumberAndUnit(self.maxx)
+		d,u = toNumberAndUnit(self.maxy)
+		e,u = toNumberAndUnit(other.minx)
+		f,u = toNumberAndUnit(other.miny)
+		g,u = toNumberAndUnit(other.maxx)
+		h,u = toNumberAndUnit(other.maxy)
+		if e < a:
+			self.minx = e
+		if f < b:
+			self.miny = f
+		if g > c:
+			self.maxx = g
+		if h > d:
+			self.maxy = h
 		return self
 	def expandFromPoint(self, pt):
-		if pt.x < self.minx:
+		a,u = toNumberAndUnit(self.minx)
+		b,u = toNumberAndUnit(self.miny)
+		c,u = toNumberAndUnit(self.maxx)
+		d,u = toNumberAndUnit(self.maxy)
+		if pt.x < a:
 			self.minx = pt.x
-		if pt.y < self.miny:
+		if pt.y < b:
 			self.miny = pt.y
-		if pt.x > self.maxx:
+		if pt.x > c:
 			self.maxx = pt.x
-		if pt.y > self.maxy:
+		if pt.y > d:
 			self.maxy = pt.y
 		return self
 	def expand(self, ratio):
@@ -416,6 +470,10 @@ class Env(_attrs_struct):
 		self.maxx = pt.x + newhwidth 
 		self.maxy = pt.y + newhheight 	
 		return self
+	def invertY(self):
+		tmp = self.maxy
+		self.maxy = self.miny
+		self.miny = tmp
 
 # transforms
 
@@ -495,6 +553,8 @@ class SkewY(transform_def):
 class path_command(_attrs_struct):
 	_fields = ()
 	_letter = ""
+	_y_valinverts = ()
+	_y_signinverts = ()
 	
 	def __init__(self, *args) -> None:
 		super().__init__(*args, defaults=None)
@@ -545,6 +605,9 @@ class path_command(_attrs_struct):
 			raise WrongValuePathCmd(self, p_field)
 		setattr(self, p_field, str(p_value))
 		return self
+	def yinvert(self, p_yheight):
+		for f in self._y_valinverts:
+			self.setvalue(f, toNumber(self.getvalue))
 
 class rel_path_command(path_command):
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
