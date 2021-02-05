@@ -14,6 +14,13 @@ MINCOORD = -MAXCOORD
 MINDELTA = 0.001
 NANODELTA = 0.000001
 
+class ValueWithUnitsError(RuntimeError):
+	def __init__(self, p_val) -> None:
+		super().__init__()
+		self.val = p_val
+	def __str__(self):
+		return f"no units allowed here, found: {self.val}"
+
 def ptCoincidence(pa: Pt, pb: Pt, mindelta=MINDELTA):
 	return abs(pa.x - pb.x) < mindelta and abs(pa.y - pb.y)  < mindelta
 
@@ -42,6 +49,16 @@ def toNumberAndUnit(p_val):
 	else:
 		un = None
 	return removeDecsep(float(''.join(numchars))), un
+
+def strictToNumber(p_val):
+	base = str(p_val)
+	numchars = []
+	for c in base:
+		if str.isdigit(c) or c in ('.', ',', '-'):
+			numchars.append(c)
+		else:
+			raise ValueWithUnitsError(p_val)
+	return removeDecsep(float(''.join(numchars)))
 
 def getUnit(p_val):
 	base = str(p_val)
@@ -382,10 +399,10 @@ class Env(_attrs_struct):
 		changed = False
 		for pt in p_ptlist:
 			changed = True
-			vx,u = toNumberAndUnit(pt.x)
+			vx = strictToNumber(pt.x)
 			if vx < minx:
 				minx = vx
-			vy,u = toNumberAndUnit(pt.y)
+			vy = strictToNumber(pt.y)
 			if vy < miny:
 				miny = vy
 			if vx > maxx:
@@ -393,21 +410,21 @@ class Env(_attrs_struct):
 			if vy > maxy:
 				maxy = vy
 		if changed:
-			self.minx = fromNumberAndUnit(minx, getUnit(self.minx))
-			self.miny = fromNumberAndUnit(miny, getUnit(self.miny))
-			self.maxx = fromNumberAndUnit(maxx, getUnit(self.maxx))
-			self.maxy = fromNumberAndUnit(maxy, getUnit(self.maxy))
+			self.minx = minx
+			self.miny = miny
+			self.maxx = maxx
+			self.maxy = maxy
 	def getWidth(self):
-		a,u = toNumberAndUnit(self.maxx)
-		b,u = toNumberAndUnit(self.minx)
+		a = strictToNumber(self.maxx)
+		b = strictToNumber(self.minx)
 		return a - b
 	def getHeight(self):
-		a,u = toNumberAndUnit(self.maxy)
-		b,u = toNumberAndUnit(self.miny)
+		a = strictToNumber(self.maxy)
+		b = strictToNumber(self.miny)
 		return a - b
 	def getMidPt(self) -> Pt:
-		a,u = toNumberAndUnit(self.minx)
-		b,u = toNumberAndUnit(self.miny)
+		a = strictToNumber(self.minx)
+		b = strictToNumber(self.miny)
 		return Pt(a + (self.getWidth() / 2.0),
 					b + (self.getHeight() / 2.0))
 	def getRectParams(self):
@@ -424,20 +441,20 @@ class Env(_attrs_struct):
 		self.maxy = other.maxy
 		return self
 	def centerAndDims(self, cntPt, dimx, dimy):
-		self.minx = removeDecsep(float(cntPt.x) - dimx/2.0)
-		self.miny = removeDecsep(float(cntPt.y) - dimy/2.0)
-		self.maxx = removeDecsep(float(cntPt.x) + dimx/2.0)
-		self.maxy = removeDecsep(float(cntPt.y) + dimy/2.0)
+		self.minx = removeDecsep(strictToNumber(cntPt.x) - dimx/2.0)
+		self.miny = removeDecsep(strictToNumber(cntPt.y) - dimy/2.0)
+		self.maxx = removeDecsep(strictToNumber(cntPt.x) + dimx/2.0)
+		self.maxy = removeDecsep(strictToNumber(cntPt.y) + dimy/2.0)
 		return self
 	def expandFromOther(self, other):
-		a,u = toNumberAndUnit(self.minx)
-		b,u = toNumberAndUnit(self.miny)
-		c,u = toNumberAndUnit(self.maxx)
-		d,u = toNumberAndUnit(self.maxy)
-		e,u = toNumberAndUnit(other.minx)
-		f,u = toNumberAndUnit(other.miny)
-		g,u = toNumberAndUnit(other.maxx)
-		h,u = toNumberAndUnit(other.maxy)
+		a = strictToNumber(self.minx)
+		b = strictToNumber(self.miny)
+		c = strictToNumber(self.maxx)
+		d = strictToNumber(self.maxy)
+		e = strictToNumber(other.minx)
+		f = strictToNumber(other.miny)
+		g = strictToNumber(other.maxx)
+		h = strictToNumber(other.maxy)
 		if e < a:
 			self.minx = e
 		if f < b:
@@ -448,10 +465,10 @@ class Env(_attrs_struct):
 			self.maxy = h
 		return self
 	def expandFromPoint(self, pt):
-		a,u = toNumberAndUnit(self.minx)
-		b,u = toNumberAndUnit(self.miny)
-		c,u = toNumberAndUnit(self.maxx)
-		d,u = toNumberAndUnit(self.maxy)
+		a = strictToNumber(self.minx)
+		b = strictToNumber(self.miny)
+		c = strictToNumber(self.maxx)
+		d = strictToNumber(self.maxy)
 		if pt.x < a:
 			self.minx = pt.x
 		if pt.y < b:
@@ -482,9 +499,9 @@ class transform_def(_attrs_struct):
 	_optfields = ()
 	_label = ""
 	def getFromXmlAttrs(self, xmlel) -> None:  
-		raise NotImplementedError("transform attribs not to translated to xml attribs")
+		raise NotImplementedError("transform attribs not to be translated to xml attribs")
 	def setXmlAttrs(self, xmlel) -> None:  
-		raise NotImplementedError("transform attribs not to translated to xml attribs")
+		raise NotImplementedError("transform attribs not to be translated to xml attribs")
 	def validate(self):
 		for f in self._fields:
 			if not hasattr(self, f) and f not in self._optfields:

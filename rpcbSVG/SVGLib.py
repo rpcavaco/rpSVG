@@ -12,7 +12,7 @@ from lxml import etree
 
 from rpcbSVG.SVGStyleText import CSSSty, Sty
 from rpcbSVG.Basics import MINDELTA, Pt, XLINK_NAMESPACE, _withunits_struct, \
-	pClose, pH, pL, pM, pV, transform_def, path_command, \
+	pClose, pH, pL, pM, pV, strictToNumber, transform_def, path_command, \
 	ptCoincidence, removeDecsep, ptEnsureStrings
 from rpcbSVG.Structs import Ci, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Pl, Pth, RaGra, Re, ReRC, Tx, TxPth, TxRf, Us, VBox
 
@@ -343,6 +343,15 @@ class BaseSVGElem(object):
 			self.getEl().set('transform', trtxt)
 		return tr
 
+	def yinvert(self, p_height: Union[float, int]):
+		strct = self.getStruct()
+		if hasattr(strct, 'yinvert'):
+			strct.yinvert(p_height)
+			ret = self.updateStructAttrs()
+		else:
+			ret = self
+		return ret
+
 class GenericSVGElem(BaseSVGElem):
 
 	def __init__(self, tag: str, struct: Optional[_withunits_struct] = None) -> None:
@@ -435,6 +444,12 @@ class SVGContainer(GenericSVGElem):
 		vb.cloneFromRect(self.getStruct(), scale=scale)
 		return self.setViewbox(vb)
 
+	def getViewbox(self):
+		vb = VBox()
+		vb.getFromXmlAttrs(self.getEl())
+		return vb
+
+
 class SVGRoot(SVGContainer):
 
 	def __init__(self, rect: Re, tree = None, viewbox: Optional[VBox] = None) -> None:
@@ -462,11 +477,12 @@ class SVGRoot(SVGContainer):
 class SVGContent(SVGRoot):
 
 	forbidden_user_tags = ["defs", "style"]
-	def __init__(self, rect: Re, viewbox: Optional[VBox] = None) -> None:
+	def __init__(self, rect: Re, viewbox: Optional[VBox] = None, yinvert=False) -> None:
 		super().__init__(rect, viewbox=viewbox)
 		self._id_serial = 0
 		self._defs = super().addChild(Defs())
 		self._styleel = self._defs.addChild(Style())
+		self._yinvert = yinvert
 
 	def nextIDSerial(self):
 		ret = self._id_serial
@@ -476,6 +492,19 @@ class SVGContent(SVGRoot):
 	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None) -> BaseSVGElem:
 		if p_child.tag in self.forbidden_user_tags:
 			raise TagOutOfDirectUserManipulation(p_child.tag)
+		if self._yinvert:
+			vb = self.getViewbox()
+			vbvals = vb.getValues()
+			height = None
+			if len(vbvals) > 2:
+				height = vbvals[3]
+			else:
+				strct = self.getStruct()
+				if hasattr(strct, 'height'):
+					height = strictToNumber(getattr(strct, 'height'))
+			assert not height is None
+			if hasattr(p_child, 'yinvert'):
+				p_child.yinvert(height)
 		if todefs:
 			assert not self._defs is None
 			ret = self._defs.addChild(p_child, nsmap=nsmap)

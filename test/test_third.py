@@ -4,7 +4,7 @@ import pytest
 
 from rpcbSVG.Basics import Pt, Rotate, polar2rect, ptAdd, ptGetAngle
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.SVGLib import AnalyticalPath, Circle, GradientStop, Group, Image, Line, LinearGradient, Marker, Mrk, MrkProps, Polygon, Polyline, RadialGradient, Re, RectRC, SVGContent, TRef, TSpan, Text, TextPath, Use
+from rpcbSVG.SVGLib import AnalyticalPath, Circle, GradientStop, Group, Image, Line, LinearGradient, Marker, Mrk, MrkProps, Polygon, Polyline, RadialGradient, Re, Rect, RectRC, SVGContent, TRef, TSpan, Text, TextPath, Use
 
 #	with capsys.disabled():
 
@@ -169,4 +169,27 @@ def test_Image():
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
 	#with capsys.disabled():
-	#	print("\nmr:", mr)
+	#	print("\nmr:", mr)s
+
+def test_YInvert(capsys):
+
+	with capsys.disabled():
+
+		sc = SVGContent(Re(0,0,1600,1200), yinvert=True).setIdentityViewbox()
+		sc.addStyleRule(CSSSty('stroke', 'grey', 'stroke-width', 2, selector='.aids'))
+
+		r = sc.addChild(Rect(0,0,1600,1200))
+		r.setStyle(Sty('stroke', 'black'))
+
+		r = sc.addChild(RectRC(60,60,300,400, 10, 10))
+		r.setStyle(Sty('fill', '#6A5ACD'))
+
+		tx = sc.addChild(Text(200,1100))   
+		tx.setStyle(Sty('fill', 'dodgerblue', 'font-size', 80, 'font-family', 'Helvetica', 'font-weight', 'bold'))
+		tx.setText("Inversão eixo Y")
+
+		sc.addChild(Line(200,1100,60,1100).setClass('aids'))
+
+
+	with open('outtest/test_YInvert.svg', 'w') as fl:
+		fl.write(sc.toString(pretty_print=True, inc_declaration=True))

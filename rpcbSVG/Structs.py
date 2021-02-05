@@ -1,8 +1,9 @@
 
-from typing import Optional
+from typing import Optional, Union
 from math import atan, degrees
+from re import split as re_split
 
-from rpcbSVG.Basics import MINDELTA, Pt, Env, XLINK_NAMESPACE, _attrs_struct, _withunits_struct, _kwarg_attrs_struct, hashed_href, isNumeric
+from rpcbSVG.Basics import MINDELTA, Pt, Env, XLINK_NAMESPACE, _attrs_struct, _withunits_struct, _kwarg_attrs_struct, hashed_href, isNumeric, strictToNumber
 
 
 class Re(_withunits_struct):
@@ -20,6 +21,10 @@ class Re(_withunits_struct):
 		self.width = self.height = "100"
 		self.setUnits('%')
 		return self
+	def yinvert(self, p_contentheight: Union[float, int]):
+		h = strictToNumber(self.height)
+		self.y = p_contentheight - strictToNumber(self.y) - h
+		return self
 
 class VBox(_withunits_struct):
 	_fields = ("viewBox",)
@@ -36,7 +41,14 @@ class VBox(_withunits_struct):
 			cont = " ".join([str(round(float(at) * scale)) for at in p_rect.iterUnitsRemoved()])
 		else:
 			cont = " ".join(list(p_rect.iterUnitsRemoved()))
-		self.viewBox = cont
+		setattr(self, 'viewBox', cont)
+	def getValues(self):
+		ret = []
+		val = getattr(self, 'viewBox')
+		if len(val) > 0:
+			ret = [int(v) for v in re_split(r"[\s]+", val)]
+		return ret
+
 
 class VBox600x800(VBox):
 	def __init__(self) -> None:
@@ -72,8 +84,8 @@ class Li(_withunits_struct):
 		super().__init__(*argslist, defaults=["0"])
 	def getAngle(self):
 		ret = None
-		dx = float(getattr(self, "x2")) - float(getattr(self, "x1"))
-		dy = float(getattr(self, "y2")) - float(getattr(self, "y1"))
+		dx = strictToNumber(getattr(self, "x2")) - strictToNumber(getattr(self, "x1"))
+		dy = strictToNumber(getattr(self, "y2")) - strictToNumber(getattr(self, "y1"))
 		if dx < MINDELTA:
 			if dy > MINDELTA:
 				ret = 90
@@ -82,6 +94,10 @@ class Li(_withunits_struct):
 		else:
 			ret = degrees(atan(dy/dx))
 		return ret
+	def yinvert(self, p_contentheight: Union[float, int]):
+		self.y1 = p_contentheight - strictToNumber(self.y1)
+		self.y2 = p_contentheight - strictToNumber(self.y2)
+		return self
 
 class Us(_withunits_struct):
 	_fields = ("x",  "y", "width", "height", f"{{{XLINK_NAMESPACE}}}href") 
@@ -166,6 +182,9 @@ class Tx(_withunits_struct):
 		if l > 6:
 			assert args[6] in ("spacing", "spacingAndGlyphs")
 		super().__init__(*args)
+	def yinvert(self, p_contentheight: Union[float, int]):
+		self.y = p_contentheight - strictToNumber(self.y)
+		return self
 
 class TxRf(_attrs_struct):
 	_fields = (f"{{{XLINK_NAMESPACE}}}href",) 
@@ -201,4 +220,8 @@ class Img(_withunits_struct):
 		if argslist is None:
 			argslist = args
 		super().__init__(*argslist, defaults=None)
+	def yinvert(self, p_contentheight: Union[float, int]):
+		h = strictToNumber(self.height)
+		self.y = p_contentheight - strictToNumber(self.y) - h
+		return self
 
