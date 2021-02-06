@@ -187,6 +187,10 @@ class RaGra(_withunits_struct):
 		if l > 7:
 			assert args[7] in ("pad", "reflect", "repeat")
 		super().__init__(*args)
+	def yinvert(self, p_contentheight: Union[float, int]):
+		self.cy = p_contentheight - strictToNumber(self.cy)
+		self.fy = p_contentheight - strictToNumber(self.fy)
+		return self
 
 class Tx(_withunits_struct):
 	_fields = ("x",  "y", "dx", "dy", "rotate", "textLength", "lengthAdjust") 

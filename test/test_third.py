@@ -207,7 +207,7 @@ def test_YInvert(capsys):
 	
 
 		r = sc.addChild(RectRC(120,60,300,480, 10, 10))
-		r.setStyle(Sty('fill', '#1E0B94'))
+		r.setStyle(Sty('fill', '#3739E1'))
 
 		sc.addChild(Text(70, 60)).\
 			setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica')).\
@@ -224,7 +224,7 @@ def test_YInvert(capsys):
 			"down by 40 units."
 		]
 
-		sc.addChild(TextParagraph(1000, 900, txtrows).\
+		sc.addChild(TextParagraph(1040, 950, txtrows).\
 			setStyle(Sty('fill', 'white', 'font-size', 40, 'font-family', 'Helvetica')))
 
 		sc.addChild(Text(70, title_height)).\
@@ -242,6 +242,16 @@ def test_YInvert(capsys):
 
 		sc.addChild(Line(650,300,740,300).setClass('aid2'))
 		sc.addChild(Line(740,210,740,300).setClass('aid2'))
+
+		# sc.addChild(Image(1080,60,840, 574,"test_image.jpg"))
+		sc.addChild(Image(1080,60, 420, 287,"test_image.jpg"))
+
+		sc.addChild(Text(1020, 60)).\
+			setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica')).\
+			setText("y: 60")
+
+		r2 = sc.addChild(Rect(1080,60, 420, 287))
+		r2.setStyle(Sty('stroke', '#494949'))
 
 
 	with open('outtest/test_YInvert.svg', 'w') as fl:
