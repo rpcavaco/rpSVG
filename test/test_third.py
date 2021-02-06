@@ -1,10 +1,11 @@
 
 
+from rpcbSVG.Structs import VBox
 import pytest
 
-from rpcbSVG.Basics import Pt, Rotate, polar2rect, ptAdd, ptGetAngle
+from rpcbSVG.Basics import Pt, Rotate, Trans, polar2rect, ptAdd, ptGetAngle
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.SVGLib import AnalyticalPath, Circle, GradientStop, Group, Image, Line, LinearGradient, Marker, Mrk, MrkProps, Polygon, Polyline, RadialGradient, Re, Rect, RectRC, SVGContent, TRef, TSpan, Text, TextPath, Use
+from rpcbSVG.SVGLib import AnalyticalPath, Circle, GradientStop, Group, Image, Line, LinearGradient, Marker, Mrk, MrkProps, Polygon, Polyline, RadialGradient, Re, Rect, RectRC, SVGContent, TRef, TSpan, Text, TextParagraph, TextPath, Use
 
 #	with capsys.disabled():
 
@@ -175,33 +176,52 @@ def test_YInvert(capsys):
 
 	with capsys.disabled():
 
-		sc = SVGContent(Re(0,0,1600,1200), yinvert=True).setIdentityViewbox()
-		sc.addStyleRule(CSSSty('stroke', 'grey', 'stroke-width', 2, selector='.aids'))
+		sc = SVGContent(Re(0,0,1600,1200), yinvert=True).setViewbox(VBox(0,40,1600,1200))
+		sc.addStyleRule(CSSSty('stroke', '#E1E1E8', 'stroke-width', 2, selector='.aid1'))
+		sc.addStyleRule(CSSSty('stroke', '#46474C', 'stroke-width', 2, selector='.aid2'))
+
+		gr1 = sc.addChild(LinearGradient(0, 1800, 0, -400, None, "userSpaceOnUse").setId("the_grad"), todefs=True)   
+		gr1.addChild(GradientStop(0, "#303B8E", 1))
+		gr1.addChild(GradientStop(1, "#DFE0EA", 1))
 
 		r = sc.addChild(Rect(0,0,1600,1200))
-		r.setStyle(Sty('stroke', 'black'))
+		r.setStyle(Sty('stroke', 'black', 'fill', 'url(#the_grad)'))
 
-		r = sc.addChild(RectRC(120,60,300,400, 10, 10))
-		r.setStyle(Sty('fill', '#6A5ACD'))
+		r = sc.addChild(RectRC(120,60,300,480, 10, 10))
+		r.setStyle(Sty('fill', '#1E0B94'))
 
-		tx = sc.addChild(Text(70, 60))   
-		tx.setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica'))
-		tx.setText("y: 60")
+		sc.addChild(Text(70, 60)).\
+			setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica')).\
+			setText("y: 60")
 
+		title_height = 1050
+		sc.addChild(Text(140,title_height)).\
+			setStyle(Sty('fill', 'white', 'font-size', 80, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
+			setText("Y Axis inversion test")
 
-		tx = sc.addChild(Text(200,1100))   
-		tx.setStyle(Sty('fill', 'dodgerblue', 'font-size', 80, 'font-family', 'Helvetica', 'font-weight', 'bold'))
-		tx.setText("Inversão eixo Y")
+		txtrows = [
+			"Viewbox y is set as y=40,",
+			"shifting the entire drawing",
+			"down by 40 units."
+		]
 
-		sc.addChild(Line(200,1100,60,1100).setClass('aids'))
+		sc.addChild(TextParagraph(1000, 900, txtrows).\
+			setStyle(Sty('fill', 'white', 'font-size', 40, 'font-family', 'Helvetica')))
+
+		sc.addChild(Text(70, title_height)).\
+			setStyle(Sty('fill', '#E9E9E9', 'font-size', 20, 'font-family', 'Helvetica')).\
+			setText(f"y: {title_height}")
+
+		# sc.addChild(Line(200,1100,60,1100).setClass('aid1'))
 
 		sc.addChild(Circle(750, 300, 240)).setStyle(Sty('stroke', 'dodgerblue', 'stroke-width', 6))
 
-		tx = sc.addChild(Text(750, 300))   
-		tx.setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica'))
-		tx.setText("y: 300")
-		sc.addChild(Line(650,300,740,300).setClass('aids'))
-		sc.addChild(Line(740,210,740,300).setClass('aids'))
+		sc.addChild(Text(750, 300)).\
+			setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica')).\
+			setText("y: 300")
+
+		sc.addChild(Line(650,300,740,300).setClass('aid2'))
+		sc.addChild(Line(740,210,740,300).setClass('aid2'))
 
 
 	with open('outtest/test_YInvert.svg', 'w') as fl:

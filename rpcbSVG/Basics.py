@@ -72,12 +72,12 @@ def getUnit(p_val):
 		un = None
 	return un
 
-def fromNumberAndUnit(p_num, p_unit):
-	if p_unit is None:
-		ret = str(removeDecsep(p_num))
-	else:
-		ret = f"{p_num}{p_unit}"
-	return ret
+# def fromNumberAndUnit(p_num, p_unit):
+# 	if p_unit is None:
+# 		ret = str(removeDecsep(p_num))
+# 	else:
+# 		ret = f"{p_num}{p_unit}"
+# 	return ret
 
 def ptEnsureStrings(p_pt: Pt):
 	ret = Pt(None, None)
@@ -534,6 +534,9 @@ class Trans(transform_def):
 	def __init__(self, *args) -> None:
 		super().__init__(*args)
 		self.validate()
+	def yinvert(self, p_yheight):
+		if hasattr(self, "ty"):
+			setattr(self, "ty", str(p_yheight - strictToNumber(getattr(self, "ty"))))
 
 class Scale(transform_def):
 	_fields = ("sx", "sy")
@@ -570,7 +573,7 @@ class SkewY(transform_def):
 class path_command(_attrs_struct):
 	_fields = ()
 	_letter = ""
-	_y_valinverts = ()
+	#_y_valinverts = ()
 	_y_signinverts = ()
 	
 	def __init__(self, *args) -> None:
@@ -622,9 +625,9 @@ class path_command(_attrs_struct):
 			raise WrongValuePathCmd(self, p_field)
 		setattr(self, p_field, str(p_value))
 		return self
-	def yinvert(self, p_yheight):
-		for f in self._y_valinverts:
-			self.setvalue(f, toNumber(self.getvalue))
+	# def yinvert(self, p_yheight):
+	# 	for f in self._y_valinverts:
+	# 		self.setvalue(f, strictToNumber(self.getvalue(f)))
 
 class rel_path_command(path_command):
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:

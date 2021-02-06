@@ -11,7 +11,7 @@ from typing import Optional, List, Union
 from lxml import etree
 
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.Basics import MINDELTA, Pt, XLINK_NAMESPACE, _withunits_struct, \
+from rpcbSVG.Basics import MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, \
 	pClose, pH, pL, pM, pV, strictToNumber, transform_def, path_command, \
 	ptCoincidence, removeDecsep, ptEnsureStrings
 from rpcbSVG.Structs import Ci, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Pl, Pth, RaGra, Re, ReRC, Tx, TxPth, TxRf, Us, VBox
@@ -56,6 +56,7 @@ class BaseSVGElem(object):
 		self.idprefix = tag[:3].title()
 		self.el = None
 		self._pendingXMLDependentOps = []
+		self._yinvertdelta = None
 		self.setStruct(struct)
 
 	def clone(self):
@@ -201,6 +202,9 @@ class BaseSVGElem(object):
 			self._struct.getFromXmlAttrs(self.getEl())
 		return self._struct
 
+	def hasStruct(self) -> bool:
+		return not self._struct is None
+
 	def setStructAttr(self, p_attr: str, p_value):
 		stru = self.getStruct()
 		stru.set(p_attr, p_value)
@@ -337,6 +341,8 @@ class BaseSVGElem(object):
 		del self._transforms[:]
 
 	def addTransform(self, tr: transform_def):
+		if not self._yinvertdelta is None and hasattr(tr, "yinvert"):
+			tr.yinvert(self._yinvertdelta)
 		self._transforms.append(tr)
 		trtxt = self._getTransform() 
 		if len(trtxt) > 0:
@@ -344,18 +350,27 @@ class BaseSVGElem(object):
 		return tr
 
 	def yinvert(self, p_height: Union[float, int]):
-		strct = self.getStruct()
-		if hasattr(strct, 'yinvert'):
-			strct.yinvert(p_height)
-			ret = self.updateStructAttrs()
+		self._yinvertdelta = p_height
+		if self.hasStruct():
+			strct = self.getStruct()
+			if hasattr(strct, 'yinvert'):
+				strct.yinvert(p_height)
+				ret = self.updateStructAttrs()
+			else:
+				ret = self
 		else:
 			ret = self
 		return ret
+
+	def onAfterParentAdding(self):
+		"to be extended, actions to run after being added to parent"
+		pass
 
 class GenericSVGElem(BaseSVGElem):
 
 	def __init__(self, tag: str, struct: Optional[_withunits_struct] = None) -> None:
 		self.content = []
+		self._yinvertheight = None
 		super().__init__(tag, struct=struct)
 
 	def addChild(self, p_child: BaseSVGElem, parent: Optional[Union[etree.Element, BaseSVGElem]] =None, nsmap=None):
@@ -372,6 +387,10 @@ class GenericSVGElem(BaseSVGElem):
 				assert isinstance(parent, BaseSVGElem), str(type(parent))
 				assert self.hasEl()
 				newel = etree.SubElement(parent.getEl(), p_child.tag)
+
+		if not self._yinvertheight is None and hasattr(p_child, 'yinvert'):
+			p_child.yinvert(self._yinvertheight)
+
 		p_child.setEl(newel)
 		self.content.append(p_child)
 		
@@ -398,6 +417,10 @@ class GenericSVGElem(BaseSVGElem):
 			for chld in self.content:
 				out["content"].append(chld.toJSON())
 		return out
+
+	def yinvert(self, p_height: Union[float, int]):
+		self._yinvertheight = p_height
+		return super().yinvert(p_height)
 
 class SVGContainer(GenericSVGElem):
 
@@ -449,7 +472,6 @@ class SVGContainer(GenericSVGElem):
 		vb.getFromXmlAttrs(self.getEl())
 		return vb
 
-
 class SVGRoot(SVGContainer):
 
 	def __init__(self, rect: Re, tree = None, viewbox: Optional[VBox] = None) -> None:
@@ -492,19 +514,23 @@ class SVGContent(SVGRoot):
 	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None) -> BaseSVGElem:
 		if p_child.tag in self.forbidden_user_tags:
 			raise TagOutOfDirectUserManipulation(p_child.tag)
-		if self._yinvert:
+		if self._yinvert and hasattr(p_child, 'yinvert'):
 			vb = self.getViewbox()
 			vbvals = vb.getValues()
+			miny = None
 			height = None
 			if len(vbvals) > 2:
+				miny = vbvals[1]
 				height = vbvals[3]
 			else:
 				strct = self.getStruct()
 				if hasattr(strct, 'height'):
 					height = strictToNumber(getattr(strct, 'height'))
-			assert not height is None
-			if hasattr(p_child, 'yinvert'):
-				p_child.yinvert(height)
+				if hasattr(strct, 'y'):
+					miny = strictToNumber(getattr(strct, 'y'))
+			assert not miny is None and not height is None
+			delta = 2 * miny + height
+			p_child.yinvert(delta)
 		if todefs:
 			assert not self._defs is None
 			ret = self._defs.addChild(p_child, nsmap=nsmap)
@@ -514,6 +540,9 @@ class SVGContent(SVGRoot):
 			ret.setId(p_child.idprefix + str(self.nextIDSerial()))
 		if isinstance(ret, SVGContainer):
 			ret.setGenIdMethod(self.nextIDSerial)
+
+		ret.onAfterParentAdding()
+
 		return ret
 
 	def addStyleRule(self, p_child: CSSSty) -> str:
@@ -786,4 +815,25 @@ class TextPath(GenericSVGElem):
 class Image(GenericSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("image", struct=Img(*args))
+
+class TextParagraph(Group):
+
+	def __init__(self, x, y, textrows: Optional[List[str]] = None, vsep="-1.2em"):
+		super().__init__()
+		self._textrows = textrows
+		self._vsep = vsep
+		self._orig = (x, y)
+
+	def onAfterParentAdding(self):
+		self.addTransform(Trans(*self._orig))
+		tx = self.addChild(Text())
+		first = True
+		for row in self._textrows:
+			if first:
+				tx.addChild(TSpan().setText(row))
+			else:
+				tx.addChild(TSpan(0,None,None,self._vsep).setText(row))
+			first = False
+
+
 

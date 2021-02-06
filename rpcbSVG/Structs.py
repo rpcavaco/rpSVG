@@ -3,7 +3,7 @@ from typing import Optional, Union
 from math import atan, degrees
 from re import split as re_split
 
-from rpcbSVG.Basics import MINDELTA, Pt, Env, XLINK_NAMESPACE, _attrs_struct, _withunits_struct, _kwarg_attrs_struct, hashed_href, isNumeric, strictToNumber
+from rpcbSVG.Basics import MINDELTA, Pt, Env, XLINK_NAMESPACE, _attrs_struct, _withunits_struct, _kwarg_attrs_struct, hashed_href, isNumeric, strictToNumber, toNumberAndUnit
 
 
 class Re(_withunits_struct):
@@ -172,6 +172,10 @@ class LiGra(_withunits_struct):
 		if l2 > 6:
 			assert argslist[6] in ("pad", "reflect", "repeat")
 		super().__init__(*argslist)
+	def yinvert(self, p_contentheight: Union[float, int]):
+		self.y1 = p_contentheight - strictToNumber(self.y1)
+		self.y2 = p_contentheight - strictToNumber(self.y2)
+		return self
 
 class RaGra(_withunits_struct):
 	_fields = ("cx",  "cy", "r", "fx", "fy", f"{{{XLINK_NAMESPACE}}}href", "gradientUnits", "spreadMethod", "gradientTransform") 
@@ -192,7 +196,14 @@ class Tx(_withunits_struct):
 			assert args[6] in ("spacing", "spacingAndGlyphs")
 		super().__init__(*args)
 	def yinvert(self, p_contentheight: Union[float, int]):
-		self.y = p_contentheight - strictToNumber(self.y)
+		if hasattr(self, "y"):
+			self.y = p_contentheight - strictToNumber(self.y)
+		if hasattr(self, "dy"):
+			dyv, _u = toNumberAndUnit(self.dy)
+			if dyv > 0:
+				self.dy =  "-" + str(self.dy)
+			else:
+				self.dy =  str(self.dy)[1:]
 		return self
 
 class TxRf(_attrs_struct):
