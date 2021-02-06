@@ -67,11 +67,17 @@ class Ci(_withunits_struct):
 	_fields = ("cx",  "cy", "r") 
 	def __init__(self, *args) -> None:
 		super().__init__(*args, defaults=["0"])
+	def yinvert(self, p_contentheight: Union[float, int]):
+		self.cy = p_contentheight - strictToNumber(self.cy)
+		return self
 
 class Elli(_withunits_struct):
 	_fields = ("cx",  "cy", "rx", "ry") 
 	def __init__(self, *args) -> None:
 		super().__init__(*args, defaults=["0"])
+	def yinvert(self, p_contentheight: Union[float, int]):
+		self.cy = p_contentheight - strictToNumber(self.cy)
+		return self
 
 class Li(_withunits_struct):
 	_fields = ("x1",  "y1", "x2", "y2") 
@@ -115,6 +121,9 @@ class Us(_withunits_struct):
 		if argslist is None:
 			argslist = args
 		super().__init__(*argslist, defaults=None)
+	# def yinvert(self, p_contentheight: Union[float, int]):
+	# 	self.cy = p_contentheight - strictToNumber(self.cy)
+	# 	return self
 
 class Pth(_withunits_struct):
 	_fields = ("d") 

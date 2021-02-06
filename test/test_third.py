@@ -181,14 +181,27 @@ def test_YInvert(capsys):
 		r = sc.addChild(Rect(0,0,1600,1200))
 		r.setStyle(Sty('stroke', 'black'))
 
-		r = sc.addChild(RectRC(60,60,300,400, 10, 10))
+		r = sc.addChild(RectRC(120,60,300,400, 10, 10))
 		r.setStyle(Sty('fill', '#6A5ACD'))
+
+		tx = sc.addChild(Text(70, 60))   
+		tx.setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica'))
+		tx.setText("y: 60")
+
 
 		tx = sc.addChild(Text(200,1100))   
 		tx.setStyle(Sty('fill', 'dodgerblue', 'font-size', 80, 'font-family', 'Helvetica', 'font-weight', 'bold'))
 		tx.setText("Inversão eixo Y")
 
 		sc.addChild(Line(200,1100,60,1100).setClass('aids'))
+
+		sc.addChild(Circle(750, 300, 240)).setStyle(Sty('stroke', 'dodgerblue', 'stroke-width', 6))
+
+		tx = sc.addChild(Text(750, 300))   
+		tx.setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica'))
+		tx.setText("y: 300")
+		sc.addChild(Line(650,300,740,300).setClass('aids'))
+		sc.addChild(Line(740,210,740,300).setClass('aids'))
 
 
 	with open('outtest/test_YInvert.svg', 'w') as fl:
