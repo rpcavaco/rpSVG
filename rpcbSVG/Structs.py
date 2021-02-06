@@ -121,9 +121,9 @@ class Us(_withunits_struct):
 		if argslist is None:
 			argslist = args
 		super().__init__(*argslist, defaults=None)
-	# def yinvert(self, p_contentheight: Union[float, int]):
-	# 	self.cy = p_contentheight - strictToNumber(self.cy)
-	# 	return self
+	def yinvert(self, p_contentheight: Union[float, int]):
+		self.y = p_contentheight - strictToNumber(self.y)
+		return self
 
 class Pth(_withunits_struct):
 	_fields = ("d") 

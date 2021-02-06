@@ -370,10 +370,12 @@ class GenericSVGElem(BaseSVGElem):
 
 	def __init__(self, tag: str, struct: Optional[_withunits_struct] = None) -> None:
 		self.content = []
+		self._noyinvert = False
 		self._yinvertheight = None
 		super().__init__(tag, struct=struct)
 
-	def addChild(self, p_child: BaseSVGElem, parent: Optional[Union[etree.Element, BaseSVGElem]] =None, nsmap=None):
+	def addChild(self, p_child: BaseSVGElem, parent: Optional[Union[etree.Element, BaseSVGElem]]=None, nsmap=None, noyinvert=False):
+		self._noyinvert = noyinvert
 		if parent is None:
 			assert self.hasEl()
 			if nsmap is None:
@@ -388,8 +390,9 @@ class GenericSVGElem(BaseSVGElem):
 				assert self.hasEl()
 				newel = etree.SubElement(parent.getEl(), p_child.tag)
 
-		if not self._yinvertheight is None and hasattr(p_child, 'yinvert'):
-			p_child.yinvert(self._yinvertheight)
+		if not self._noyinvert:
+			if not self._yinvertheight is None and hasattr(p_child, 'yinvert'):
+				p_child.yinvert(self._yinvertheight)
 
 		p_child.setEl(newel)
 		self.content.append(p_child)
@@ -419,8 +422,9 @@ class GenericSVGElem(BaseSVGElem):
 		return out
 
 	def yinvert(self, p_height: Union[float, int]):
-		self._yinvertheight = p_height
-		return super().yinvert(p_height)
+		if not self._noyinvert:
+			self._yinvertheight = p_height
+			return super().yinvert(p_height)
 
 class SVGContainer(GenericSVGElem):
 
@@ -434,7 +438,8 @@ class SVGContainer(GenericSVGElem):
 	def setGenIdMethod(self, p_method):
 		self.genIDMethod = p_method
 
-	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None) -> BaseSVGElem:
+	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None, noyinvert=False) -> BaseSVGElem:
+		self._noyinvert = noyinvert
 		if todefs:
 			if self._defs is None:
 				self._defs = super().addChild(Defs())
@@ -511,26 +516,28 @@ class SVGContent(SVGRoot):
 		self._id_serial = self._id_serial + 1
 		return ret
 
-	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None) -> BaseSVGElem:
+	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None, noyinvert=False) -> BaseSVGElem:
+		self._noyinvert = noyinvert
 		if p_child.tag in self.forbidden_user_tags:
 			raise TagOutOfDirectUserManipulation(p_child.tag)
-		if self._yinvert and hasattr(p_child, 'yinvert'):
-			vb = self.getViewbox()
-			vbvals = vb.getValues()
-			miny = None
-			height = None
-			if len(vbvals) > 2:
-				miny = vbvals[1]
-				height = vbvals[3]
-			else:
-				strct = self.getStruct()
-				if hasattr(strct, 'height'):
-					height = strictToNumber(getattr(strct, 'height'))
-				if hasattr(strct, 'y'):
-					miny = strictToNumber(getattr(strct, 'y'))
-			assert not miny is None and not height is None
-			delta = 2 * miny + height
-			p_child.yinvert(delta)
+		if not self._noyinvert:
+			if self._yinvert and hasattr(p_child, 'yinvert'):
+				vb = self.getViewbox()
+				vbvals = vb.getValues()
+				miny = None
+				height = None
+				if len(vbvals) > 2:
+					miny = vbvals[1]
+					height = vbvals[3]
+				else:
+					strct = self.getStruct()
+					if hasattr(strct, 'height'):
+						height = strictToNumber(getattr(strct, 'height'))
+					if hasattr(strct, 'y'):
+						miny = strictToNumber(getattr(strct, 'y'))
+				assert not miny is None and not height is None
+				delta = 2 * miny + height
+				p_child.yinvert(delta)
 		if todefs:
 			assert not self._defs is None
 			ret = self._defs.addChild(p_child, nsmap=nsmap)

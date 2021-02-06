@@ -5,7 +5,7 @@ import pytest
 
 from rpcbSVG.Basics import Pt, Rotate, Trans, polar2rect, ptAdd, ptGetAngle
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.SVGLib import AnalyticalPath, Circle, GradientStop, Group, Image, Line, LinearGradient, Marker, Mrk, MrkProps, Polygon, Polyline, RadialGradient, Re, Rect, RectRC, SVGContent, TRef, TSpan, Text, TextParagraph, TextPath, Use
+from rpcbSVG.SVGLib import AnalyticalPath, Circle, Ellipse, GradientStop, Group, Image, Line, LinearGradient, Marker, MrkProps, Polygon, Polyline, RadialGradient, Re, Rect, RectRC, SVGContent, TRef, TSpan, Text, TextParagraph, TextPath, Use
 
 #	with capsys.disabled():
 
@@ -179,13 +179,32 @@ def test_YInvert(capsys):
 		sc = SVGContent(Re(0,0,1600,1200), yinvert=True).setViewbox(VBox(0,40,1600,1200))
 		sc.addStyleRule(CSSSty('stroke', '#E1E1E8', 'stroke-width', 2, selector='.aid1'))
 		sc.addStyleRule(CSSSty('stroke', '#46474C', 'stroke-width', 2, selector='.aid2'))
+		sc.addStyleRule(CSSSty('stroke', '#494949', 'fill', '#F68E4C', 'stroke-width', 2, selector='.uses'))
+
+		# Reference red rect to be "used" later, non y-inverted
+		rsrc = sc.addChild(Rect(0, 0,60,60), todefs=True, noyinvert=True)
 
 		gr1 = sc.addChild(LinearGradient(0, 1800, 0, -400, None, "userSpaceOnUse").setId("the_grad"), todefs=True)   
 		gr1.addChild(GradientStop(0, "#303B8E", 1))
 		gr1.addChild(GradientStop(1, "#DFE0EA", 1))
 
-		r = sc.addChild(Rect(0,0,1600,1200))
-		r.setStyle(Sty('stroke', 'black', 'fill', 'url(#the_grad)'))
+		#  --- Background  --------------------------------------
+		sc.addChild(Rect(0,0,1600,1200)).\
+			setStyle(Sty('stroke', 'black', 'fill', 'url(#the_grad)'))
+		#  ------------------------------------------------------
+
+		# Red rect "uses"
+
+		sc.addChild(Text(70, 860)).\
+			setStyle(Sty('fill', '#E9E9E9', 'font-size', 20, 'font-family', 'Helvetica')).\
+			setText(f"y: 860")
+
+		for col in range(3):
+			x = 140 + col * 100
+			for row in range(3):
+				y = 860 - row * 90
+				sc.addChild(Use(Pt(x,y), rsrc.getSel())).setClass('uses')
+	
 
 		r = sc.addChild(RectRC(120,60,300,480, 10, 10))
 		r.setStyle(Sty('fill', '#1E0B94'))
@@ -215,6 +234,7 @@ def test_YInvert(capsys):
 		# sc.addChild(Line(200,1100,60,1100).setClass('aid1'))
 
 		sc.addChild(Circle(750, 300, 240)).setStyle(Sty('stroke', 'dodgerblue', 'stroke-width', 6))
+		sc.addChild(Ellipse(750, 300, 160, 220)).setStyle(Sty('stroke', '#0054A6', 'stroke-width', 2))
 
 		sc.addChild(Text(750, 300)).\
 			setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica')).\
