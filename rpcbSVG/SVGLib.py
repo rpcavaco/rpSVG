@@ -13,7 +13,7 @@ from rpcbSVG.SVGStyleText import CSSSty, Sty
 from rpcbSVG.Basics import MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, \
 	pClose, pH, pL, pM, pV, strictToNumber, transform_def, path_command, \
 	ptCoincidence, removeDecsep, ptEnsureStrings
-from rpcbSVG.Structs import Ci, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Pl, Pth, RaGra, Re, ReRC, Tx, TxPth, TxRf, Us, VBox
+from rpcbSVG.Structs import Ci, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Patt, Pl, Pth, RaGra, Re, ReRC, Tx, TxPth, TxRf, Us, VBox
 
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
 
@@ -216,7 +216,7 @@ class BaseSVGElem(object):
 		self.updateStructAttrs()
 		return self
 
-	def getSelector(self, select='id'):
+	def getSelector(self, select='id', funciri=False):
 		assert select in (None, "id", "class", "tag")
 		sel = None
 		if select == 'id':
@@ -227,7 +227,11 @@ class BaseSVGElem(object):
 			sel = '.' + self.getClass()
 		elif select == 'tag':
 			sel = self.tag
-		return sel
+		if funciri:
+			ret = f"url({sel})"
+		else:
+			ret = sel
+		return ret
 
 	def _updateStyleAttrs(self):
 		if not self._style is None and self.hasEl():
@@ -887,6 +891,10 @@ class TextParagraph(Group):
 			else:
 				tx.addChild(TSpan(0,None,None,self._vsep).setText(row))
 			first = False
+
+class Pattern(GenericSVGElem):
+	def __init__(self, *args) -> None:
+		super().__init__("pattern", struct=Patt(*args))
 
 
 

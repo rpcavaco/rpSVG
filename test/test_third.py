@@ -5,7 +5,7 @@ import pytest
 
 from rpcbSVG.Basics import Pt, Rotate, Trans, pA, pC, pQ, pS, pT, polar2rect, ptAdd, ptGetAngle
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.SVGLib import AnalyticalPath, Circle, Ellipse, GradientStop, Group, Image, Line, LinearGradient, Marker, MrkProps, Polygon, Polyline, RadialGradient, Re, Rect, RectRC, SVGContent, TRef, TSpan, Text, TextParagraph, TextPath, Title, Use
+from rpcbSVG.SVGLib import AnalyticalPath, Circle, Ellipse, GradientStop, Group, Image, Line, LinearGradient, Marker, MrkProps, Pattern, Polygon, Polyline, RadialGradient, Re, Rect, RectRC, SVGContent, TRef, TSpan, Text, TextParagraph, TextPath, Title, Use
 
 #	with capsys.disabled():
 
@@ -329,6 +329,33 @@ def test_Comment():
 	sc.addChild(Line(100,100,1500,1100).setStyle(Sty('stroke', '#494949', 'stroke-width', 8)))
 
 	assert sc.toString(pretty_print=False) == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="1600" height="1200" viewBox="0 0 1600 1200"><defs/><rect x="0" y="0" width="1600" height="1200" id="Rec0" fill="navy" stroke="black"/><!--Just a simple comment--><line x1="100" y1="100" x2="1500" y2="1100" fill="none" stroke="#494949" stroke-width="8" id="Lin1"/></svg>"""
+
+def test_Pattern():
+
+	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
+	sc.setBackground(Sty('fill', '#E7E8EA'))
+
+	sc.addChild(Title("Pattern test"))
+
+
+	patt = sc.addChild(Pattern(10,10,50,70, "userSpaceOnUse",'rotate(14)'), todefs=True)
+	patt.addChild(Rect(5,5,10,10)).setStyle(Sty('fill', 'blue'))
+	patt.addChild(Rect(20,5,10,10)).setStyle(Sty('fill', 'blue'))
+	patt.addChild(Rect(31,5,6,10)).setStyle(Sty('fill', 'blue'))
+
+	patt.addChild(Rect(5,20,10,10)).setStyle(Sty('fill', '#2567FF'))
+	patt.addChild(Rect(5,35,10,10)).setStyle(Sty('fill', '#419EFF'))
+
+	title_height = 200
+	sc.addChild(Text(300,title_height)).\
+		setStyle(Sty('fill', '#7C7C7C', 'font-size', 60, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
+		setText("Pattern test")
+
+	sc.addChild(Rect(300,250,1000,800).setStyle(Sty('fill', 'white')))
+	sc.addChild(Rect(300,250,1000,800).setStyle(Sty('stroke', 'black', 'fill', patt.getSelector(funciri=True))))
+
+	with open('outtest/test_Pattern.svg', 'w') as fl:
+		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
 # 	with capsys.disabled():
 

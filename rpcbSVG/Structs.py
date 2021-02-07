@@ -269,3 +269,23 @@ class Img(_withunits_struct):
 		self.y = p_contentheight - strictToNumber(self.y) - h
 		return self
 
+class Patt(_withunits_struct):
+	_fields = ("x",  "y", "width", "height", "patternUnits", "patternTransform", f"{{{XLINK_NAMESPACE}}}href", "patternContentUnits", "preserveAspectRatio") 
+	def __init__(self, *args) -> None:
+		l =  len(args)
+		argslist = list(args)
+		if l != 9:
+			if l > 4:
+				assert argslist[4]  in ("userSpaceOnUse", "objectBoundingBox")
+			elif l == 4:
+				argslist.append("userSpaceOnUse") # adds automatically userSpaceOnUse if just 4 params are given
+			if l > 7:
+				assert argslist[7]  in ("userSpaceOnUse", "objectBoundingBox")
+			if l > 6:
+				argslist[6] = hashed_href(argslist[6])
+		super().__init__(*argslist, defaults=None)
+	def yinvert(self, p_contentheight: Union[float, int]):
+		h = strictToNumber(self.height)
+		self.y = p_contentheight - strictToNumber(self.y) - h
+		return self
+

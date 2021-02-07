@@ -155,6 +155,8 @@ def test_PathCommands():
 	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
 	sc.addStyleRule(CSSSty('fill', 'none', 'stroke', 'green', 'stroke-width', '10', selector='.cambase'))
 
+	sc.setBackground(Sty('fill', '#DEDEFD'))
+
 	pts = [
 		Pt(120, 140),
 		Pt(290, 160),
