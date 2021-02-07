@@ -5,7 +5,7 @@ import pytest
 
 from rpcbSVG.Basics import Pt, Rotate, Trans, pA, pC, pQ, pS, pT, polar2rect, ptAdd, ptGetAngle
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.SVGLib import AnalyticalPath, Circle, Ellipse, GradientStop, Group, Image, Line, LinearGradient, Marker, MrkProps, Polygon, Polyline, RadialGradient, Re, Rect, RectRC, SVGContent, TRef, TSpan, Text, TextParagraph, TextPath, Use
+from rpcbSVG.SVGLib import AnalyticalPath, Circle, Ellipse, GradientStop, Group, Image, Line, LinearGradient, Marker, MrkProps, Polygon, Polyline, RadialGradient, Re, Rect, RectRC, SVGContent, TRef, TSpan, Text, TextParagraph, TextPath, Title, Use
 
 #	with capsys.disabled():
 
@@ -175,150 +175,160 @@ def test_Image():
 	#with capsys.disabled():
 	#	print("\nmr:", mr)s
 
-def test_YInvert(capsys):
+def test_YInvert():
 
-	with capsys.disabled():
+	sc = SVGContent(Re(0,0,1600,1200), yinvert=True).setViewbox(VBox(0,40,1600,1200))
+	sc.addStyleRule(CSSSty('stroke', '#E1E1E8', 'stroke-width', 2, selector='.aid1'))
+	sc.addStyleRule(CSSSty('stroke', '#46474C', 'stroke-width', 2, selector='.aid2'))
+	sc.addStyleRule(CSSSty('stroke', '#494949', 'fill', '#F68E4C', 'stroke-width', 2, selector='.uses'))
 
-		sc = SVGContent(Re(0,0,1600,1200), yinvert=True).setViewbox(VBox(0,40,1600,1200))
-		sc.addStyleRule(CSSSty('stroke', '#E1E1E8', 'stroke-width', 2, selector='.aid1'))
-		sc.addStyleRule(CSSSty('stroke', '#46474C', 'stroke-width', 2, selector='.aid2'))
-		sc.addStyleRule(CSSSty('stroke', '#494949', 'fill', '#F68E4C', 'stroke-width', 2, selector='.uses'))
+	sc.addChild(Title("Y Axis inversion test"))
 
-		# Define markers =======================================================
+	# Define markers =======================================================
 
-		# Common items to both arrow terminators
-		mrkattrs = (1.5, 5, 3, "auto")
-		plist = (Pt(5,0), Pt(5,3), Pt(0, 1.5))
+	# Common items to both arrow terminators
+	mrkattrs = (1.5, 5, 3, "auto")
+	plist = (Pt(5,0), Pt(5,3), Pt(0, 1.5))
 
-		# Start arrow terminator
-		mr1 = sc.addChild(Marker(3,*mrkattrs), todefs=True)
+	# Start arrow terminator
+	mr1 = sc.addChild(Marker(3,*mrkattrs), todefs=True)
 
-		# Should not add points to Polygon prior to addChild if yinvert needed to be applied, wouldn't function properly. Warning is issued
-		with pytest.warns(UserWarning):
-			fakepol = mr1.addChild(Polygon().addPList(plist), noyinvert=False)
+	# Should not add points to Polygon prior to addChild if yinvert needed to be applied, wouldn't function properly. Warning is issued
+	with pytest.warns(UserWarning):
+		fakepol = mr1.addChild(Polygon().addPList(plist), noyinvert=False)
 
-		# Correct way of adding points if yinversion was to be applied.
-		# In fact we don't need it to be applied here in this case, but works properly 
-		#  either you need, or don't need, to yinvert
-		pol = mr1.addChild(Polygon(), noyinvert=True)
-		pol.addPList(plist)
-		pol.setStyle(Sty('fill', '#AED7FE'))
+	# Correct way of adding points if yinversion was to be applied.
+	# In fact we don't need it to be applied here in this case, but works properly 
+	#  either you need, or don't need, to yinvert
+	pol = mr1.addChild(Polygon(), noyinvert=True)
+	pol.addPList(plist)
+	pol.setStyle(Sty('fill', '#AED7FE'))
 
-		# End arrow terminator -- noyinvert=True
-		mr2 = sc.addChild(Marker(2,*mrkattrs), todefs=True)
-		gr = mr2.addChild(Group())
-		pol2 = gr.addChild(Polygon().setStyle(Sty('fill', '#313163')), noyinvert=True)
-		pol2.addPList(plist)
-		gr.addTransform(Rotate(180,2.5,1.5))
+	# End arrow terminator -- noyinvert=True
+	mr2 = sc.addChild(Marker(2,*mrkattrs), todefs=True)
+	gr = mr2.addChild(Group())
+	pol2 = gr.addChild(Polygon().setStyle(Sty('fill', '#313163')), noyinvert=True)
+	pol2.addPList(plist)
+	gr.addTransform(Rotate(180,2.5,1.5))
 
-		# node vertices marker
-		mr3 = sc.addChild(Marker(0.5,0.5,1,1, 0), todefs=True, noyinvert=True)
-		mr3.addChild(Circle(0.5,0.5,0.5)).setStyle(Sty('fill', 'navyblue', 'fill-opacity', '0.8'))
+	# node vertices marker
+	mr3 = sc.addChild(Marker(0.5,0.5,1,1, 0), todefs=True, noyinvert=True)
+	mr3.addChild(Circle(0.5,0.5,0.5)).setStyle(Sty('fill', 'navyblue', 'fill-opacity', '0.8'))
 
-		# End define markers ===================================================
+	# End define markers ===================================================
 
 
-		# Reference red rect to be "used" later, non y-inverted
-		rsrc = sc.addChild(Rect(0, 0,60,60), todefs=True, noyinvert=True)
+	# Reference red rect to be "used" later, non y-inverted
+	rsrc = sc.addChild(Rect(0, 0,60,60), todefs=True, noyinvert=True)
 
-		gr1 = sc.addChild(LinearGradient(0, 1800, 0, -400, None, "userSpaceOnUse").setId("the_grad"), todefs=True)   
-		gr1.addChild(GradientStop(0, "#303B8E", 1))
-		gr1.addChild(GradientStop(1, "#DFE0EA", 1))
+	gr1 = sc.addChild(LinearGradient(0, 1800, 0, -400, None, "userSpaceOnUse").setId("the_grad"), todefs=True)   
+	gr1.addChild(GradientStop(0, "#303B8E", 1))
+	gr1.addChild(GradientStop(1, "#DFE0EA", 1))
 
-		plist= [
-			Pt(570,860),
-			Pt(640,670),
-			Pt(700,740)
-		]
+	plist= [
+		Pt(570,860),
+		Pt(640,670),
+		Pt(700,740)
+	]
 
-		ap = sc.addChild(AnalyticalPath(
-					marker_props=MrkProps(
-						marker_start=mr1.getId(), 
-						marker_mid=mr3.getId(),
-						marker_end=mr2.getId()
-					)
-				).setStyle(Sty('stroke', 'white', 'stroke-width', 4)), todefs=True)
-		ap.addPolylinePList(plist)
+	ap = sc.addChild(AnalyticalPath(
+				marker_props=MrkProps(
+					marker_start=mr1.getId(), 
+					marker_mid=mr3.getId(),
+					marker_end=mr2.getId()
+				)
+			).setStyle(Sty('stroke', 'white', 'stroke-width', 4)), todefs=True)
+	ap.addPolylinePList(plist)
 
-		ap.addCmd(pQ(760,810,820,670))
-		ap.addCmd(pT(920,670))
-		ap.addCmd(pC(940,750,1030,760,1050,690))
-		ap.addCmd(pS(1150,690,1160,710))
-		ap.addCmd(pA(80, 60, 32, 0,1, 1450, 450))
+	ap.addCmd(pQ(760,810,820,670))
+	ap.addCmd(pT(920,670))
+	ap.addCmd(pC(940,750,1030,760,1050,690))
+	ap.addCmd(pS(1150,690,1160,710))
+	ap.addCmd(pA(80, 60, 32, 0,1, 1450, 450))
 
-		sc.setBackground(Sty('stroke', 'black', 'fill', 'url(#the_grad)'))
+	sc.setBackground(Sty('stroke', 'black', 'fill', 'url(#the_grad)'))
 
-		# Guides pointing to end of polyline
-		# sc.addChild(Line(570,860, 600, 890).setClass('aid1'))
-		# sc.addChild(Line(1450, 450, 1490,420).setClass('aid2'))
+	# Guides pointing to end of polyline
+	# sc.addChild(Line(570,860, 600, 890).setClass('aid1'))
+	# sc.addChild(Line(1450, 450, 1490,420).setClass('aid2'))
 
-		# Red rect "uses"
+	# Red rect "uses"
 
-		sc.addChild(Text(70, 860)).\
-			setStyle(Sty('fill', '#E9E9E9', 'font-size', 20, 'font-family', 'Helvetica')).\
-			setText(f"y: 860")
+	sc.addChild(Text(70, 860)).\
+		setStyle(Sty('fill', '#E9E9E9', 'font-size', 20, 'font-family', 'Helvetica')).\
+		setText(f"y: 860")
 
-		for col in range(3):
-			x = 140 + col * 100
-			for row in range(3):
-				y = 860 - row * 90
-				sc.addChild(Use(Pt(x,y), rsrc.getSel())).setClass('uses')
-	
+	for col in range(3):
+		x = 140 + col * 100
+		for row in range(3):
+			y = 860 - row * 90
+			sc.addChild(Use(Pt(x,y), rsrc.getSel())).setClass('uses')
 
-		r = sc.addChild(RectRC(120,60,300,480, 10, 10))
-		r.setStyle(Sty('fill', '#3739E1'))
 
-		sc.addChild(Text(70, 60)).\
-			setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica')).\
-			setText("y: 60")
+	r = sc.addChild(RectRC(120,60,300,480, 10, 10))
+	r.setStyle(Sty('fill', '#3739E1'))
 
-		title_height = 1050
-		sc.addChild(Text(140,title_height)).\
-			setStyle(Sty('fill', 'white', 'font-size', 80, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
-			setText("Y Axis inversion test")
+	sc.addChild(Text(70, 60)).\
+		setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica')).\
+		setText("y: 60")
 
-		txtrows = [
-			"Viewbox y is set as y=40,",
-			"shifting the entire drawing",
-			"down by 40 units."
-		]
+	title_height = 1050
+	sc.addChild(Text(140,title_height)).\
+		setStyle(Sty('fill', 'white', 'font-size', 80, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
+		setText("Y Axis inversion test")
 
-		sc.addChild(TextParagraph(1040, 950, txtrows).\
-			setStyle(Sty('fill', 'white', 'font-size', 40, 'font-family', 'Helvetica')))
+	txtrows = [
+		"Viewbox y is set as y=40,",
+		"shifting the entire drawing",
+		"down by 40 units."
+	]
 
-		sc.addChild(Text(70, title_height)).\
-			setStyle(Sty('fill', '#E9E9E9', 'font-size', 20, 'font-family', 'Helvetica')).\
-			setText(f"y: {title_height}")
+	sc.addChild(TextParagraph(1040, 950, txtrows).\
+		setStyle(Sty('fill', 'white', 'font-size', 40, 'font-family', 'Helvetica')))
 
-		# sc.addChild(Line(200,1100,60,1100).setClass('aid1'))
+	sc.addChild(Text(70, title_height)).\
+		setStyle(Sty('fill', '#E9E9E9', 'font-size', 20, 'font-family', 'Helvetica')).\
+		setText(f"y: {title_height}")
 
-		sc.addChild(Circle(750, 300, 240)).setStyle(Sty('stroke', 'dodgerblue', 'stroke-width', 6))
-		sc.addChild(Ellipse(750, 300, 160, 220)).setStyle(Sty('stroke', '#0054A6', 'stroke-width', 2))
+	# sc.addChild(Line(200,1100,60,1100).setClass('aid1'))
 
-		sc.addChild(Text(750, 300)).\
-			setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica')).\
-			setText("y: 300")
+	sc.addChild(Circle(750, 300, 240)).setStyle(Sty('stroke', 'dodgerblue', 'stroke-width', 6))
+	sc.addChild(Ellipse(750, 300, 160, 220)).setStyle(Sty('stroke', '#0054A6', 'stroke-width', 2))
 
-		sc.addChild(Line(650,300,740,300).setClass('aid2'))
-		sc.addChild(Line(740,210,740,300).setClass('aid2'))
+	sc.addChild(Text(750, 300)).\
+		setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica')).\
+		setText("y: 300")
 
-		# sc.addChild(Image(1080,60,840, 574,"test_image.jpg"))
-		sc.addChild(Image(1080,60, 420, 287,"test_image.jpg"))
+	sc.addChild(Line(650,300,740,300).setClass('aid2'))
+	sc.addChild(Line(740,210,740,300).setClass('aid2'))
 
-		sc.addChild(Text(1020, 60)).\
-			setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica')).\
-			setText("y: 60")
+	# sc.addChild(Image(1080,60,840, 574,"test_image.jpg"))
+	sc.addChild(Image(1080,60, 420, 287,"test_image.jpg"))
 
-		r2 = sc.addChild(Rect(1080,60, 420, 287))
-		r2.setStyle(Sty('stroke', '#494949'))
+	sc.addChild(Text(1020, 60)).\
+		setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica')).\
+		setText("y: 60")
 
-		us = sc.addChild(Use().setStyle(Sty('stroke', 'white', 'stroke-width', 2, 'stroke-linejoin', 'round')))
-		us.setHREFAttr(ap.getSel())
+	r2 = sc.addChild(Rect(1080,60, 420, 287))
+	r2.setStyle(Sty('stroke', '#494949'))
+
+	us = sc.addChild(Use().setStyle(Sty('stroke', 'white', 'stroke-width', 2, 'stroke-linejoin', 'round')))
+	us.setHREFAttr(ap.getSel())
 
 	with open('outtest/test_YInvert.svg', 'w') as fl:
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
-# def test_x(capsys):
+def test_Comment():
+
+	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
+
+	sc.setBackground(Sty('stroke', 'black', 'fill', 'navy'))
+
+	sc.addComment("Just a simple comment")
+
+	sc.addChild(Line(100,100,1500,1100).setStyle(Sty('stroke', '#494949', 'stroke-width', 8)))
+
+	assert sc.toString(pretty_print=False) == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="1600" height="1200" viewBox="0 0 1600 1200"><defs/><rect x="0" y="0" width="1600" height="1200" id="Rec0" fill="navy" stroke="black"/><!--Just a simple comment--><line x1="100" y1="100" x2="1500" y2="1100" fill="none" stroke="#494949" stroke-width="8" id="Lin1"/></svg>"""
 
 # 	with capsys.disabled():
 

@@ -500,6 +500,15 @@ class SVGRoot(SVGContainer):
 		p_rect.setXmlAttrs(self.getEl())
 		return self
 
+	def _addComment(self, p_text: str) -> None:
+		assert isinstance(p_text, str)
+		assert self.hasEl(), self.NO_XML_EL
+		self.getEl().append(etree.Comment(p_text))
+
+	def addComment(self, p_text: str):
+		self.dispatchXMLDependentOp(self._addComment, args=(p_text,))
+		return self
+
 class SVGContent(SVGRoot):
 
 	forbidden_user_tags = ["defs", "style"]
