@@ -558,6 +558,16 @@ class SVGContent(SVGRoot):
 	def delStyleRule(self, selector: str) -> bool:
 		return self._styleel.delRule(selector)
 
+	def setBackground(self, sty: Sty):
+		vb = self.getViewbox()
+		if vb.isEmpty():
+			strct = self.getStruct()
+			assert not strct.isEmpty()
+			vals = strct.getValues()
+		else:
+			vals = vb.getValues()
+		self.addChild(Rect(*vals)).setStyle(sty)
+
 	def render(self):
 		return self._styleel.render(depth=-1)
 
@@ -698,9 +708,11 @@ class Path(GenericSVGElem):
 		super().__init__("path", struct=Pth(*args))
 
 class AnalyticalPath(Path):
+
 	def __init__(self) -> None:
 		super().__init__("")
 		self.cmds = []
+
 	def _refresh(self):
 		prevcmd = None
 		buf = []
@@ -722,33 +734,42 @@ class AnalyticalPath(Path):
 			prevcmd = cmd
 		self.getStruct().setall("".join(buf))
 		self.updateStructAttrs()
+
 	def addCmd(self, p_cmd: path_command):
 		self.cmds.append(p_cmd)
 		self._refresh()
+
 	def delCmd(self, p_idx: int):
 		del self.cmds[p_idx]
 		self._refresh()
+
 	def insCmd(self, p_idx: int, p_cmd: path_command):
 		self.cmds.insert(p_idx, p_cmd)
 		self._refresh()
+
 	def addPolylinePList(self, p_list: List[Pt]):
 		l = len(p_list)
+		new_list = []
 		for pi, pt in enumerate(p_list):
+			wkpt = [strictToNumber(pt.x), strictToNumber(pt.y)]
+			if not self._noyinvert and not self._yinvertheight is None:
+				wkpt[1] = self._yinvertheight - wkpt[1]
+			new_list.append(wkpt)
 			cmd_added = False
 			if pi == 0: # first point
-				self.cmds.append(pM(*pt))
+				self.cmds.append(pM(*wkpt))
 				cmd_added = True
 			elif pi == l-1: # last point
-				frstpt = p_list[0]
-				diffX = float(frstpt.x) - float(pt.x)
-				diffY = float(frstpt.y) - float(pt.y)
+				frstpt = new_list[0]
+				diffX = frstpt[0] - wkpt[0]
+				diffY = frstpt[1] - wkpt[1]
 				if diffX == 0 and diffY == 0:
 					self.cmds.append(pClose())
 					cmd_added = True
 			if not cmd_added:
-				prevpt = p_list[pi -1]
-				diffX = float(pt.x) - float(prevpt.x)
-				diffY = float(pt.y) - float(prevpt.y)
+				prevpt = new_list[pi -1]
+				diffX = wkpt[0] - prevpt[0]
+				diffY = wkpt[1] - prevpt[1]
 				if diffX == 0 and diffY == 0:
 					# skip this point
 					continue
@@ -757,11 +778,15 @@ class AnalyticalPath(Path):
 				elif diffY == 0:
 					self.cmds.append(pH(removeDecsep(diffX), relative=True))
 				else:
-					if abs(diffX) < abs(float(pt.x)) and abs(diffY) < abs(float(pt.y)):
+					if abs(diffX) < abs(wkpt[0]) and abs(diffY) < abs(wkpt[1]):
 						self.cmds.append(pL(removeDecsep(diffX), removeDecsep(diffY), relative=True))
 					else:
-						self.cmds.append(pL(*pt))
+						self.cmds.append(pL(*wkpt))
 		self._refresh()
+
+	def yinvert(self, p_height: Union[float, int]):
+		if not self._noyinvert:
+			self._yinvertheight = p_height
 
 class _pointsElement(MarkeableSVGElem):
 	def __init__(self, tag, *args, marker_props: Optional[MrkProps] = None) -> None:

@@ -21,6 +21,10 @@ class Re(_withunits_struct):
 		self.width = self.height = "100"
 		self.setUnits('%')
 		return self
+	def getValues(self):
+		return [x[0] for x in [toNumberAndUnit(v) for v in self.getall()]]
+	def isEmpty(self):
+		return [x[0] for x in [toNumberAndUnit(v) for v in self.getall()]] == [0,0,0,0]
 	def yinvert(self, p_contentheight: Union[float, int]):
 		h = strictToNumber(self.height)
 		self.y = p_contentheight - strictToNumber(self.y) - h
@@ -46,9 +50,10 @@ class VBox(_withunits_struct):
 		ret = []
 		val = getattr(self, 'viewBox')
 		if len(val) > 0:
-			ret = [int(v) for v in re_split(r"[\s]+", val)]
+			ret = [x[0] for x in [toNumberAndUnit(v) for v in re_split(r"[\s]+", val)]]
 		return ret
-
+	def isEmpty(self):
+		return [x[0] for x in [toNumberAndUnit(v) for v in self.getValues()]] == [0,0,0,0]
 
 class VBox600x800(VBox):
 	def __init__(self) -> None:
@@ -122,7 +127,9 @@ class Us(_withunits_struct):
 			argslist = args
 		super().__init__(*argslist, defaults=None)
 	def yinvert(self, p_contentheight: Union[float, int]):
-		self.y = p_contentheight - strictToNumber(self.y)
+		if hasattr(self, 'y'):
+			prevval = strictToNumber(self.y)
+			self.y = p_contentheight - prevval
 		return self
 
 class Pth(_withunits_struct):

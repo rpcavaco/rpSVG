@@ -95,6 +95,8 @@ def test_Gradient():
 
 	assert gr2.getStruct().getfields() == "cx,cy,r,fx,fy,{http://www.w3.org/1999/xlink}href,gradientUnits,spreadMethod,gradientTransform"
 
+	sc.setBackground(Sty('fill', '#000029'))
+
 	sc.addChild(RectRC(200,50,500,400,10,20)).setStyle(Sty('fill', 'url(#the_grad)', 'stroke', 'black'))
 	
 	sc.addChild(RectRC(850,500,600,400,10,20)).setStyle(Sty('fill', 'url(#the_rgrad)', 'stroke', 'black'))
@@ -114,6 +116,8 @@ def test_Text():
 	]
 
 	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
+
+	# Not displayed on browsers, only on gnome viewers
 	td = sc.addChild(Text(), todefs=True).setText("Gatos ao ataque")
 
 	ap = sc.addChild(AnalyticalPath(), todefs=True)
@@ -188,9 +192,25 @@ def test_YInvert(capsys):
 		gr1.addChild(GradientStop(0, "#303B8E", 1))
 		gr1.addChild(GradientStop(1, "#DFE0EA", 1))
 
+
+		plist= [
+			Pt(570,800),
+			# Pt(280,990),
+			# Pt(460,820),
+			# Pt(640,930),
+			# Pt(820,890),
+			Pt(1500,540)
+		]
+
+		ap = sc.addChild(AnalyticalPath(), todefs=True)
+		ap.addPolylinePList(plist)
+
+		sc.setBackground(Sty('stroke', 'black', 'fill', 'url(#the_grad)'))
+
+
 		#  --- Background  --------------------------------------
-		sc.addChild(Rect(0,0,1600,1200)).\
-			setStyle(Sty('stroke', 'black', 'fill', 'url(#the_grad)'))
+		# sc.addChild(Rect(0,0,1600,1200)).\
+		# 	setStyle(Sty('stroke', 'black', 'fill', 'url(#the_grad)'))
 		#  ------------------------------------------------------
 
 		# Red rect "uses"
@@ -253,6 +273,19 @@ def test_YInvert(capsys):
 		r2 = sc.addChild(Rect(1080,60, 420, 287))
 		r2.setStyle(Sty('stroke', '#494949'))
 
+		us = sc.addChild(Use().setStyle(Sty('stroke', 'white', 'stroke-width', 2, 'stroke-linejoin', 'round')))
+		us.setHREFAttr(ap.getSel())
 
 	with open('outtest/test_YInvert.svg', 'w') as fl:
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+
+# def test_x(capsys):
+
+# 	with capsys.disabled():
+
+# 		#sc = SVGContent(Re(0,0,1600,1200))
+# 		sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
+# 		sc.setBackground(Sty('fill', '#E9E9E9'))
+
+# 	with open('outtest/test_x.svg', 'w') as fl:
+# 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))

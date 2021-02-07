@@ -1,7 +1,7 @@
 
 from collections import namedtuple
 
-from typing import Optional
+from typing import List, Optional
 
 from math import atan, cos, sin, radians, degrees
 
@@ -187,6 +187,12 @@ class _attrs_struct(object):
 			for idx in range(l, la):
 				self._unusedattrs.append(args[idx])
 		return self
+
+	def getall(self) -> List:
+		ret = []
+		for fld in self._fields:
+			ret.append(self.get(fld))
+		return ret
 
 	def getUnusedAttrs(self):
 		return self._unusedattrs
