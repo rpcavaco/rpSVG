@@ -3,7 +3,7 @@
 from rpcbSVG.Structs import VBox
 import pytest
 
-from rpcbSVG.Basics import Pt, Rotate, Trans, polar2rect, ptAdd, ptGetAngle
+from rpcbSVG.Basics import Pt, Rotate, Trans, pA, pC, pQ, pS, pT, polar2rect, ptAdd, ptGetAngle
 from rpcbSVG.SVGStyleText import CSSSty, Sty
 from rpcbSVG.SVGLib import AnalyticalPath, Circle, Ellipse, GradientStop, Group, Image, Line, LinearGradient, Marker, MrkProps, Polygon, Polyline, RadialGradient, Re, Rect, RectRC, SVGContent, TRef, TSpan, Text, TextParagraph, TextPath, Use
 
@@ -21,7 +21,6 @@ def test_Marker():
 
 	mrkattrs = (3.5,10,7, "auto")
 	pol = Polygon().addPList( (Pt(10,0), Pt(10,7), Pt(0, 3.5)) )
-
 	mr1 = sc.addChild(Marker(2,*mrkattrs), todefs=True)
 	mr1.addChild(pol)
 	pol.setStyle(Sty('fill', 'red'))
@@ -185,6 +184,40 @@ def test_YInvert(capsys):
 		sc.addStyleRule(CSSSty('stroke', '#46474C', 'stroke-width', 2, selector='.aid2'))
 		sc.addStyleRule(CSSSty('stroke', '#494949', 'fill', '#F68E4C', 'stroke-width', 2, selector='.uses'))
 
+		# Define markers =======================================================
+
+		# Common items to both arrow terminators
+		mrkattrs = (1.5, 5, 3, "auto")
+		plist = (Pt(5,0), Pt(5,3), Pt(0, 1.5))
+
+		# Start arrow terminator
+		mr1 = sc.addChild(Marker(3,*mrkattrs), todefs=True)
+
+		# Should not add points to Polygon prior to addChild if yinvert needed to be applied, wouldn't function properly. Warning is issued
+		with pytest.warns(UserWarning):
+			fakepol = mr1.addChild(Polygon().addPList(plist), noyinvert=False)
+
+		# Correct way of adding points if yinversion was to be applied.
+		# In fact we don't need it to be applied here in this case, but works properly 
+		#  either you need, or don't need, to yinvert
+		pol = mr1.addChild(Polygon(), noyinvert=True)
+		pol.addPList(plist)
+		pol.setStyle(Sty('fill', '#AED7FE'))
+
+		# End arrow terminator -- noyinvert=True
+		mr2 = sc.addChild(Marker(2,*mrkattrs), todefs=True)
+		gr = mr2.addChild(Group())
+		pol2 = gr.addChild(Polygon().setStyle(Sty('fill', '#313163')), noyinvert=True)
+		pol2.addPList(plist)
+		gr.addTransform(Rotate(180,2.5,1.5))
+
+		# node vertices marker
+		mr3 = sc.addChild(Marker(0.5,0.5,1,1, 0), todefs=True, noyinvert=True)
+		mr3.addChild(Circle(0.5,0.5,0.5)).setStyle(Sty('fill', 'navyblue', 'fill-opacity', '0.8'))
+
+		# End define markers ===================================================
+
+
 		# Reference red rect to be "used" later, non y-inverted
 		rsrc = sc.addChild(Rect(0, 0,60,60), todefs=True, noyinvert=True)
 
@@ -192,26 +225,32 @@ def test_YInvert(capsys):
 		gr1.addChild(GradientStop(0, "#303B8E", 1))
 		gr1.addChild(GradientStop(1, "#DFE0EA", 1))
 
-
 		plist= [
-			Pt(570,800),
-			# Pt(280,990),
-			# Pt(460,820),
-			# Pt(640,930),
-			# Pt(820,890),
-			Pt(1500,540)
+			Pt(570,860),
+			Pt(640,670),
+			Pt(700,740)
 		]
 
-		ap = sc.addChild(AnalyticalPath(), todefs=True)
+		ap = sc.addChild(AnalyticalPath(
+					marker_props=MrkProps(
+						marker_start=mr1.getId(), 
+						marker_mid=mr3.getId(),
+						marker_end=mr2.getId()
+					)
+				).setStyle(Sty('stroke', 'white', 'stroke-width', 4)), todefs=True)
 		ap.addPolylinePList(plist)
+
+		ap.addCmd(pQ(760,810,820,670))
+		ap.addCmd(pT(920,670))
+		ap.addCmd(pC(940,750,1030,760,1050,690))
+		ap.addCmd(pS(1150,690,1160,710))
+		ap.addCmd(pA(80, 60, 32, 0,1, 1450, 450))
 
 		sc.setBackground(Sty('stroke', 'black', 'fill', 'url(#the_grad)'))
 
-
-		#  --- Background  --------------------------------------
-		# sc.addChild(Rect(0,0,1600,1200)).\
-		# 	setStyle(Sty('stroke', 'black', 'fill', 'url(#the_grad)'))
-		#  ------------------------------------------------------
+		# Guides pointing to end of polyline
+		# sc.addChild(Line(570,860, 600, 890).setClass('aid1'))
+		# sc.addChild(Line(1450, 450, 1490,420).setClass('aid2'))
 
 		# Red rect "uses"
 

@@ -136,11 +136,24 @@ class Pth(_withunits_struct):
 	_fields = ("d") 
 	def __init__(self, *args) -> None:
 		super().__init__(*args, defaults=None)
+	def hasPoints(self) -> bool:
+		ret = False
+		pts = self.get("d")
+		if not pts is None:
+			ret = len(pts) > 0
+		return ret
 
 class Pl(_withunits_struct):
 	_fields = ("points",) 
 	def __init__(self, *args) -> None:
 		super().__init__(*args, defaults=None)
+	def hasPoints(self) -> bool:
+		ret = False
+		pts = self.get("points")
+		if not pts is None:
+			ret = len(pts) > 0
+		return ret
+
 
 class Mrk(_withunits_struct):
 	_fields = ("refX", "refY", "markerWidth", "markerHeight", "orient", "markerUnits") 

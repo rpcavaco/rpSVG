@@ -81,14 +81,22 @@ def getUnit(p_val):
 
 def ptEnsureStrings(p_pt: Pt):
 	ret = Pt(None, None)
-	if not isinstance(p_pt.x, str):
-		ret = ret._replace(x=str(removeDecsep(p_pt.x)))
+	if hasattr(p_pt, 'x'):
+		v_x = p_pt.x
 	else:
-		ret = ret._replace(x=p_pt.x)
-	if not isinstance(p_pt.y, str):
-		ret = ret._replace(y=str(removeDecsep(p_pt.y)))
+		v_x = p_pt[0]
+	if hasattr(p_pt, 'y'):
+		v_y = p_pt.y
 	else:
-		ret = ret._replace(y=p_pt.y)
+		v_y = p_pt[1]
+	if not isinstance(v_x, str):
+		ret = ret._replace(x=str(removeDecsep(v_x)))
+	else:
+		ret = ret._replace(x=v_x)
+	if not isinstance(v_y, str):
+		ret = ret._replace(y=str(removeDecsep(v_y)))
+	else:
+		ret = ret._replace(y=v_y)
 	return ret
 
 def ptGetAngle(p_pt1: Pt, p_pt2: Pt):
@@ -655,6 +663,10 @@ class pM(rel_path_command):
 	_letter = "M"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
+	def yinvert(self, p_yheight):
+		if hasattr(self, "y"):
+			setattr(self, "y", str(p_yheight - strictToNumber(getattr(self, "y"))))
+	
 
 class pL(rel_path_command):
 	"Line to"
@@ -662,6 +674,9 @@ class pL(rel_path_command):
 	_letter = "L"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
+	def yinvert(self, p_yheight):
+		if hasattr(self, "y"):
+			setattr(self, "y", str(p_yheight - strictToNumber(getattr(self, "y"))))
 
 class pH(rel_path_command):
 	"Horizontal line to"
@@ -676,6 +691,9 @@ class pV(rel_path_command):
 	_letter = "V"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
+	def yinvert(self, p_yheight):
+		if hasattr(self, "y"):
+			setattr(self, "y", str(p_yheight - strictToNumber(getattr(self, "y"))))
 
 class pC(rel_path_command):
 	"Cubic Bézier"
@@ -683,6 +701,10 @@ class pC(rel_path_command):
 	_letter = "C"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
+	def yinvert(self, p_yheight):
+		for fld in ("y1", "y2", "y"):
+			if hasattr(self, fld):
+				setattr(self, fld, str(p_yheight - strictToNumber(getattr(self, fld))))
 
 class pS(rel_path_command):
 	"Shorthand cubic Bézier"
@@ -690,6 +712,10 @@ class pS(rel_path_command):
 	_letter = "S"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
+	def yinvert(self, p_yheight):
+		for fld in ("y2", "y"):
+			if hasattr(self, fld):
+				setattr(self, fld, str(p_yheight - strictToNumber(getattr(self, fld))))
 
 class pQ(rel_path_command):
 	"Quadratic Bézier"
@@ -697,6 +723,10 @@ class pQ(rel_path_command):
 	_letter = "Q"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
+	def yinvert(self, p_yheight):
+		for fld in ("y1", "y"):
+			if hasattr(self, fld):
+				setattr(self, fld, str(p_yheight - strictToNumber(getattr(self, fld))))
 
 class pT(rel_path_command):
 	"Shorthand quadratic Bézier"
@@ -704,6 +734,9 @@ class pT(rel_path_command):
 	_letter = "T"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
+	def yinvert(self, p_yheight):
+		if hasattr(self, "y"):
+			setattr(self, "y", str(p_yheight - strictToNumber(getattr(self, "y"))))
 
 class pA(rel_path_command):
 	"Eliptical arc"
@@ -711,6 +744,9 @@ class pA(rel_path_command):
 	_letter = "A"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
 		super().__init__(*args, relative=relative)
+	def yinvert(self, p_yheight):
+		if hasattr(self, "y"):
+			setattr(self, "y", str(p_yheight - strictToNumber(getattr(self, "y"))))
 
 class pClose(path_command):
 	_fields = ()

@@ -4,9 +4,8 @@
 
 
 from io import StringIO
-
 from typing import Optional, List, Union
-
+from warnings import warn
 
 from lxml import etree
 
@@ -443,9 +442,9 @@ class SVGContainer(GenericSVGElem):
 		if todefs:
 			if self._defs is None:
 				self._defs = super().addChild(Defs())
-			ret = super().addChild(p_child, parent=self._defs, nsmap=nsmap)
+			ret = super().addChild(p_child, parent=self._defs, nsmap=nsmap, noyinvert=noyinvert)
 		else:
-			ret = super().addChild(p_child, nsmap=nsmap)
+			ret = super().addChild(p_child, nsmap=nsmap, noyinvert=noyinvert)
 		if not self.genIDMethod is None and hasattr(ret, 'setGenIdMethod'):
 			ret.setGenIdMethod(self.genIDMethod)
 		return ret
@@ -703,14 +702,14 @@ class Line(MarkeableSVGElem):
 	def __init__(self, *args, marker_props: Optional[MrkProps] = None) -> None:
 		super().__init__("line", struct=Li(*args), marker_props=marker_props)
 
-class Path(GenericSVGElem):
-	def __init__(self, *args) -> None:
-		super().__init__("path", struct=Pth(*args))
+class Path(MarkeableSVGElem):
+	def __init__(self, *args, marker_props: Optional[MrkProps] = None) -> None:
+		super().__init__("path", struct=Pth(*args), marker_props=marker_props)
 
 class AnalyticalPath(Path):
 
-	def __init__(self) -> None:
-		super().__init__("")
+	def __init__(self, marker_props: Optional[MrkProps] = None) -> None:
+		super().__init__("", marker_props=marker_props)
 		self.cmds = []
 
 	def _refresh(self):
@@ -736,6 +735,9 @@ class AnalyticalPath(Path):
 		self.updateStructAttrs()
 
 	def addCmd(self, p_cmd: path_command):
+		if hasattr(p_cmd, 'yinvert'):
+			if not self._noyinvert and not self._yinvertheight is None:
+				p_cmd.yinvert(self._yinvertheight)
 		self.cmds.append(p_cmd)
 		self._refresh()
 
@@ -793,6 +795,8 @@ class _pointsElement(MarkeableSVGElem):
 		super().__init__(tag, struct=Pl(*args), marker_props=marker_props)
 		self.initialpoint = None
 		self.omitclosingpoint = False
+	def hasPoints(self):
+		return self.getStruct().hasPoints()
 	def addPList(self, p_list: List[Pt], mindelta=MINDELTA):
 		l = len(p_list)
 		buf = []
@@ -802,10 +806,18 @@ class _pointsElement(MarkeableSVGElem):
 			elif pi == l-1 and not self.initialpoint is None: 
 				if ptCoincidence(pt, self.initialpoint, mindelta=mindelta) and self.omitclosingpoint:
 					continue
-			buf.append("{0},{1}".format(*ptEnsureStrings(pt)))
+			wkpt = [strictToNumber(pt.x), strictToNumber(pt.y)]
+			if not self._noyinvert and not self._yinvertheight is None:
+				wkpt[1] = self._yinvertheight - wkpt[1]
+			buf.append("{0},{1}".format(*ptEnsureStrings(wkpt)))
 		self.getStruct().setall(" ".join(buf))
 		self.updateStructAttrs()
 		return self
+	def yinvert(self, p_height: Union[float, int]):
+		if not self._noyinvert:
+			self._yinvertheight = p_height
+			if self.hasPoints():
+				warn(UserWarning("points already defined prior to yinvert activation on this object, their y coord won't be changed."))
 
 class Polyline(_pointsElement):
 	def __init__(self, *args, marker_props: Optional[MrkProps] = None) -> None:
