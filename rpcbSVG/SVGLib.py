@@ -753,6 +753,7 @@ class AnalyticalPath(Path):
 				p_cmd.yinvert(self._yinvertheight)
 		self.cmds.append(p_cmd)
 		self._refresh()
+		return self
 
 	def delCmd(self, p_idx: int):
 		del self.cmds[p_idx]

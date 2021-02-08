@@ -1,10 +1,10 @@
 
 
-from rpcbSVG.Symbols import Cross, Diamond
+from rpcbSVG.Symbols import Asterisk, Cross, CrossSight, Diamond, Square, XSight, XSymb
 from rpcbSVG.Structs import VBox
 import pytest
 
-from rpcbSVG.Basics import Pt, Rotate, Trans, pA, pC, pQ, pS, pT, polar2rect, ptAdd, ptGetAngle
+from rpcbSVG.Basics import Pt, Rotate, Trans, pA, pC, pQ, pS, pT, polar2rectDegs, ptAdd, ptGetAngle
 from rpcbSVG.SVGStyleText import CSSSty, Sty
 from rpcbSVG.SVGLib import AnalyticalPath, Circle, Ellipse, GradientStop, Group, Image, Line, LinearGradient, Marker, MrkProps, Pattern, Polygon, Polyline, RadialGradient, Re, Rect, RectRC, SVGContent, TRef, TSpan, Text, TextParagraph, TextPath, Title, Use
 
@@ -13,7 +13,7 @@ from rpcbSVG.SVGLib import AnalyticalPath, Circle, Ellipse, GradientStop, Group,
 def test_Marker():
 
 	def pttrans(p_pt, p_ang):
-		return (p_pt, ptAdd(p_pt, polar2rect(p_ang, 30)))
+		return (p_pt, ptAdd(p_pt, polar2rectDegs(p_ang, 30)))
 
 	sc = SVGContent(Re(0,0,1200,1000)).setIdentityViewbox()
 	sc.addStyleRule(CSSSty('stroke', 'grey', 'stroke-width', 2, selector='.aids'))
@@ -359,16 +359,34 @@ def test_Pattern():
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
 
-def test_Symbols():
+def test_Symbols(capsys):
 
 	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
 	sc.setBackground(Sty('fill', '#E7E8EA'))
 
 	sc.addChild(Title("Symbol library test"))
 
-	dsymb = sc.addChild(Diamond(60,80), todefs=True)
-	crsymb = sc.addChild(Cross(60,80), todefs=True)
+	with capsys.disabled():
 
+		# SYMBOL DEFINITIONS ------------------------------------------------------
+		#
+		xsight = sc.addChild(XSight(24,36,7), todefs=True)
+		xsight_centerMarker = sc.addChild(XSight(36,36,10), todefs=True)
+		xsymb = sc.addChild(XSymb(24,36), todefs=True)
+		crosssight = sc.addChild(CrossSight(38,38, 6), todefs=True)
+		crosssight_centerMarker = sc.addChild(CrossSight(38,38, 10), todefs=True)
+		dsymb_cc = sc.addChild(Diamond(80,60, handle='cc'), todefs=True)
+		dsymb_lc = sc.addChild(Diamond(30,80, handle='lc'), todefs=True)
+		dsymb_rc = sc.addChild(Diamond(30,80, handle='rc'), todefs=True)
+		dsymb_ct = sc.addChild(Diamond(80,30, handle='ct'), todefs=True)
+		dsymb_cb = sc.addChild(Diamond(80,30, handle='cb'), todefs=True)
+		crsymb_centerMarker = sc.addChild(Cross(10,10), todefs=True)
+		crsymb_xs_centerMarker = sc.addChild(Cross(5,5), todefs=True)
+		crsymb = sc.addChild(Cross(60,80), todefs=True)
+		sqrsymb = sc.addChild(Square(60), todefs=True)
+		asteri = sc.addChild(Asterisk(60), todefs=True)
+		#
+		# =========================================================================
 
 	title_height = 200
 	sc.addChild(Text(300,title_height)).\
@@ -376,23 +394,276 @@ def test_Symbols():
 		setText("Symbol library test")
 
 	tstyle = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 30, 'font-family', 'Helvetica', 'text-anchor', 'middle', 'stroke-width', 2)
+	txstyle_small = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 16, 'font-family', 'Monospace', 'text-anchor', 'middle', 'stroke-width', 2)
+	txstyle_xsmall = Sty('fill', 'black', 'stroke', '#404040', 'font-size', 14, 'font-family', 'Monospace', 'text-anchor', 'middle', 'stroke-width', 2)
 	symbstyle = Sty('stroke', 'red', 'stroke-width', 4)
 
-	us = sc.addChild(Use(Pt(400,400), dsymb.getSel()).setStyle(symbstyle))
-	sc.addChild(Text(400,500)).\
+	def code_height_row1(p_topval):
+		return p_topval + 75
+
+	def label_height_row1(p_topval):
+		return p_topval + 120
+
+	left = 240
+	hstep = 240
+	top_row1 = 320
+	top_row2 = 580
+	top_row3 = 840
+
+	# -- X Sight -----------------------------------------------------------
+	sc.addComment("Start 'X Sight'")
+
+	thisleft = left
+	this_top = top_row1
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), xsight.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("XSight(24,36,7)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
 		setStyle(tstyle).\
-		setText("Diamond")
+		setText("X Sight")
 
-	sc.addChild(Line(400,400,440,440).setStyle(Sty('stroke', 'black')))
+	# extra small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_xs_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End 'X Sight'")
+	# =========================================================================
 
 
-	us = sc.addChild(Use(Pt(600,400), crsymb.getSel()).setStyle(symbstyle))
-	sc.addChild(Text(600,500)).\
+	# -- 'X' symbol -----------------------------------------------------------
+	sc.addComment("Start 'X'")
+
+	thisleft = thisleft + hstep
+	this_top = top_row1
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), xsymb.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("XSymb(60,80)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("X")
+
+	# small center crosssight
+	sc.addChild(Use(Pt(thisleft,this_top), crosssight_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End 'X'")
+	# =========================================================================
+
+	
+	# -- CrossSight ----------------------------------------------------------------
+	sc.addComment("Start CrossSight")
+
+	thisleft = thisleft + hstep
+	this_top = top_row1
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), crosssight.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("CrossSight(38,38, 6)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("CrossSight")
+
+	# extra small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_xs_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End CrossSight")
+	# =========================================================================
+
+	# -- Cross ----------------------------------------------------------------
+	sc.addComment("Start Cross")
+
+	thisleft = thisleft + hstep
+	this_top = top_row1
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), crsymb.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("Cross(60,80)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
 		setStyle(tstyle).\
 		setText("Cross")
 
+	# small center X sight
+	sc.addChild(Use(Pt(thisleft,this_top), xsight_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Cross")
+	# =========================================================================
+
+	# -- Diamond cc -----------------------------------------------------------
+	sc.addComment("Start Diamond CC")
+
+	thisleft = thisleft + hstep
+	this_top = top_row1
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), dsymb_cc.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("Diamond(80,60,handle='cc')")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Diamond")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Diamond CC")
+	# =========================================================================
+
+	# -- Diamond lc -----------------------------------------------------------
+	sc.addComment("Start Diamond LC")
+
+	thisleft = left
+	this_top = top_row2
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), dsymb_lc.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_xsmall).\
+		setText("Diamond(30,80,handle='lc')")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Diamond LC")
+	# =========================================================================
+
+	# -- Diamond rc -----------------------------------------------------------
+	sc.addComment("Start Diamond RC")
+
+	thisleft = thisleft + hstep
+	this_top = top_row2
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), dsymb_rc.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_xsmall).\
+		setText("Diamond(30,80,handle='rc')")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Diamond RC")
+	# =========================================================================
+
+	sc.addChild(Text(thisleft + (hstep/2),label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Different diamond placements")
+
+	# -- Diamond ct -----------------------------------------------------------
+	sc.addComment("Start Diamond CT")
+
+	thisleft = thisleft + hstep
+	this_top = top_row2
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), dsymb_ct.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_xsmall).\
+		setText("Diamond(80,30, handle='ct')")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Diamond CT")
+	# =========================================================================
+
+	# -- Diamond cb -----------------------------------------------------------
+	sc.addComment("Start Diamond CB")
+
+	thisleft = thisleft + hstep
+	this_top = top_row2
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), dsymb_cb.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_xsmall).\
+		setText("Diamond(80,30, handle='cb')")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Diamond CB")
+	# =========================================================================
+
+	# -- Square -----------------------------------------------------------
+	sc.addComment("Start Square")
+
+	thisleft = thisleft + hstep
+	this_top = top_row2
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), sqrsymb.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("Square(60)")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Square")
+
+	sc.addComment("End Square")
+	# =========================================================================
+
+	## THIRD ROW ####
+
+	# -- Asterisk -----------------------------------------------------------
+	sc.addComment("Start Asterisk")
+
+	thisleft = left
+	this_top = top_row3
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), asteri.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("Asterisk(60)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Asterisk")
+
+	sc.addComment("End Asterisk")
+	# =========================================================================
+
+
+	# -- Circled Asterisk -----------------------------------------------------------
+	sc.addComment("Start Circled Asterisk")
+
+	thisleft = thisleft + hstep
+	this_top = top_row3
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), sqrsymb.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("CircAsterisk(60)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Circled Asterisk")
+
+	sc.addComment("End Circled Asterisk")
+	# =========================================================================
+
 	with open('outtest/test_Symbols.svg', 'w') as fl:
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+
 
 # 	with capsys.disabled():
 

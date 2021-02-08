@@ -1,7 +1,7 @@
 
 from collections import namedtuple
 
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from math import atan, cos, sin, radians, degrees
 
@@ -103,17 +103,42 @@ def ptGetAngle(p_pt1: Pt, p_pt2: Pt):
 	ret = None
 	dx = float(p_pt2.x) - float(p_pt1.x)
 	dy = float(p_pt2.y) - float(p_pt1.y)
-	if dx < MINDELTA:
+	adx = abs(dx)
+	ady = abs(dy)
+	if adx < MINDELTA:
 		if dy > MINDELTA:
 			ret = 90
 		if dy < MINDELTA:
 			ret = 270
+	elif ady < MINDELTA:
+		if dx > MINDELTA:
+			ret = 0
+		if dx < MINDELTA:
+			ret = 180
 	else:
-		ret = degrees(atan(dy/dx))
+		ret = degrees(atan(ady/adx))
+	if dx < 0:
+		if dy > 0:
+			ret = 180 - ret
+		elif dy < 0:
+			ret = 180 + ret
+	elif dx > 0:
+		if dy < 0:
+			ret = - ret
+
+
+	return ret
+
+def polar2rectDegs(ang, rad):
+	ret = Pt(cos(radians(ang)) * rad, sin(radians(ang)) * rad)
 	return ret
 
 def polar2rect(ang, rad):
-	return Pt(cos(radians(ang)) * rad, sin(radians(ang)) * rad)
+	return Pt(cos(ang) * rad, sin(ang) * rad)
+
+def calc3rdPointInSegment(p_pt1: Pt, p_pt2: Pt, radiusFromP1: Union[float, int]):
+	ang = ptGetAngle(p_pt1, p_pt2)
+	return polar2rectDegs(ang, radiusFromP1)
 
 def isNumeric(p_val):
 	try:
