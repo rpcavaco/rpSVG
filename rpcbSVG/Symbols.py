@@ -1,6 +1,8 @@
 
 from typing import Optional, Union
-from rpcbSVG.Basics import Pt, calc3rdPointInSegment, pA, pClose, pL, pM, polar2rectDegs, ptRemoveDecsep, removeDecsep, toNumberAndUnit
+from math import sqrt, pow
+
+from rpcbSVG.Basics import Pt, calc3rdPointInSegment, pA, pClose, pL, pM, polar2rectDegs, ptRemoveDecsep, removeDecsep, strictToNumber, toNumberAndUnit
 from rpcbSVG.SVGLib import AnalyticalPath, Rect
 
 class Diamond(AnalyticalPath):
@@ -231,19 +233,18 @@ class Arrow(AnalyticalPath):
 			self.addCmd(pClose())
 
 class CircArrow(Arrow):
-
-	def __init__(self, length, basewidth, headwidth, headlength, handle='cc', coffset: Optional[Union[float, int]] = None) -> None:
-		super().__init__(length, basewidth, headwidth, headlength, handle=handle)
+	"Only on handle = 'cc'"
+	def __init__(self, length, basewidth, headwidth, headlength, coffset: Optional[Union[float, int]] = None) -> None:
+		super().__init__(length, basewidth, headwidth, headlength, handle='cc')
 		self.coffset = coffset
 
 	def onAfterParentAdding(self):	
 		super().onAfterParentAdding()
 		length, _basewidth, _headwidth, _headlength, handle = self.dims
-		rad = 0
-		if handle == 'cb':
-			rad = self.coffset + length
-		elif handle == 'cc':
-			rad = self.coffset + (length / 2)
+		# if handle == 'cb':
+		# 	rad = self.coffset + length
+		# elif handle == 'cc':
+		rad = self.coffset + (length / 2)
 		self.addCmd(pM(-rad,0))
 		self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
 		self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
@@ -255,18 +256,33 @@ class Triangle(AnalyticalPath):
 		self.dims = (width, height)
 
 	def onAfterParentAdding(self):	
-		w, _u = toNumberAndUnit(self.dims[0])
-		h, _u = toNumberAndUnit(self.dims[1])
+		w = strictToNumber(self.dims[0])
+		h = strictToNumber(self.dims[1])
 		mw = removeDecsep(w / 2)
-		ch = removeDecsep(h / 3)
 
-		self.addCmd(pM(-mw,ch))
+		a = sqrt(pow(h,2) + pow(mw,2))
+		s = 0.5 * ((2 * a) + w)
+
+		# r = sqrt(((s-a) * (s-a) * (s - w)) / s) -- inscribed
+		R = (a * a * w) / (4 * sqrt(s * (s-a) * (s-a) * (s-w))) # Circunscribed
+
+		self.addCmd(pM(0,-R))
+		self.addCmd(pL(-mw,h, relative=True))
 		self.addCmd(pL(w,0, relative=True))
-		self.addCmd(pL(-mw,-h, relative=True))
 		self.addCmd(pClose())
+
+		return R
 
 class CircTriangle(Triangle):
 
 	def __init__(self, width, height, coffset: Optional[Union[float, int]] = None) -> None:
-		pass
+		super().__init__(width, height)
+		self.coffset = coffset
+
+	def onAfterParentAdding(self):	
+		R = super().onAfterParentAdding()
+		rad = self.coffset + R
+		self.addCmd(pM(-rad,0))
+		self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
+		self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
 

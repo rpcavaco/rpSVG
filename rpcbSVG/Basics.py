@@ -785,7 +785,6 @@ class pA(rel_path_command):
 	_fields = ("rx", "ry", "x-axis-rotation", "large-arc-flag", "sweep-flag", "x", "y")
 	_letter = "A"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
-		print("\npA args:", args)
 		super().__init__(*args, relative=relative)
 	def yinvert(self, p_yheight):
 		if hasattr(self, "y"):
