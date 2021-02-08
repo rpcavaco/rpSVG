@@ -249,15 +249,16 @@ class CircArrow(Arrow):
 		self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
 		self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
 
-class Triangle(AnalyticalPath):
+class Wedge(AnalyticalPath):
 	
-	def __init__(self, width, height) -> None:
+	def __init__(self, width, height, indent: Optional[Union[float, int]] = 0) -> None:
 		super().__init__()
-		self.dims = (width, height)
+		self.dims = (width, height, indent)
 
 	def onAfterParentAdding(self):	
 		w = strictToNumber(self.dims[0])
 		h = strictToNumber(self.dims[1])
+		i = strictToNumber(self.dims[2])
 		mw = removeDecsep(w / 2)
 
 		a = sqrt(pow(h,2) + pow(mw,2))
@@ -268,15 +269,19 @@ class Triangle(AnalyticalPath):
 
 		self.addCmd(pM(0,-R))
 		self.addCmd(pL(-mw,h, relative=True))
-		self.addCmd(pL(w,0, relative=True))
+		if i != 0:
+			self.addCmd(pL(mw,-i, relative=True))
+			self.addCmd(pL(mw,i, relative=True))
+		else:
+			self.addCmd(pL(w,0, relative=True))
 		self.addCmd(pClose())
 
 		return R
 
-class CircTriangle(Triangle):
+class CircWedge(Wedge):
 
-	def __init__(self, width, height, coffset: Optional[Union[float, int]] = None) -> None:
-		super().__init__(width, height)
+	def __init__(self, width, height, indent: Optional[Union[float, int]] = 0, coffset: Optional[Union[float, int]] = None) -> None:
+		super().__init__(width, height, indent=indent)
 		self.coffset = coffset
 
 	def onAfterParentAdding(self):	
@@ -285,4 +290,6 @@ class CircTriangle(Triangle):
 		self.addCmd(pM(-rad,0))
 		self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
 		self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
+
+
 
