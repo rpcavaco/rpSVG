@@ -1,6 +1,6 @@
 
 
-from rpcbSVG.Symbols import Asterisk, Cross, CrossSight, Diamond, Square, XSight, XSymb
+from rpcbSVG.Symbols import Asterisk, CircAsterisk, Cross, CrossSight, Diamond, Square, XSight, XSymb
 from rpcbSVG.Structs import VBox
 import pytest
 
@@ -388,8 +388,9 @@ def test_Symbols(capsys):
 		crsymb = sc.addChild(Cross(60,80), todefs=True)
 		sqrsymb = sc.addChild(Square(60), todefs=True)
 		asteri = sc.addChild(Asterisk(60), todefs=True)
-		fan = sc.addChild(Asterisk(60,14), todefs=True)
-		circasteri = sc.addChild(Asterisk(60), todefs=True)
+		fan = sc.addChild(Asterisk(60, separation=14), todefs=True)
+		circasteri = sc.addChild(CircAsterisk(44, 30), todefs=True)
+		circfan = sc.addChild(CircAsterisk(44, 30, separation=12), todefs=True)
 		#
 		# =========================================================================
 
@@ -668,7 +669,6 @@ def test_Symbols(capsys):
 	sc.addComment("End Fan")
 	# =========================================================================
 
-
 	# -- Circled Asterisk -----------------------------------------------------------
 	sc.addComment("Start Circled Asterisk")
 
@@ -679,13 +679,35 @@ def test_Symbols(capsys):
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
-		setText("CircAsterisk(60)")
+		setText("CircAsterisk(44, 30)")
 
 	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
 		setStyle(tstyle).\
 		setText("Circled Asterisk")
 
 	sc.addComment("End Circled Asterisk")
+	# =========================================================================
+
+	# -- Circled Fan -----------------------------------------------------------
+	sc.addComment("Start Circled Fan")
+
+	thisleft = thisleft + hstep
+	this_top = top_row3
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), circfan.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("CircAsterisk(60,33,14)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Circled Fan")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Circled Fan")
 	# =========================================================================
 
 	with open('outtest/test_Symbols.svg', 'w') as fl:

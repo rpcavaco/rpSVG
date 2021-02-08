@@ -191,5 +191,9 @@ class CircAsterisk(Asterisk):
 
 	def onAfterParentAdding(self):	
 		super().onAfterParentAdding()
-		self.addCmd(pA())
+		self.addCmd(pM(-self.circrad,0))
+		self.addCmd(pA(self.circrad, self.circrad, 0, 1, 0, self.circrad, 0))
+		self.addCmd(pA(self.circrad, self.circrad, 0, 1, 0, -self.circrad, 0))
+
+
 
