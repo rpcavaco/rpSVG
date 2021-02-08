@@ -667,7 +667,6 @@ class pM(rel_path_command):
 		if hasattr(self, "y"):
 			setattr(self, "y", str(p_yheight - strictToNumber(getattr(self, "y"))))
 	
-
 class pL(rel_path_command):
 	"Line to"
 	_fields = ("x", "y")

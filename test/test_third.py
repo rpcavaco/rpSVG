@@ -1,5 +1,6 @@
 
 
+from rpcbSVG.Symbols import Cross, Diamond
 from rpcbSVG.Structs import VBox
 import pytest
 
@@ -355,6 +356,42 @@ def test_Pattern():
 	sc.addChild(Rect(300,250,1000,800).setStyle(Sty('stroke', 'black', 'fill', patt.getSelector(funciri=True))))
 
 	with open('outtest/test_Pattern.svg', 'w') as fl:
+		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+
+
+def test_Symbols():
+
+	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
+	sc.setBackground(Sty('fill', '#E7E8EA'))
+
+	sc.addChild(Title("Symbol library test"))
+
+	dsymb = sc.addChild(Diamond(60,80), todefs=True)
+	crsymb = sc.addChild(Cross(60,80), todefs=True)
+
+
+	title_height = 200
+	sc.addChild(Text(300,title_height)).\
+		setStyle(Sty('fill', '#7C7C7C', 'font-size', 60, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
+		setText("Symbol library test")
+
+	tstyle = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 30, 'font-family', 'Helvetica', 'text-anchor', 'middle', 'stroke-width', 2)
+	symbstyle = Sty('stroke', 'red', 'stroke-width', 4)
+
+	us = sc.addChild(Use(Pt(400,400), dsymb.getSel()).setStyle(symbstyle))
+	sc.addChild(Text(400,500)).\
+		setStyle(tstyle).\
+		setText("Diamond")
+
+	sc.addChild(Line(400,400,440,440).setStyle(Sty('stroke', 'black')))
+
+
+	us = sc.addChild(Use(Pt(600,400), crsymb.getSel()).setStyle(symbstyle))
+	sc.addChild(Text(600,500)).\
+		setStyle(tstyle).\
+		setText("Cross")
+
+	with open('outtest/test_Symbols.svg', 'w') as fl:
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
 # 	with capsys.disabled():

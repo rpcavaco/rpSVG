@@ -380,7 +380,7 @@ class GenericSVGElem(BaseSVGElem):
 	def addChild(self, p_child: BaseSVGElem, parent: Optional[Union[etree.Element, BaseSVGElem]]=None, nsmap=None, noyinvert=False):
 		self._noyinvert = noyinvert
 		if parent is None:
-			assert self.hasEl()
+			assert self.hasEl(), "XML parent not inited. If this is happening in a new object class init, maybe you should instead place this child adding in 'onAfterParentAdding' method"
 			if nsmap is None:
 				newel = etree.SubElement(self.getEl(), p_child.tag)
 			else:
