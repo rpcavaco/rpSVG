@@ -1,6 +1,6 @@
 
 
-from rpcbSVG.Symbols import Asterisk, CircAsterisk, Cross, CrossSight, Diamond, Square, XSight, XSymb
+from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, Cross, CrossSight, Diamond, Square, Triangle, XSight, XSymb
 from rpcbSVG.Structs import VBox
 import pytest
 
@@ -390,12 +390,17 @@ def test_Symbols(capsys):
 		asteri = sc.addChild(Asterisk(60), todefs=True)
 		fan = sc.addChild(Asterisk(60, separation=14), todefs=True)
 		circasteri = sc.addChild(CircAsterisk(44, 30), todefs=True)
-		circfan = sc.addChild(CircAsterisk(44, 30, separation=12), todefs=True)
+		circfan = sc.addChild(CircAsterisk(44, 30, separation=10), todefs=True)
+		arr = sc.addChild(Arrow(65, 30, 60, 30), todefs=True)
+		arrlc = sc.addChild(Arrow(36, 12, 24, 14, handle='cb'), todefs=True)
+		circarr = sc.addChild(CircArrow(62, 22, 50, 30, coffset=8), todefs=True)
+		circarrcb = sc.addChild(CircArrow(36, 12, 24, 14, handle='cb', coffset=8), todefs=True)
+		tri = sc.addChild(Triangle(30,32), todefs=True)
 		#
 		# =========================================================================
 
-	title_height = 200
-	sc.addChild(Text(300,title_height)).\
+	title_height = 140
+	sc.addChild(Text(180,title_height)).\
 		setStyle(Sty('fill', '#7C7C7C', 'font-size', 60, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
 		setText("Symbol library test")
 
@@ -410,11 +415,15 @@ def test_Symbols(capsys):
 	def label_height_row1(p_topval):
 		return p_topval + 120
 
-	left = 240
-	hstep = 240
-	top_row1 = 320
-	top_row2 = 580
-	top_row3 = 840
+	left = 260
+	hstep = 280
+	vstep = 230
+
+	top_row1 = 260
+
+	top_row2 = top_row1 + vstep
+	top_row3 = top_row1 + 2 * vstep
+	top_row4 = top_row1 + 3 * vstep
 
 	# -- X Sight -----------------------------------------------------------
 	sc.addComment("Start 'X Sight'")
@@ -506,11 +515,35 @@ def test_Symbols(capsys):
 	sc.addComment("End Cross")
 	# =========================================================================
 
-	# -- Diamond cc -----------------------------------------------------------
-	sc.addComment("Start Diamond CC")
+	# -- Square -----------------------------------------------------------
+	sc.addComment("Start Square")
 
 	thisleft = thisleft + hstep
 	this_top = top_row1
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), sqrsymb.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("Square(60)")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Square")
+
+	sc.addComment("End Square")
+	# =========================================================================
+
+	## SECOND ROW ####
+
+	# -- Diamond cc -----------------------------------------------------------
+	sc.addComment("Start Diamond CC")
+
+	thisleft = left
+	this_top = top_row2
 
 	us = sc.addChild(Use(Pt(thisleft,this_top), dsymb_cc.getSel()).setStyle(symbstyle))
 
@@ -531,7 +564,7 @@ def test_Symbols(capsys):
 	# -- Diamond lc -----------------------------------------------------------
 	sc.addComment("Start Diamond LC")
 
-	thisleft = left
+	thisleft = thisleft + hstep
 	this_top = top_row2
 
 	us = sc.addChild(Use(Pt(thisleft,this_top), dsymb_lc.getSel()).setStyle(symbstyle))
@@ -604,28 +637,6 @@ def test_Symbols(capsys):
 	sc.addComment("End Diamond CB")
 	# =========================================================================
 
-	# -- Square -----------------------------------------------------------
-	sc.addComment("Start Square")
-
-	thisleft = thisleft + hstep
-	this_top = top_row2
-
-	us = sc.addChild(Use(Pt(thisleft,this_top), sqrsymb.getSel()).setStyle(symbstyle))
-
-	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
-		setStyle(txstyle_small).\
-		setText("Square(60)")
-
-	# small center cross
-	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
-
-	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
-		setStyle(tstyle).\
-		setText("Square")
-
-	sc.addComment("End Square")
-	# =========================================================================
-
 	## THIRD ROW ####
 
 	# -- Asterisk -----------------------------------------------------------
@@ -679,7 +690,7 @@ def test_Symbols(capsys):
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
-		setText("CircAsterisk(44, 30)")
+		setText("CircAsterisk(44,30)")
 
 	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
 		setStyle(tstyle).\
@@ -698,7 +709,7 @@ def test_Symbols(capsys):
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
-		setText("CircAsterisk(60,33,14)")
+		setText("CircAsterisk(44,30,10)")
 
 	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
 		setStyle(tstyle).\
@@ -708,6 +719,120 @@ def test_Symbols(capsys):
 	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
 
 	sc.addComment("End Circled Fan")
+	# =========================================================================
+
+	# -- Triangle -----------------------------------------------------------
+	sc.addComment("Start Triangle")
+
+	thisleft = thisleft + hstep
+	this_top = top_row3
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), tri.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("Triangle(.....)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Triangle")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Triangle")
+	# =========================================================================
+
+	# -- Arrow ----------------------------------------------------------------
+	sc.addComment("Start Arrow")
+
+	thisleft = left
+	# thisleft = thisleft + hstep
+	this_top = top_row4
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), arr.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("Arrow(65,30,60,30)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Arrow")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Arrow")
+	# =========================================================================
+
+	# -- Arrow CB -------------------------------------------------------------
+	sc.addComment("Start Arrow CB")
+
+	#thisleft = left
+	thisleft = thisleft + hstep
+	this_top = top_row4
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), arrlc.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("Arrow(36,12,24,14,handle='cb')")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Arrow CB")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Arrow CB")
+	# =========================================================================
+
+	# -- Circular Arrow ----------------------------------------------------------------
+	sc.addComment("Start Circular Arrow")
+
+	# thisleft = left
+	thisleft = thisleft + hstep
+	this_top = top_row4
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), circarr.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("CircArrow(62,22,50,30,8)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Circular Arrow")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Circular Arrow")
+	# =========================================================================
+
+	# -- Circular Arrow CB -------------------------------------------------------------
+	sc.addComment("Start Circular Arrow CB")
+
+	#thisleft = left
+	thisleft = thisleft + hstep
+	this_top = top_row4
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), circarrcb.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("CircArrow(36,12,24,14,'cb',8)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Circular Arrow CB")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Circular Arrow CB")
 	# =========================================================================
 
 	with open('outtest/test_Symbols.svg', 'w') as fl:
