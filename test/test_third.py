@@ -4,7 +4,7 @@ from rpcbSVG.Symbols import Asterisk, Cross, CrossSight, Diamond, Square, XSight
 from rpcbSVG.Structs import VBox
 import pytest
 
-from rpcbSVG.Basics import Pt, Rotate, Trans, pA, pC, pQ, pS, pT, polar2rectDegs, ptAdd, ptGetAngle
+from rpcbSVG.Basics import GLOBAL_ENV, Pt, Rotate, Trans, pA, pC, pQ, pS, pT, polar2rectDegs, ptAdd, ptGetAngle
 from rpcbSVG.SVGStyleText import CSSSty, Sty
 from rpcbSVG.SVGLib import AnalyticalPath, Circle, Ellipse, GradientStop, Group, Image, Line, LinearGradient, Marker, MrkProps, Pattern, Polygon, Polyline, RadialGradient, Re, Rect, RectRC, SVGContent, TRef, TSpan, Text, TextParagraph, TextPath, Title, Use
 
@@ -361,6 +361,9 @@ def test_Pattern():
 
 def test_Symbols(capsys):
 
+	# Coordinates rounded to 1 dec.place
+	GLOBAL_ENV["ROUND"]["places"] = 1
+
 	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
 	sc.setBackground(Sty('fill', '#E7E8EA'))
 
@@ -385,6 +388,8 @@ def test_Symbols(capsys):
 		crsymb = sc.addChild(Cross(60,80), todefs=True)
 		sqrsymb = sc.addChild(Square(60), todefs=True)
 		asteri = sc.addChild(Asterisk(60), todefs=True)
+		fan = sc.addChild(Asterisk(60,14), todefs=True)
+		circasteri = sc.addChild(Asterisk(60), todefs=True)
 		#
 		# =========================================================================
 
@@ -641,6 +646,28 @@ def test_Symbols(capsys):
 	sc.addComment("End Asterisk")
 	# =========================================================================
 
+	# -- Fan -----------------------------------------------------------
+	sc.addComment("Start Fan")
+
+	thisleft = thisleft + hstep
+	this_top = top_row3
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), fan.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("Asterisk(60,14)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Fan")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Fan")
+	# =========================================================================
+
 
 	# -- Circled Asterisk -----------------------------------------------------------
 	sc.addComment("Start Circled Asterisk")
@@ -648,7 +675,7 @@ def test_Symbols(capsys):
 	thisleft = thisleft + hstep
 	this_top = top_row3
 
-	us = sc.addChild(Use(Pt(thisleft,this_top), sqrsymb.getSel()).setStyle(symbstyle))
+	us = sc.addChild(Use(Pt(thisleft,this_top), circasteri.getSel()).setStyle(symbstyle))
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\

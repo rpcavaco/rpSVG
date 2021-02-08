@@ -28,7 +28,7 @@ SVG_ROOT = """<svg
 
 DECLARATION_ROOT = """<?xml version="1.0" standalone="no"?>
 {0}""".format(SVG_ROOT)
-	 
+
 class TagOutOfDirectUserManipulation(RuntimeError):
 	def __init__(self, p_tag):
 		self.tag = p_tag

@@ -1,9 +1,9 @@
 
-from typing import Optional
-from rpcbSVG.Basics import Pt, calc3rdPointInSegment, pClose, pL, pM, polar2rectDegs, toNumberAndUnit
-from rpcbSVG.SVGLib import AnalyticalPath, Group, Rect
+from typing import Optional, Union
+from rpcbSVG.Basics import Pt, calc3rdPointInSegment, pA, pClose, pL, pM, polar2rectDegs, ptRemoveDecsep, removeDecsep, toNumberAndUnit
+from rpcbSVG.SVGLib import AnalyticalPath, Rect
 
-class Diamond(Group):
+class Diamond(AnalyticalPath):
 
 	def __init__(self, width, height, handle='cc') -> None:
 		super().__init__()
@@ -14,42 +14,41 @@ class Diamond(Group):
 	def onAfterParentAdding(self):	
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
-		mw = w / 2
-		mh = h / 2
+		mw = removeDecsep(w / 2)
+		mh = removeDecsep(h / 2)
 
-		ap = self.addChild(AnalyticalPath())
 		if self.handle == 'cc':
-			ap.addCmd(pM(-mw,0))
-			ap.addCmd(pL(0,-mh))
-			ap.addCmd(pL(mw,0))
-			ap.addCmd(pL(0,mh))
-			ap.addCmd(pClose())
+			self.addCmd(pM(-mw,0))
+			self.addCmd(pL(0,-mh))
+			self.addCmd(pL(mw,0))
+			self.addCmd(pL(0,mh))
+			self.addCmd(pClose())
 		elif self.handle == 'lc':
-			ap.addCmd(pM(0,0))
-			ap.addCmd(pL(mw,-mh))
-			ap.addCmd(pL(w,0))
-			ap.addCmd(pL(mw,mh))
-			ap.addCmd(pClose())
+			self.addCmd(pM(0,0))
+			self.addCmd(pL(mw,-mh))
+			self.addCmd(pL(w,0))
+			self.addCmd(pL(mw,mh))
+			self.addCmd(pClose())
 		elif self.handle == 'rc':
-			ap.addCmd(pM(-w,0))
-			ap.addCmd(pL(-mw,-mh))
-			ap.addCmd(pL(0,0))
-			ap.addCmd(pL(-mw,mh))
-			ap.addCmd(pClose())
+			self.addCmd(pM(-w,0))
+			self.addCmd(pL(-mw,-mh))
+			self.addCmd(pL(0,0))
+			self.addCmd(pL(-mw,mh))
+			self.addCmd(pClose())
 		elif self.handle == 'ct':
-			ap.addCmd(pM(-mw,mh))
-			ap.addCmd(pL(0,0))
-			ap.addCmd(pL(mw,mh))
-			ap.addCmd(pL(0,h))
-			ap.addCmd(pClose())
+			self.addCmd(pM(-mw,mh))
+			self.addCmd(pL(0,0))
+			self.addCmd(pL(mw,mh))
+			self.addCmd(pL(0,h))
+			self.addCmd(pClose())
 		elif self.handle == 'cb':
-			ap.addCmd(pM(-mw,-mh))
-			ap.addCmd(pL(0,-h))
-			ap.addCmd(pL(mw,-mh))
-			ap.addCmd(pL(0,0))
-			ap.addCmd(pClose())
+			self.addCmd(pM(-mw,-mh))
+			self.addCmd(pL(0,-h))
+			self.addCmd(pL(mw,-mh))
+			self.addCmd(pL(0,0))
+			self.addCmd(pClose())
 
-class Cross(Group):
+class Cross(AnalyticalPath):
 
 	def __init__(self, width, height) -> None:
 		super().__init__()
@@ -58,16 +57,15 @@ class Cross(Group):
 	def onAfterParentAdding(self):	
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
-		mw = w / 2
-		mh = h / 2
+		mw = removeDecsep(w / 2)
+		mh = removeDecsep(h / 2)
 
-		ap = self.addChild(AnalyticalPath())
-		ap.addCmd(pM(0,mh))
-		ap.addCmd(pL(0,-mh))
-		ap.addCmd(pM(-mw,0))
-		ap.addCmd(pL(mw,0))
+		self.addCmd(pM(0,mh))
+		self.addCmd(pL(0,-mh))
+		self.addCmd(pM(-mw,0))
+		self.addCmd(pL(mw,0))
 
-class XSymb(Group):
+class XSymb(AnalyticalPath):
 	
 	def __init__(self, width, height) -> None:
 		super().__init__()
@@ -76,16 +74,15 @@ class XSymb(Group):
 	def onAfterParentAdding(self):	
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
-		mw = w / 2
-		mh = h / 2
+		mw = removeDecsep(w / 2)
+		mh = removeDecsep(h / 2)
 
-		ap = self.addChild(AnalyticalPath())
-		ap.addCmd(pM(-mw,-mh))
-		ap.addCmd(pL(mw,mh))
-		ap.addCmd(pM(-mw,mh))
-		ap.addCmd(pL(mw,-mh))
+		self.addCmd(pM(-mw,-mh))
+		self.addCmd(pL(mw,mh))
+		self.addCmd(pM(-mw,mh))
+		self.addCmd(pL(mw,-mh))
 
-class XSight(Group):
+class XSight(AnalyticalPath):
 	
 	def __init__(self, width, height, separation) -> None:
 		super().__init__()
@@ -95,8 +92,8 @@ class XSight(Group):
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
 		sep, _u = toNumberAndUnit(self.dims[2])
-		mw = w / 2
-		mh = h / 2
+		mw = removeDecsep(w / 2)
+		mh = removeDecsep(h / 2)
 
 		ul = Pt(-mw,-mh)
 		ll = Pt(-mw,mh)
@@ -110,15 +107,14 @@ class XSight(Group):
 		urs = calc3rdPointInSegment(orig, ur, sep)
 		lrs = calc3rdPointInSegment(orig, lr, sep)
 
-		ap = self.addChild(AnalyticalPath())
-		ap.addCmd(pM(*ul)).addCmd(pL(*uls))
-		ap.addCmd(pM(*ll)).addCmd(pL(*lls))
-		ap.addCmd(pM(*ur)).addCmd(pL(*urs))
-		ap.addCmd(pM(*lr)).addCmd(pL(*lrs))
+		self.addCmd(pM(*ul)).addCmd(pL(*uls))
+		self.addCmd(pM(*ll)).addCmd(pL(*lls))
+		self.addCmd(pM(*ur)).addCmd(pL(*urs))
+		self.addCmd(pM(*lr)).addCmd(pL(*lrs))
 
-class CrossSight(Group):
+class CrossSight(AnalyticalPath):
 	
-	def __init__(self, width, height, separation) -> None:
+	def __init__(self, width, height, separation: Union[float, int]) -> None:
 		super().__init__()
 		self.dims = (width, height, separation)
 
@@ -126,8 +122,8 @@ class CrossSight(Group):
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
 		sep, _u = toNumberAndUnit(self.dims[2])
-		mw = w / 2
-		mh = h / 2
+		mw = removeDecsep(w / 2)
+		mh = removeDecsep(h / 2)
 
 		t = Pt(0,-mh)
 		l = Pt(-mw,0)
@@ -141,47 +137,59 @@ class CrossSight(Group):
 		bs = calc3rdPointInSegment(orig, b, sep)
 		rs = calc3rdPointInSegment(orig, r, sep)
 
-		ap = self.addChild(AnalyticalPath())
-		ap.addCmd(pM(*t)).addCmd(pL(*ts))
-		ap.addCmd(pM(*l)).addCmd(pL(*ls))
-		ap.addCmd(pM(*b)).addCmd(pL(*bs))
-		ap.addCmd(pM(*r)).addCmd(pL(*rs))
+		self.addCmd(pM(*t)).addCmd(pL(*ts))
+		self.addCmd(pM(*l)).addCmd(pL(*ls))
+		self.addCmd(pM(*b)).addCmd(pL(*bs))
+		self.addCmd(pM(*r)).addCmd(pL(*rs))
 
-class Square(Group):
+class Square(Rect):
 	
 	def __init__(self, width) -> None:
-		super().__init__()
 		self.width = width
-
-	def onAfterParentAdding(self):	
 		w, _u = toNumberAndUnit(self.width)
-		mw = w / 2
+		mw = removeDecsep(w / 2)
+		super().__init__(-mw,-mw,w,w)
 
-		self.addChild(Rect(-mw,-mw,w,w))
-
-class Asterisk(Group):
+class Asterisk(AnalyticalPath):
 	
-	def __init__(self, width, separation=Optional[] = None) -> None:
+	def __init__(self, width, separation: Optional[Union[float, int]] = None) -> None:
 		super().__init__()
 		self.width = width
+		self.separation = separation
 
 	def onAfterParentAdding(self):	
-		w, _u = toNumberAndUnit(self.width)
-		mw = w / 2
+
+		mw = self.width / 2
 
 		step = 30
 
-		def nextangle(p_ang):
+		def nextangle(p_ang, halve=False):
 			seed = 0
-			steps = 360 / p_ang / 2.0
+			if halve:
+				steps = 360 / p_ang / 2.0
+			else:
+				steps = 360 / p_ang
 			for i in range(round(steps)):
 				yield seed + i * p_ang
 
-		ap = self.addChild(AnalyticalPath())
-		for ang in nextangle(step):
-			p1 = polar2rectDegs(ang, mw)
-			p2 = Pt(-p1.x, -p1.y)
-			ap.addCmd(pM(*p1)).addCmd(pL(*p2))
+		if self.separation is None:
+			for ang in nextangle(step, halve=True):
+				p1 = ptRemoveDecsep(*polar2rectDegs(ang, mw))
+				p2 = Pt(-p1.x, -p1.y)
+				self.addCmd(pM(*p1)).addCmd(pL(*p2))
+		else:
+			for ang in nextangle(step):
+				p1 = ptRemoveDecsep(*polar2rectDegs(ang, mw))
+				p2 = ptRemoveDecsep(*polar2rectDegs(ang, self.separation))
+				self.addCmd(pM(*p1)).addCmd(pL(*p2))
 
+class CircAsterisk(Asterisk):
+	
+	def __init__(self, width, circrad, separation: Optional[Union[float, int]] = None) -> None:
+		super().__init__(width, separation=separation)
+		self.circrad = circrad
 
+	def onAfterParentAdding(self):	
+		super().onAfterParentAdding()
+		self.addCmd(pA())
 

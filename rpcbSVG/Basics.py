@@ -21,11 +21,13 @@ class ValueWithUnitsError(RuntimeError):
 	def __str__(self):
 		return f"no units allowed here, found: {self.val}"
 
-def ptCoincidence(pa: Pt, pb: Pt, mindelta=MINDELTA):
-	return abs(pa.x - pb.x) < mindelta and abs(pa.y - pb.y)  < mindelta
+GLOBAL_ENV = {
+	"ROUND": {
+		"flag": True,
+		"places": 4
+	}
+}
 
-def ptAdd(pa: Pt, pb: Pt):
-	return Pt(pa.x + pb.x, pa.y + pb.y)
 
 def removeDecsep(p_val):
 	r = int(p_val)
@@ -34,6 +36,21 @@ def removeDecsep(p_val):
 	else:
 		ret = p_val
 	return ret
+
+def glRd(p_val):
+	if GLOBAL_ENV["ROUND"]["flag"]:
+		return removeDecsep(round(p_val, GLOBAL_ENV["ROUND"]["places"]))
+	else:
+		return removeDecsep(p_val)
+	 
+def ptCoincidence(pa: Pt, pb: Pt, mindelta=MINDELTA):
+	return abs(pa.x - pb.x) < mindelta and abs(pa.y - pb.y)  < mindelta
+
+def ptAdd(pa: Pt, pb: Pt):
+	return Pt(pa.x + pb.x, pa.y + pb.y)
+
+def ptRemoveDecsep(p_x, p_y):
+	return Pt(removeDecsep(p_x), removeDecsep(p_y))
 
 def toNumberAndUnit(p_val):
 	base = str(p_val)
@@ -616,7 +633,8 @@ class path_command(_attrs_struct):
 	_y_signinverts = ()
 	
 	def __init__(self, *args) -> None:
-		super().__init__(*args, defaults=None)
+		arglist = [glRd(arg) for arg in args]
+		super().__init__(*arglist, defaults=None)
 		self.letter = self._letter
 		self.validate()
 	def getLetter(self):
@@ -767,6 +785,7 @@ class pA(rel_path_command):
 	_fields = ("rx", "ry", "x-axis-rotation", "large-arc-flag", "sweep-flag", "x", "y")
 	_letter = "A"
 	def __init__(self, *args, relative: Optional[bool] = False) -> None:
+		print("\npA args:", args)
 		super().__init__(*args, relative=relative)
 	def yinvert(self, p_yheight):
 		if hasattr(self, "y"):
