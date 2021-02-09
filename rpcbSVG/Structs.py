@@ -30,16 +30,19 @@ class Re(_withunits_struct):
 		self.y = p_contentheight - strictToNumber(self.y) - h
 		return self
 
-class VBox(_withunits_struct):
+class VBox(_attrs_struct):
 	_fields = ("viewBox",)
 	def __init__(self, *args) -> None:
+		rect = None
 		if len(args) == 1 and isinstance(args[0], list):
-			super().__init__(*args[0], defaults=["0"])
+			rect = Re(*args[0])
+		if len(args) > 1:
+			rect = Re(*args)
+		if not rect is None:
+			cont = " ".join(list(rect.iterUnitsRemoved()))
+			super().__init__(cont)
 		else:
-			super().__init__(*args, defaults=["0"])
-		rect = Re(*args)
-		cont = " ".join(list(rect.iterUnitsRemoved()))
-		super().__init__(cont)
+			super().__init__(*args)
 	def cloneFromRect(self, p_rect: Re, scale: Optional[float] = None):
 		if not scale is None:
 			cont = " ".join([str(round(float(at) * scale)) for at in p_rect.iterUnitsRemoved()])
@@ -288,4 +291,11 @@ class Patt(_withunits_struct):
 		h = strictToNumber(self.height)
 		self.y = p_contentheight - strictToNumber(self.y) - h
 		return self
+
+class Symb(VBox):
+	_fields = ("viewBox", "preserveAspectRatio")
+	def __init__(self, *viewboxargs, preserveAspectRatio=None) -> None:
+		super().__init__(*viewboxargs)
+		if not preserveAspectRatio is None:
+			self.preserveAspectRatio = preserveAspectRatio
 

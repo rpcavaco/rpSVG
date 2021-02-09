@@ -4,7 +4,7 @@ from typing import Optional, Union
 from math import sqrt, pow
 
 from rpcbSVG.Basics import Pt, calc3rdPointInSegment, circleDividers, pA, pClose, pL, pM, polar2rectDegs, ptRemoveDecsep, removeDecsep, strictToNumber, toNumberAndUnit
-from rpcbSVG.SVGLib import AnalyticalPath, Group, Rect
+from rpcbSVG.SVGLib import AnalyticalPath, Desc, Group, Rect, Symbol
 
 class Diamond(AnalyticalPath):
 
@@ -340,7 +340,7 @@ class CircWedge(Wedge):
 		self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
 		self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
 
-class Crescent(Group):
+class Crescent(Symbol):
 
 	def __init__(self, p_radius) -> None:
 
@@ -351,6 +351,8 @@ class Crescent(Group):
 		return f"Crescent, radius:{self.radius}"
 
 	def onAfterParentAdding(self):	
+
+		self.addChild(Desc().setText(self.getComment()))
 
 		ap = self.addChild(AnalyticalPath())
 		
@@ -369,7 +371,7 @@ class Crescent(Group):
 		ap2.addCmd(pM(*p1))
 		ap2.addCmd(pA(self.radius, self.radius, 0, 0, 1, *p2))
 
-class SuspPointCirc(Group):
+class SuspPointCirc(Symbol):
 
 	def __init__(self, p_radius) -> None:
 		
@@ -404,7 +406,7 @@ class SuspPointCirc(Group):
 		ap2.addCmd(pM(*p1))
 		ap2.addCmd(pA(self.radius, self.radius, 0, 0, 1, *p4))
 
-class SuspPointSquare(Group):
+class SuspPointSquare(Symbol):
 
 	def __init__(self, p_radius) -> None:
 		
@@ -442,7 +444,7 @@ class SuspPointSquare(Group):
 		ap2.addCmd(pL(p1.x, p2.y))
 		ap2.addCmd(pL(p1.x, 0))
 
-class SuspPointTriang(Group):
+class SuspPointTriang(Symbol):
 
 	def __init__(self, p_radius) -> None:
 		

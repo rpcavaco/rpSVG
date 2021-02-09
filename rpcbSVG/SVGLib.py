@@ -13,7 +13,7 @@ from rpcbSVG.SVGStyleText import CSSSty, Sty
 from rpcbSVG.Basics import MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, \
 	pClose, pH, pL, pM, pV, strictToNumber, transform_def, path_command, \
 	ptCoincidence, removeDecsep, ptEnsureStrings
-from rpcbSVG.Structs import Ci, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Patt, Pl, Pth, RaGra, Re, ReRC, Tx, TxPth, TxRf, Us, VBox
+from rpcbSVG.Structs import Ci, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Patt, Pl, Pth, RaGra, Re, ReRC, Symb, Tx, TxPth, TxRf, Us, VBox
 
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
 
@@ -404,11 +404,13 @@ class GenericSVGElem(BaseSVGElem):
 
 		p_child.setEl(newel)
 		self.content.append(p_child)
-		
-		if not p_child.hasId() and hasattr(self, 'genNextId'):
-			idval = self.genNextId()
-			if not idval is None:
-				p_child.setId(p_child.idprefix + str(idval))
+
+		if not hasattr(self, "_autoGenerateSubIds") or getattr(self, "_autoGenerateSubIds"):
+			if not hasattr(p_child, '_autoGenerateId') or getattr(p_child, '_autoGenerateId'):		
+				if not p_child.hasId() and hasattr(self, 'genNextId'):
+					idval = self.genNextId()
+					if not idval is None:
+						p_child.setId(p_child.idprefix + str(idval))
 
 		return p_child
 
@@ -533,6 +535,8 @@ class SVGContent(SVGRoot):
 		self._id_serial = self._id_serial + 1
 		return ret
 
+		# self._autoGenerateSubIds = False
+
 	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None, noyinvert=False) -> BaseSVGElem:
 		self._noyinvert = noyinvert
 		if p_child.tag in self.forbidden_user_tags:
@@ -555,7 +559,7 @@ class SVGContent(SVGRoot):
 				assert not miny is None and not height is None
 				delta = 2 * miny + height
 				p_child.yinvert(delta)
-		if todefs:
+		if todefs or (hasattr(p_child, "_forceToDefs") and getattr(p_child, "_forceToDefs")):
 			assert not self._defs is None
 			ret = self._defs.addChild(p_child, nsmap=nsmap)
 		else:
@@ -618,12 +622,19 @@ class Marker(SVGContainer):
 	def __init__(self, *args) -> None:
 		super().__init__("marker", struct=Mrk(*args))
 
+class Symbol(SVGContainer):
+	def __init__(self, *args) -> None:
+		self._forceToDefs = True
+		self._autoGenerateSubIds = False
+		super().__init__("symbol", struct=Symb(*args))
+
 class Use(BaseSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("use", struct=Us(*args))
 
 class Desc(SVGContainer):
 	def __init__(self) -> None:
+		self._autoGenerateId = False
 		super().__init__("desc")
 
 class Title(BaseSVGElem):
