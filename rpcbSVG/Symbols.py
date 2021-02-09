@@ -353,7 +353,6 @@ class Crescent(Symbol):
 	def onAfterParentAdding(self):	
 
 		self.addChild(Desc().setText(self.getComment()))
-
 		ap = self.addChild(AnalyticalPath())
 		
 		ang = 92
@@ -383,6 +382,7 @@ class SuspPointCirc(Symbol):
 
 	def onAfterParentAdding(self):	
 
+		self.addChild(Desc().setText(self.getComment()))
 		ap = self.addChild(AnalyticalPath())
 		
 		p1 = polar2rectDegs(0, self.radius)
@@ -418,6 +418,7 @@ class SuspPointSquare(Symbol):
 
 	def onAfterParentAdding(self):	
 
+		self.addChild(Desc().setText(self.getComment()))
 		ap = self.addChild(AnalyticalPath())
 		
 		p1 = polar2rectDegs(-45, self.radius)
@@ -456,6 +457,8 @@ class SuspPointTriang(Symbol):
 		return f"SuspPointTriang, radius:{self.radius}"
 
 	def onAfterParentAdding(self):	
+
+		self.addChild(Desc().setText(self.getComment()))
 
 		pt = polar2rectDegs(270, self.radius)
 		pl = polar2rectDegs(150, self.radius)
