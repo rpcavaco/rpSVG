@@ -11,7 +11,7 @@ from lxml import etree
 
 from rpcbSVG.SVGStyleText import CSSSty, Sty
 from rpcbSVG.Basics import MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, \
-	pClose, pH, pL, pM, pV, strictToNumber, transform_def, path_command, \
+	pClose, pH, pL, pM, pV, strictToNumber, toNumberAndUnit, transform_def, path_command, \
 	ptCoincidence, removeDecsep, ptEnsureStrings
 from rpcbSVG.Structs import Ci, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Patt, Pl, Pth, RaGra, Re, ReRC, Symb, Tx, TxPth, TxRf, Us, VBox
 
@@ -112,6 +112,21 @@ class BaseSVGElem(object):
 	def setText(self, p_text: str):
 		self.dispatchXMLDependentOp(self._setText, args=(p_text,))
 		return self
+
+	def getText(self):
+		if self.hasEl():
+			ret = self.getEl().text
+		else:
+			ret = ""
+		return ret
+
+	def clearText(self):
+		if self.hasEl():
+			self.getEl().text = ""
+
+	def clearChildren(self):
+		for child in list(self.getEl()):
+			self.getEl().remove(child)		
 
 	def _tailText(self, p_text: str) -> None:
 		assert isinstance(p_text, str)
@@ -458,6 +473,9 @@ class SVGContainer(GenericSVGElem):
 			ret = super().addChild(p_child, nsmap=nsmap, noyinvert=noyinvert)
 		if not self.genIDMethod is None and hasattr(ret, 'setGenIdMethod'):
 			ret.setGenIdMethod(self.genIDMethod)
+
+		ret.onAfterParentAdding()
+
 		return ret
 
 	def genNextId(self):
@@ -896,22 +914,41 @@ class Pattern(GenericSVGElem):
 
 class TextParagraph(Group):
 
-	def __init__(self, x, y, textrows: Optional[List[str]] = None, vsep="-1.2em"):
+	def __init__(self, x, y, textrows: Optional[Union[str, List[str]]] = None, vsep="-1.2em"):
 		super().__init__()
-		self._textrows = textrows
+		if isinstance(textrows, List):
+			self._textrows = textrows
+		elif isinstance(textrows, str):
+			self._textrows = textrows.split('\n')
+		else:
+			self._textrows = []
 		self._vsep = vsep
 		self._orig = (x, y)
+		self.tx = None
 
-	def onAfterParentAdding(self):
-		self.addTransform(Trans(*self._orig))
-		tx = self.addChild(Text())
+	def setText(self, textrows: Optional[Union[str, List[str]]]):
+		assert isinstance(textrows, List) or isinstance(textrows, str)
+		if isinstance(textrows, List):
+			self._textrows = textrows
+		elif isinstance(textrows, str):
+			self._textrows = textrows.split('\n')
+		self._build()
+
+	def _build(self):
+		assert not self.tx is None
+		self.tx.clearChildren()
 		first = True
 		for row in self._textrows:
 			if first:
-				tx.addChild(TSpan().setText(row))
+				self.tx.addChild(TSpan().setText(row))
 			else:
-				tx.addChild(TSpan(0,None,None,self._vsep).setText(row))
+				self.tx.addChild(TSpan(0,None,None,self._vsep).setText(row))
 			first = False
+
+	def onAfterParentAdding(self):
+		self.addTransform(Trans(*self._orig))
+		self.tx = self.addChild(Text())
+		self._build()
 
 class TextBoxA(Group):
 
@@ -919,13 +956,32 @@ class TextBoxA(Group):
 		super().__init__()
 		self.args = args
 		self.text = text
+		self.txpara = None
+
+	def _getTextLines(self):
+		if not self.text is None and len(self.text) > 0:
+			textrows = self.text.split('\n')
+		else:
+			textrows = []
+		return textrows
 
 	def setText(self, p_text: str):
 		self.text = p_text
+		if not self.txpara is None:
+			self.txpara.setText(self._getTextLines())
 		return self
 
 	def onAfterParentAdding(self):	
-		self.addChild(Rect(*self.args))
+		rect = Rect(*self.args)
+		strct = rect.getStruct()
+		textrows = self._getTextLines()
+
+		y, _u = toNumberAndUnit(strct.get('y'))  
+		h, _u = toNumberAndUnit(strct.get('height'))  
+		cota = y + h
+
+		self.txpara = self.addChild(TextParagraph(strct.get('x'), cota, textrows))
+		self.addChild(rect)
 
 
 
