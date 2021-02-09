@@ -1,6 +1,6 @@
 
 
-from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, RegPoly, Square, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
+from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircRegPoly, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, RegPoly, Square, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
 
 from rpcbSVG.Basics import GLOBAL_ENV, Pt, circleDividers
 from rpcbSVG.SVGStyleText import Sty
@@ -476,6 +476,8 @@ def genSymbols2(yinvert):
 	penta = sc.addChild(RegPoly(32, 5), todefs=True)
 	hexa = sc.addChild(RegPoly(32,6, rot=20), todefs=True)
 	sun = sc.addChild(CircAsterisk(38, 22, separation=30), todefs=True)
+	cpenta = sc.addChild(CircRegPoly(32, 5, coffset=7), todefs=True)
+	chept = sc.addChild(CircRegPoly(38,8, rot=9, coffset=-14), todefs=True)
 
 
 	#
@@ -798,7 +800,6 @@ def genSymbols2(yinvert):
 	sc.addComment("End Pentagon")
 	# =========================================================================
 
-
 	# -- Hexagon ---------------------------------------------------
 	sc.addComment("Start Hexagon")
 
@@ -819,6 +820,50 @@ def genSymbols2(yinvert):
 	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
 
 	sc.addComment("End Hexagon")
+	# =========================================================================
+
+	# -- Circled Pentagon ---------------------------------------------------
+	sc.addComment("Start Circled Pentagon")
+
+	thisleft = thisleft + hstep
+	this_top = top_row4
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), cpenta.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top)-16)).\
+		setStyle(txstyle_small).\
+		setText("CircRegPoly(32,5,coffset=7)")
+
+	sc.addChild(Text(thisleft + hstep/2,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Circled regular polygons")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Circled Pentagon")
+	# =========================================================================
+
+	# -- Circled Octagon ---------------------------------------------------
+	sc.addComment("Start Circled Octagon")
+
+	thisleft = thisleft + hstep
+	this_top = top_row4
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), chept.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("CircRegPoly(38,8,rot=9,coffset=-14)")
+
+	# sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+	# 	setStyle(tstyle).\
+	# 	setText("Octagon")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Circled Octagon")
 	# =========================================================================
 
 

@@ -574,6 +574,20 @@ class RegPoly(AnalyticalPath):
 		if not first:
 			self.addCmd(pClose())
 
-class CircPoly(AnalyticalPath):
-	pass
+class CircRegPoly(RegPoly):
+
+	def __init__(self, p_radius, p_n, rot: Optional[Union[float, int]] = 0, coffset: Optional[Union[float, int]] = None) -> None:
+		
+		super().__init__(p_radius, p_n, rot=rot)
+		self.coffset = coffset
+
+	def getComment(self):		
+		return f"{super().getComment()}, CircPoly, coffset:{self.coffset}"
+
+	def onAfterParentAdding(self):	
+		super().onAfterParentAdding()
+		rad = self.coffset + self.radius
+		self.addCmd(pM(-rad,0))
+		self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
+		self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
 			
