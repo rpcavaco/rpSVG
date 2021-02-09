@@ -874,6 +874,10 @@ class Image(GenericSVGElem):
 	def __init__(self, *args) -> None:
 		super().__init__("image", struct=Img(*args))
 
+class Pattern(GenericSVGElem):
+	def __init__(self, *args) -> None:
+		super().__init__("pattern", struct=Patt(*args))
+
 class TextParagraph(Group):
 
 	def __init__(self, x, y, textrows: Optional[List[str]] = None, vsep="-1.2em"):
@@ -893,9 +897,21 @@ class TextParagraph(Group):
 				tx.addChild(TSpan(0,None,None,self._vsep).setText(row))
 			first = False
 
-class Pattern(GenericSVGElem):
-	def __init__(self, *args) -> None:
-		super().__init__("pattern", struct=Patt(*args))
+class TextBoxA(Group):
+
+	def __init__(self, *args, text: Optional[str] = None) -> None:
+		super().__init__()
+		self.args = args
+		self.text = text
+
+	def setText(self, p_text: str):
+		self.text = p_text
+		return self
+
+	def onAfterParentAdding(self):	
+		self.addChild(Rect(*self.args))
+
+
 
 
 

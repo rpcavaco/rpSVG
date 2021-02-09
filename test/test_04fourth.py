@@ -1,6 +1,6 @@
 
 
-from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircWedge, Cross, CrossSight, Diamond, Square, Wedge, XSight, XSymb
+from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircWedge, Crescent, Cross, CrossSight, Diamond, Square, SuspPointCirc, SuspPointSquare, Wedge, XSight, XSymb
 
 from rpcbSVG.Basics import GLOBAL_ENV, Pt
 from rpcbSVG.SVGStyleText import Sty
@@ -10,7 +10,7 @@ from rpcbSVG.SVGLib import Re, SVGContent, Text, Title, Use
 def test_Symbols1():
 
 	# Coordinates rounded to 1 dec.place
-	GLOBAL_ENV["ROUND"]["places"] = 1
+	GLOBAL_ENV["ROUND"]["places"] = 2
 
 	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
 	sc.setBackground(Sty('fill', '#E7E8EA'))
@@ -441,27 +441,30 @@ def test_Symbols1():
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
 
-def test_Symbols2():
+def test_Symbols2(capsys):
 
 	# Coordinates rounded to 1 dec.place
-	GLOBAL_ENV["ROUND"]["places"] = 1
+	# GLOBAL_ENV["ROUND"]["places"] = 2
 
 	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
 	sc.setBackground(Sty('fill', '#E7E8EA'))
 
 	sc.addChild(Title("Symbol library test 2"))
 
+	with capsys.disabled():
 
-	# SYMBOL DEFINITIONS ------------------------------------------------------
-	#
-	crsymb_centerMarker = sc.addChild(Cross(10,10), todefs=True)
-	tri = sc.addChild(Wedge(40,46), todefs=True)
-	circtri = sc.addChild(CircWedge(32,32,coffset=5), todefs=True)
-	wedge = sc.addChild(Wedge(40,46,indent=10), todefs=True)
-	circwedge = sc.addChild(CircWedge(32,32,indent=10,coffset=5), todefs=True)
-
-	#
-	# =========================================================================
+		# SYMBOL DEFINITIONS ------------------------------------------------------
+		#
+		crsymb_centerMarker = sc.addChild(Cross(10,10), todefs=True)
+		tri = sc.addChild(Wedge(40,46), todefs=True)
+		circtri = sc.addChild(CircWedge(32,32,coffset=5), todefs=True)
+		wedge = sc.addChild(Wedge(40,46,indent=10), todefs=True)
+		circwedge = sc.addChild(CircWedge(32,32,indent=10,coffset=5), todefs=True)
+		cresc = sc.addChild(Crescent(32), todefs=True)
+		susppt1 = sc.addChild(SuspPointCirc(32), todefs=True)
+		susppt2 = sc.addChild(SuspPointSquare(32), todefs=True)
+		#
+		# =========================================================================
 
 	title_height = 140
 	sc.addChild(Text(140,title_height)).\
@@ -576,6 +579,72 @@ def test_Symbols2():
 	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
 
 	sc.addComment("End Circled Wedge")
+	# =========================================================================
+	
+	# -- Crescent -------------------------------------------------------------
+	sc.addComment("Start Crescent")
+
+	thisleft = left
+	this_top = top_row2
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), cresc.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("Crescent(32)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Crescent")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Crescent")
+	# =========================================================================
+	
+	# -- Suspension point 1 ---------------------------------------------------
+	sc.addComment("Start Suspension point 1")
+
+	thisleft = thisleft + hstep
+	this_top = top_row2
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), susppt1.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("SuspPointCirc(32)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Suspension 1")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Suspension point 1")
+	# =========================================================================
+	
+	# -- Suspension point 2 ---------------------------------------------------
+	sc.addComment("Start Suspension point 2")
+
+	thisleft = thisleft + hstep
+	this_top = top_row2
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), susppt2.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("SuspPointSquare(32)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Suspension 2")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Suspension point 2")
 	# =========================================================================
 
 

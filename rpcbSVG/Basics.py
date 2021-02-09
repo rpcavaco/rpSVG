@@ -147,7 +147,7 @@ def ptGetAngle(p_pt1: Pt, p_pt2: Pt):
 	return ret
 
 def polar2rectDegs(ang, rad):
-	ret = Pt(cos(radians(ang)) * rad, sin(radians(ang)) * rad)
+	ret = Pt(glRd(cos(radians(ang)) * rad), glRd(sin(radians(ang)) * rad))
 	return ret
 
 def polar2rect(ang, rad):

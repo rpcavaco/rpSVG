@@ -3,7 +3,7 @@ from typing import Optional, Union
 from math import sqrt, pow
 
 from rpcbSVG.Basics import Pt, calc3rdPointInSegment, pA, pClose, pL, pM, polar2rectDegs, ptRemoveDecsep, removeDecsep, strictToNumber, toNumberAndUnit
-from rpcbSVG.SVGLib import AnalyticalPath, Rect
+from rpcbSVG.SVGLib import AnalyticalPath, Group, Rect
 
 class Diamond(AnalyticalPath):
 
@@ -291,5 +291,122 @@ class CircWedge(Wedge):
 		self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
 		self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
 
+class Crescent(AnalyticalPath):
 
+	def __init__(self, p_radius) -> None:
 
+		super().__init__()
+		self.radius = strictToNumber(p_radius)
+
+	def onAfterParentAdding(self):	
+		
+		ang = 95
+		rad2 = self.radius+4
+		p1 = polar2rectDegs(ang, self.radius)
+		p2 = polar2rectDegs(-ang, self.radius)
+
+		self.addCmd(pM(*p1))
+		self.addCmd(pA(self.radius, self.radius, 0, 1, 0, *p2))
+		self.addCmd(pM(*p1))
+		self.addCmd(pA(rad2, rad2, 0, 0, 0, *p2))
+
+		ang2 = 100
+		p3 = polar2rectDegs(ang2, self.radius)
+		p4 = polar2rectDegs(-ang2, self.radius)
+
+		self.addCmd(pM(*p3))
+		self.addCmd(pA(self.radius, self.radius, 0, 0, 1, *p4))
+
+class SuspPointCirc(AnalyticalPath):
+
+	def __init__(self, p_radius) -> None:
+		
+		super().__init__()
+		self.radius = strictToNumber(p_radius)
+
+	def onAfterParentAdding(self):	
+		
+		p1 = polar2rectDegs(0, self.radius)
+		p2 = polar2rectDegs(270, self.radius)
+		self.addCmd(pM(*p1))
+		self.addCmd(pA(self.radius, self.radius, 0, 0, 0, *p2))
+		self.addCmd(pL(0,0))
+		self.addCmd(pClose())
+		
+		p3 = polar2rectDegs(180, self.radius)
+		p4 = polar2rectDegs(90, self.radius)
+		self.addCmd(pM(*p3))
+		self.addCmd(pA(self.radius, self.radius, 0, 0, 0, *p4))
+		self.addCmd(pL(0,0))
+		self.addCmd(pClose())
+		
+		p5 = polar2rectDegs(190, self.radius)
+		p6 = polar2rectDegs(260, self.radius)
+		self.addCmd(pM(*p5))
+		self.addCmd(pA(self.radius, self.radius, 0, 0, 1, *p6))
+		
+		p7 = polar2rectDegs(10, self.radius)
+		p8 = polar2rectDegs(80, self.radius)
+		self.addCmd(pM(*p7))
+		self.addCmd(pA(self.radius, self.radius, 0, 0, 1, *p8))
+
+class SuspPointSquare(AnalyticalPath):
+
+	def __init__(self, p_radius) -> None:
+		
+		super().__init__()
+		self.radius = strictToNumber(p_radius)
+
+	def onAfterParentAdding(self):	
+		
+		p1 = polar2rectDegs(-45, self.radius)
+		self.addCmd(pM(*p1))
+		self.addCmd(pL(-p1.x, 0, relative=True))
+		self.addCmd(pL(0, 0))
+		self.addCmd(pL(p1.x, 0))
+		self.addCmd(pClose())
+		
+		p2 = polar2rectDegs(135, self.radius)
+		self.addCmd(pM(*p2))
+		self.addCmd(pL(-p2.x, 0, relative=True))
+		self.addCmd(pL(0, 0))
+		self.addCmd(pL(p2.x, 0))
+		self.addCmd(pClose())
+
+		self.addCmd(pM(p2.x, -3))
+		self.addCmd(pL(p2.x, p1.y))
+		self.addCmd(pL(-3, p1.y))
+
+		self.addCmd(pM(3, p2.y))
+		self.addCmd(pL(p1.x, p2.y))
+		self.addCmd(pL(p1.x, 3))
+
+class SuspPointTriang(AnalyticalPath):
+
+	def __init__(self, p_radius) -> None:
+		
+		super().__init__()
+		self.radius = strictToNumber(p_radius)
+
+	def onAfterParentAdding(self):	
+		
+		p1 = polar2rectDegs(150, self.radius)
+		p2 = polar2rectDegs(120, self.radius)
+		self.addCmd(pM(*p1))
+		self.addCmd(pL(-p1.x, 0, relative=True))
+		self.addCmd(pL(0, 0))
+		self.addCmd(pL(p1.x, 0))
+		self.addCmd(pClose())
+
+		# TODO: INCOMPLETE
+
+class Star(AnalyticalPath):
+
+	def __init__(self, p_radius) -> None:
+		
+		super().__init__()
+		self.radius = strictToNumber(p_radius)
+
+	def onAfterParentAdding(self):	
+		
+		p1 = polar2rectDegs(150, self.radius)
