@@ -1,4 +1,5 @@
 
+from rpcbSVG.SVGStyleText import Sty
 from typing import Optional, Union
 from math import sqrt, pow
 
@@ -172,17 +173,15 @@ class Square(Rect):
 
 class Asterisk(AnalyticalPath):
 	
-	def __init__(self, width, separation: Optional[Union[float, int]] = None) -> None:
+	def __init__(self, p_radius, separation: Optional[Union[float, int]] = None) -> None:
 		super().__init__()
-		self.width = width
+		self.radius = p_radius
 		self.separation = separation
 
 	def getComment(self):
-		return f"Asterisk symbol, width:{self.width} separation:{self.separation}"
+		return f"Asterisk symbol, width:{self.radius} separation:{self.separation}"
 
 	def onAfterParentAdding(self):	
-
-		mw = self.width / 2
 
 		step = 30
 		def nextangle(p_ang, halve=False):
@@ -196,19 +195,19 @@ class Asterisk(AnalyticalPath):
 
 		if self.separation is None:
 			for ang in nextangle(step, halve=True):
-				p1 = ptRemoveDecsep(*polar2rectDegs(ang, mw))
+				p1 = ptRemoveDecsep(*polar2rectDegs(ang, self.radius))
 				p2 = Pt(-p1.x, -p1.y)
 				self.addCmd(pM(*p1)).addCmd(pL(*p2))
 		else:
 			for ang in nextangle(step):
-				p1 = ptRemoveDecsep(*polar2rectDegs(ang, mw))
+				p1 = ptRemoveDecsep(*polar2rectDegs(ang, self.radius))
 				p2 = ptRemoveDecsep(*polar2rectDegs(ang, self.separation))
 				self.addCmd(pM(*p1)).addCmd(pL(*p2))
 
 class CircAsterisk(Asterisk):
 	
-	def __init__(self, width, circrad, separation: Optional[Union[float, int]] = None) -> None:
-		super().__init__(width, separation=separation)
+	def __init__(self, p_radius, circrad, separation: Optional[Union[float, int]] = None) -> None:
+		super().__init__(p_radius, separation=separation)
 		self.circrad = circrad
 
 	def getComment(self):		
@@ -341,7 +340,7 @@ class CircWedge(Wedge):
 		self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
 		self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
 
-class Crescent(AnalyticalPath):
+class Crescent(Group):
 
 	def __init__(self, p_radius) -> None:
 
@@ -352,25 +351,25 @@ class Crescent(AnalyticalPath):
 		return f"Crescent, radius:{self.radius}"
 
 	def onAfterParentAdding(self):	
+
+		ap = self.addChild(AnalyticalPath())
 		
-		ang = 95
+		ang = 92
 		rad2 = self.radius+4
 		p1 = polar2rectDegs(ang, self.radius)
 		p2 = polar2rectDegs(-ang, self.radius)
 
-		self.addCmd(pM(*p1))
-		self.addCmd(pA(self.radius, self.radius, 0, 1, 0, *p2))
-		self.addCmd(pM(*p1))
-		self.addCmd(pA(rad2, rad2, 0, 0, 0, *p2))
+		ap.addCmd(pM(*p1))
+		ap.addCmd(pA(self.radius, self.radius, 0, 1, 0, *p2))
+		ap.addCmd(pM(*p2))
+		ap.addCmd(pA(rad2, rad2, 0, 0, 1, *p1))
 
-		ang2 = 100
-		p3 = polar2rectDegs(ang2, self.radius)
-		p4 = polar2rectDegs(-ang2, self.radius)
+		ap2 = self.addChild(AnalyticalPath().setStyle(Sty('fill', 'none')))
 
-		self.addCmd(pM(*p3))
-		self.addCmd(pA(self.radius, self.radius, 0, 0, 1, *p4))
+		ap2.addCmd(pM(*p1))
+		ap2.addCmd(pA(self.radius, self.radius, 0, 0, 1, *p2))
 
-class SuspPointCirc(AnalyticalPath):
+class SuspPointCirc(Group):
 
 	def __init__(self, p_radius) -> None:
 		
@@ -381,32 +380,31 @@ class SuspPointCirc(AnalyticalPath):
 		return f"SuspPointCirc, radius:{self.radius}"
 
 	def onAfterParentAdding(self):	
+
+		ap = self.addChild(AnalyticalPath())
 		
 		p1 = polar2rectDegs(0, self.radius)
 		p2 = polar2rectDegs(270, self.radius)
-		self.addCmd(pM(*p1))
-		self.addCmd(pA(self.radius, self.radius, 0, 0, 0, *p2))
-		self.addCmd(pL(0,0))
-		self.addCmd(pClose())
+		ap.addCmd(pM(*p1))
+		ap.addCmd(pA(self.radius, self.radius, 0, 0, 0, *p2))
+		ap.addCmd(pL(0,0))
+		ap.addCmd(pClose())
 		
 		p3 = polar2rectDegs(180, self.radius)
 		p4 = polar2rectDegs(90, self.radius)
-		self.addCmd(pM(*p3))
-		self.addCmd(pA(self.radius, self.radius, 0, 0, 0, *p4))
-		self.addCmd(pL(0,0))
-		self.addCmd(pClose())
+		ap.addCmd(pM(*p3))
+		ap.addCmd(pA(self.radius, self.radius, 0, 0, 0, *p4))
+		ap.addCmd(pL(0,0))
+		ap.addCmd(pClose())
 		
-		p5 = polar2rectDegs(190, self.radius)
-		p6 = polar2rectDegs(260, self.radius)
-		self.addCmd(pM(*p5))
-		self.addCmd(pA(self.radius, self.radius, 0, 0, 1, *p6))
-		
-		p7 = polar2rectDegs(10, self.radius)
-		p8 = polar2rectDegs(80, self.radius)
-		self.addCmd(pM(*p7))
-		self.addCmd(pA(self.radius, self.radius, 0, 0, 1, *p8))
+		ap2 = self.addChild(AnalyticalPath().setStyle(Sty('fill', 'none')))		
+		ap2.addCmd(pM(*p3))
+		ap2.addCmd(pA(self.radius, self.radius, 0, 0, 1, *p2))
 
-class SuspPointSquare(AnalyticalPath):
+		ap2.addCmd(pM(*p1))
+		ap2.addCmd(pA(self.radius, self.radius, 0, 0, 1, *p4))
+
+class SuspPointSquare(Group):
 
 	def __init__(self, p_radius) -> None:
 		
@@ -417,30 +415,34 @@ class SuspPointSquare(AnalyticalPath):
 		return f"SuspPointSquare, radius:{self.radius}"
 
 	def onAfterParentAdding(self):	
+
+		ap = self.addChild(AnalyticalPath())
 		
 		p1 = polar2rectDegs(-45, self.radius)
-		self.addCmd(pM(*p1))
-		self.addCmd(pL(-p1.x, 0, relative=True))
-		self.addCmd(pL(0, 0))
-		self.addCmd(pL(p1.x, 0))
-		self.addCmd(pClose())
+		ap.addCmd(pM(*p1))
+		ap.addCmd(pL(-p1.x, 0, relative=True))
+		ap.addCmd(pL(0, 0))
+		ap.addCmd(pL(p1.x, 0))
+		ap.addCmd(pClose())
 		
 		p2 = polar2rectDegs(135, self.radius)
-		self.addCmd(pM(*p2))
-		self.addCmd(pL(-p2.x, 0, relative=True))
-		self.addCmd(pL(0, 0))
-		self.addCmd(pL(p2.x, 0))
-		self.addCmd(pClose())
+		ap.addCmd(pM(*p2))
+		ap.addCmd(pL(-p2.x, 0, relative=True))
+		ap.addCmd(pL(0, 0))
+		ap.addCmd(pL(p2.x, 0))
+		ap.addCmd(pClose())
 
-		self.addCmd(pM(p2.x, -3))
-		self.addCmd(pL(p2.x, p1.y))
-		self.addCmd(pL(-3, p1.y))
+		ap2 = self.addChild(AnalyticalPath().setStyle(Sty('fill', 'none')))
+		
+		ap2.addCmd(pM(*p2))
+		ap2.addCmd(pL(p2.x, p1.y))
+		ap2.addCmd(pL(0, p1.y))
 
-		self.addCmd(pM(3, p2.y))
-		self.addCmd(pL(p1.x, p2.y))
-		self.addCmd(pL(p1.x, 3))
+		ap2.addCmd(pM(0, p2.y))
+		ap2.addCmd(pL(p1.x, p2.y))
+		ap2.addCmd(pL(p1.x, 0))
 
-class SuspPointTriang(AnalyticalPath):
+class SuspPointTriang(Group):
 
 	def __init__(self, p_radius) -> None:
 		
@@ -452,7 +454,7 @@ class SuspPointTriang(AnalyticalPath):
 		return f"SuspPointTriang, radius:{self.radius}"
 
 	def onAfterParentAdding(self):	
-		
+
 		pt = polar2rectDegs(270, self.radius)
 		pl = polar2rectDegs(150, self.radius)
 		pr = polar2rectDegs(30, self.radius)
@@ -462,27 +464,28 @@ class SuspPointTriang(AnalyticalPath):
 		mb = b / 2
 		rat = mb / h 
 		l0 = pt.y * rat 
-		l0t = (-self.interval + pt.y) * rat 
-		l0b = (self.interval + pt.y) * rat
-		tb = self.interval * rat
 
-		self.addCmd(pM(*pl))
-		self.addCmd(pL(-pl.x, 0, relative=True))
-		self.addCmd(pL(0, 0))
-		self.addCmd(pL(l0, 0))
-		self.addCmd(pClose())
+		ap = self.addChild(AnalyticalPath())
+		
+		ap.addCmd(pM(*pl))
+		ap.addCmd(pL(-pl.x, 0, relative=True))
+		ap.addCmd(pL(0, 0))
+		ap.addCmd(pL(l0, 0))
+		ap.addCmd(pClose())
 
-		self.addCmd(pM(0,0))
-		self.addCmd(pL(-l0,0))
-		self.addCmd(pL(*pt))
-		self.addCmd(pClose())
+		ap.addCmd(pM(0,0))
+		ap.addCmd(pL(-l0,0))
+		ap.addCmd(pL(*pt))
+		ap.addCmd(pClose())
 
-		self.addCmd(pM(3,pl.y))
-		self.addCmd(pL(*pr))
-		self.addCmd(pL(-l0t,self.interval)) 
+		ap2 = self.addChild(AnalyticalPath().setStyle(Sty('fill', 'none')))
+		
+		ap2.addCmd(pM(0,pl.y))
+		ap2.addCmd(pL(*pr))
+		ap2.addCmd(pL(-l0,0)) 
 
-		self.addCmd(pM(-tb,pt.y+self.interval)) # --> replace
-		self.addCmd(pL(l0b,-self.interval)) 
+		ap2.addCmd(pM(*pt))
+		ap2.addCmd(pL(l0,0)) 
 
 class Star(AnalyticalPath):
 
@@ -522,6 +525,23 @@ class Star(AnalyticalPath):
 		if not first:
 			self.addCmd(pClose())
 
+class CircStar(Star):
+
+	def __init__(self, p_outradius, p_inoffset, p_nspikes, rot: Optional[Union[float, int]] = 0, coffset: Optional[Union[float, int]] = None) -> None:
+		
+		super().__init__(p_outradius, p_inoffset, p_nspikes, rot=rot)
+		self.coffset = coffset
+
+	def getComment(self):		
+		return f"{super().getComment()}, CircStar, coffset:{self.coffset}"
+
+	def onAfterParentAdding(self):	
+		super().onAfterParentAdding()
+		rad = self.coffset + self.radius
+		self.addCmd(pM(-rad,0))
+		self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
+		self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
+
 class RegPoly(AnalyticalPath):
 
 	def __init__(self, p_radius, p_n, rot: Optional[Union[float, int]] = 0) -> None:
@@ -554,4 +574,6 @@ class RegPoly(AnalyticalPath):
 		if not first:
 			self.addCmd(pClose())
 
+class CircPoly(AnalyticalPath):
+	pass
 			

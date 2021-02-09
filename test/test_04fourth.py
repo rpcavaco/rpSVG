@@ -1,6 +1,6 @@
 
 
-from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircWedge, Crescent, Cross, CrossSight, Diamond, RegPoly, Square, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
+from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, RegPoly, Square, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
 
 from rpcbSVG.Basics import GLOBAL_ENV, Pt, circleDividers
 from rpcbSVG.SVGStyleText import Sty
@@ -34,10 +34,10 @@ def test_Symbols1():
 	crsymb_xs_centerMarker = sc.addChild(Cross(5,5), todefs=True)
 	crsymb = sc.addChild(Cross(60,80), todefs=True)
 	sqrsymb = sc.addChild(Square(60), todefs=True)
-	asteri = sc.addChild(Asterisk(60), todefs=True)
-	fan = sc.addChild(Asterisk(60, separation=14), todefs=True)
-	circasteri = sc.addChild(CircAsterisk(44, 30), todefs=True)
-	circfan = sc.addChild(CircAsterisk(44, 30, separation=10), todefs=True)
+	asteri = sc.addChild(Asterisk(30), todefs=True)
+	fan = sc.addChild(Asterisk(30, separation=14), todefs=True)
+	circasteri = sc.addChild(CircAsterisk(22, 30), todefs=True)
+	circfan = sc.addChild(CircAsterisk(22, 30, separation=10), todefs=True)
 	arr = sc.addChild(Arrow(65, 30, 60, 30), todefs=True)
 	arrlc = sc.addChild(Arrow(36, 12, 24, 14, handle='cb'), todefs=True)
 	circarr = sc.addChild(CircArrow(58, 16, 38, 20, coffset=8), todefs=True)
@@ -300,6 +300,9 @@ def test_Symbols1():
 		setStyle(tstyle).\
 		setText("Asterisk")
 
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
 	sc.addComment("End Asterisk")
 	# =========================================================================
 
@@ -335,11 +338,14 @@ def test_Symbols1():
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
-		setText("CircAsterisk(44,30)")
+		setText("CircAsterisk(22,30)")
 
 	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
 		setStyle(tstyle).\
 		setText("Circled Asterisk")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
 
 	sc.addComment("End Circled Asterisk")
 	# =========================================================================
@@ -354,7 +360,7 @@ def test_Symbols1():
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
-		setText("CircAsterisk(44,30,10)")
+		setText("CircAsterisk(22,30,10)")
 
 	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
 		setStyle(tstyle).\
@@ -454,21 +460,26 @@ def genSymbols2(yinvert):
 	# SYMBOL DEFINITIONS ------------------------------------------------------
 	#
 	crsymb_centerMarker = sc.addChild(Cross(10,10), todefs=True)
+	#crosssight_centerMarker = sc.addChild(CrossSight(38,38, 10), todefs=True)
+	xsight_centerMarker = sc.addChild(XSight(26,26, 8), todefs=True)
 	tri = sc.addChild(Wedge(40,46), todefs=True)
 	circtri = sc.addChild(CircWedge(32,32,coffset=5), todefs=True)
 	wedge = sc.addChild(Wedge(40,46,indent=10), todefs=True)
 	circwedge = sc.addChild(CircWedge(40,46,indent=10,coffset=5), todefs=True)
 	cresc = sc.addChild(Crescent(32), todefs=True)
 	susppt1 = sc.addChild(SuspPointCirc(32), todefs=True)
-	susppt2 = sc.addChild(SuspPointSquare(32), todefs=True)
-	susppt3 = sc.addChild(SuspPointTriang(32), todefs=True)
+	susppt2 = sc.addChild(SuspPointSquare(40), todefs=True)
+	susppt3 = sc.addChild(SuspPointTriang(40), todefs=True)
 	star1 = sc.addChild(Star(32, 24, 5), todefs=True)
 	star2 = sc.addChild(Star(32, 24, 8, rot=22.5), todefs=True)
+	cstar = sc.addChild(CircStar(30, 14, 10, coffset=7), todefs=True)
 	penta = sc.addChild(RegPoly(32, 5), todefs=True)
 	hexa = sc.addChild(RegPoly(32,6, rot=20), todefs=True)
+	sun = sc.addChild(CircAsterisk(38, 22, separation=30), todefs=True)
 
-		#
-		# =========================================================================
+
+	#
+	# =========================================================================
 
 	title_height = 140
 	sc.addChild(Text(140,title_height)).\
@@ -478,7 +489,7 @@ def genSymbols2(yinvert):
 	tstyle = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 30, 'font-family', 'Helvetica', 'text-anchor', 'middle', 'stroke-width', 2)
 	txstyle_small = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 16, 'font-family', 'Monospace', 'text-anchor', 'middle', 'stroke-width', 2)
 	# txstyle_xsmall = Sty('fill', 'black', 'stroke', '#404040', 'font-size', 14, 'font-family', 'Monospace', 'text-anchor', 'middle', 'stroke-width', 2)
-	symbstyle = Sty('fill', 'red', 'fill-opacity', 0.3, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round')
+	symbstyle = Sty('fill', 'red', 'fill-opacity', 0.5, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round')
 
 	def code_height_row1(p_topval):
 		return p_topval + 75
@@ -490,7 +501,7 @@ def genSymbols2(yinvert):
 	hstep = 280
 	vstep = 230
 
-	top_row1 = 360
+	top_row1 = 280
 
 	top_row2 = top_row1 + vstep
 	top_row3 = top_row1 + 2 * vstep
@@ -624,7 +635,7 @@ def genSymbols2(yinvert):
 		setText("Suspension 1")
 
 	# small center cross
-	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+	sc.addChild(Use(Pt(thisleft,this_top), xsight_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
 
 	sc.addComment("End Suspension point 1")
 	# =========================================================================
@@ -639,14 +650,14 @@ def genSymbols2(yinvert):
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
-		setText("SuspPointSquare(32)")
+		setText("SuspPointSquare(40)")
 
 	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
 		setStyle(tstyle).\
 		setText("Suspension 2")
 
 	# small center cross
-	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+	sc.addChild(Use(Pt(thisleft,this_top), xsight_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
 
 	sc.addComment("End Suspension point 2")
 	# =========================================================================
@@ -661,24 +672,46 @@ def genSymbols2(yinvert):
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
-		setText("SuspPointSquare(32)")
+		setText("SuspPointTriang(40)")
 
 	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
 		setStyle(tstyle).\
 		setText("Suspension 3")
 
 	# small center cross
-	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+	sc.addChild(Use(Pt(thisleft,this_top), xsight_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
 
 	sc.addComment("End Suspension point 3")
 	# =========================================================================
 	
 	## ROW 3
 
+	# -- Sun -----------------------------------------------------------
+	sc.addComment("Start Sun")
+
+	thisleft = left
+	this_top = top_row3
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), sun.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("CircAsterisk(38,22,30)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Sun")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Sun")
+	# =========================================================================
+
 	# -- Star 1  ---------------------------------------------------
 	sc.addComment("Start Star 1")
 
-	thisleft = left
+	thisleft = thisleft + hstep
 	this_top = top_row3
 
 	us = sc.addChild(Use(Pt(thisleft,this_top), star1.getSel()).setStyle(symbstyle))
@@ -719,11 +752,35 @@ def genSymbols2(yinvert):
 	sc.addComment("End Star")
 	# =========================================================================
 
-	# -- Pentagon ---------------------------------------------------
-	sc.addComment("Start Pentagon")
+	# -- Circled Star ---------------------------------------------------
+	sc.addComment("Start Circled Star")
 
 	thisleft = thisleft + hstep
 	this_top = top_row3
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), cstar.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("CircStar(30,14,10,coffset=7)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Circled Star")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Circled Star")
+	# =========================================================================
+
+	## ROW 4
+
+	# -- Pentagon ---------------------------------------------------
+	sc.addComment("Start Pentagon")
+
+	thisleft = left
+	this_top = top_row4
 
 	us = sc.addChild(Use(Pt(thisleft,this_top), penta.getSel()).setStyle(symbstyle))
 
@@ -746,7 +803,7 @@ def genSymbols2(yinvert):
 	sc.addComment("Start Hexagon")
 
 	thisleft = thisleft + hstep
-	this_top = top_row3
+	this_top = top_row4
 
 	us = sc.addChild(Use(Pt(thisleft,this_top), hexa.getSel()).setStyle(symbstyle))
 
@@ -763,7 +820,6 @@ def genSymbols2(yinvert):
 
 	sc.addComment("End Hexagon")
 	# =========================================================================
-
 
 
 	if yinvert:
