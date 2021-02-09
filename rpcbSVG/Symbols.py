@@ -13,6 +13,9 @@ class Diamond(AnalyticalPath):
 		self.dims = (width, height)
 		self.handle = handle
 
+	def getComment(self):
+		return f"Diamond symbol, dims:{self.dims} handle:{self.handle}"
+
 	def onAfterParentAdding(self):	
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
@@ -56,6 +59,9 @@ class Cross(AnalyticalPath):
 		super().__init__()
 		self.dims = (width, height)
 
+	def getComment(self):
+		return f"Cross symbol, dims:{self.dims}"
+
 	def onAfterParentAdding(self):	
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
@@ -73,6 +79,9 @@ class XSymb(AnalyticalPath):
 		super().__init__()
 		self.dims = (width, height)
 
+	def getComment(self):
+		return f"XSymb symbol, dims:{self.dims}"
+
 	def onAfterParentAdding(self):	
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
@@ -89,6 +98,9 @@ class XSight(AnalyticalPath):
 	def __init__(self, width, height, separation) -> None:
 		super().__init__()
 		self.dims = (width, height, separation)
+
+	def getComment(self):
+		return f"XSight symbol, dims:{self.dims}"
 
 	def onAfterParentAdding(self):	
 		w, _u = toNumberAndUnit(self.dims[0])
@@ -119,6 +131,9 @@ class CrossSight(AnalyticalPath):
 	def __init__(self, width, height, separation: Union[float, int]) -> None:
 		super().__init__()
 		self.dims = (width, height, separation)
+
+	def getComment(self):
+		return f"CrossSight symbol, dims:{self.dims}"
 
 	def onAfterParentAdding(self):	
 		w, _u = toNumberAndUnit(self.dims[0])
@@ -152,12 +167,18 @@ class Square(Rect):
 		mw = removeDecsep(w / 2)
 		super().__init__(-mw,-mw,w,w)
 
+	def getComment(self):
+		return f"Square symbol, width:{self.width}"
+
 class Asterisk(AnalyticalPath):
 	
 	def __init__(self, width, separation: Optional[Union[float, int]] = None) -> None:
 		super().__init__()
 		self.width = width
 		self.separation = separation
+
+	def getComment(self):
+		return f"Asterisk symbol, width:{self.width} separation:{self.separation}"
 
 	def onAfterParentAdding(self):	
 
@@ -191,6 +212,9 @@ class CircAsterisk(Asterisk):
 		super().__init__(width, separation=separation)
 		self.circrad = circrad
 
+	def getComment(self):		
+		return f"{super().getComment()}, CircAsterisk, circrad:{self.circrad}"
+
 	def onAfterParentAdding(self):	
 		super().onAfterParentAdding()
 		self.addCmd(pM(-self.circrad,0))
@@ -205,6 +229,9 @@ class Arrow(AnalyticalPath):
 		assert handle in ('cb', 'cc')
 		super().__init__()
 		self.dims = (length, basewidth, headwidth, headlength, handle)
+
+	def getComment(self):		
+		return f"Arrow, dims:{self.dims}"
 
 	def onAfterParentAdding(self):	
 		length, basewidth, headwidth, headlength, handle = self.dims
@@ -238,6 +265,9 @@ class CircArrow(Arrow):
 		super().__init__(length, basewidth, headwidth, headlength, handle='cc')
 		self.coffset = coffset
 
+	def getComment(self):		
+		return f"{super().getComment()}, CircArrow, coffset:{self.coffset}"
+
 	def onAfterParentAdding(self):	
 		super().onAfterParentAdding()
 		length, _basewidth, _headwidth, _headlength, handle = self.dims
@@ -254,6 +284,9 @@ class Wedge(AnalyticalPath):
 	def __init__(self, width, height, indent: Optional[Union[float, int]] = 0) -> None:
 		super().__init__()
 		self.dims = (width, height, indent)
+
+	def getComment(self):		
+		return f"Wedge, dims:{self.dims}"
 
 	def onAfterParentAdding(self):	
 		w = strictToNumber(self.dims[0])
@@ -284,6 +317,9 @@ class CircWedge(Wedge):
 		super().__init__(width, height, indent=indent)
 		self.coffset = coffset
 
+	def getComment(self):		
+		return f"{super().getComment()}, CircWedge, coffset:{self.coffset}"
+
 	def onAfterParentAdding(self):	
 		R = super().onAfterParentAdding()
 		rad = self.coffset + R
@@ -297,6 +333,9 @@ class Crescent(AnalyticalPath):
 
 		super().__init__()
 		self.radius = strictToNumber(p_radius)
+
+	def getComment(self):		
+		return f"Crescent, radius:{self.radius}"
 
 	def onAfterParentAdding(self):	
 		
@@ -323,6 +362,9 @@ class SuspPointCirc(AnalyticalPath):
 		
 		super().__init__()
 		self.radius = strictToNumber(p_radius)
+
+	def getComment(self):		
+		return f"SuspPointCirc, radius:{self.radius}"
 
 	def onAfterParentAdding(self):	
 		
@@ -357,6 +399,9 @@ class SuspPointSquare(AnalyticalPath):
 		super().__init__()
 		self.radius = strictToNumber(p_radius)
 
+	def getComment(self):		
+		return f"SuspPointSquare, radius:{self.radius}"
+
 	def onAfterParentAdding(self):	
 		
 		p1 = polar2rectDegs(-45, self.radius)
@@ -387,6 +432,9 @@ class SuspPointTriang(AnalyticalPath):
 		
 		super().__init__()
 		self.radius = strictToNumber(p_radius)
+
+	def getComment(self):		
+		return f"SuspPointTriang, radius:{self.radius}"
 
 	def onAfterParentAdding(self):	
 		

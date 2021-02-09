@@ -379,6 +379,11 @@ class GenericSVGElem(BaseSVGElem):
 
 	def addChild(self, p_child: BaseSVGElem, parent: Optional[Union[etree.Element, BaseSVGElem]]=None, nsmap=None, noyinvert=False):
 		self._noyinvert = noyinvert
+
+		# Comments
+		if hasattr(p_child, 'getComment'):
+			self.getEl().append(etree.Comment(p_child.getComment()))
+
 		if parent is None:
 			assert self.hasEl(), "XML parent not inited. If this is happening in a new object class init, maybe you should instead place this child adding in 'onAfterParentAdding' method"
 			if nsmap is None:
