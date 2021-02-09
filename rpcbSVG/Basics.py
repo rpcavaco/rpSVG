@@ -165,6 +165,16 @@ def isNumeric(p_val):
 		ret = False
 	return ret
 
+def circleDividers(p_center: Pt, p_radius: Union[float, int], p_n: int, p_rot_left: Optional[Union[float, int]] = 0):
+	"""Generate p_n points equally dividing a circle defined by:
+		- p_center - a point
+		- p_radius - radius from center
+		- p_rot_left - (degrees) angle on trigonometric circle"""
+	step = 360 / p_n
+	for i in range(p_n):
+		ang = i * step + p_rot_left
+		yield ptRemoveDecsep(*ptAdd(p_center, polar2rectDegs(ang, p_radius)))
+
 def url_href(p_text):
 	if not p_text.startswith('url'):
 		if not p_text.startswith('#'):

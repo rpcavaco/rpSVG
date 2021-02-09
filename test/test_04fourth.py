@@ -1,8 +1,8 @@
 
 
-from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircWedge, Crescent, Cross, CrossSight, Diamond, Square, SuspPointCirc, SuspPointSquare, Wedge, XSight, XSymb
+from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircWedge, Crescent, Cross, CrossSight, Diamond, RegPoly, Square, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
 
-from rpcbSVG.Basics import GLOBAL_ENV, Pt
+from rpcbSVG.Basics import GLOBAL_ENV, Pt, circleDividers
 from rpcbSVG.SVGStyleText import Sty
 from rpcbSVG.SVGLib import Re, SVGContent, Text, Title, Use
 
@@ -463,6 +463,12 @@ def test_Symbols2(capsys):
 		cresc = sc.addChild(Crescent(32), todefs=True)
 		susppt1 = sc.addChild(SuspPointCirc(32), todefs=True)
 		susppt2 = sc.addChild(SuspPointSquare(32), todefs=True)
+		susppt3 = sc.addChild(SuspPointTriang(32), todefs=True)
+		star1 = sc.addChild(Star(32, 24, 5), todefs=True)
+		star2 = sc.addChild(Star(32, 24, 8, rot=22.5), todefs=True)
+		penta = sc.addChild(RegPoly(32, 5), todefs=True)
+		hexa = sc.addChild(RegPoly(32,6, rot=20), todefs=True)
+
 		#
 		# =========================================================================
 
@@ -482,11 +488,11 @@ def test_Symbols2(capsys):
 	def label_height_row1(p_topval):
 		return p_topval + 120
 
-	left = 240
+	left = 320
 	hstep = 280
 	vstep = 230
 
-	top_row1 = 260
+	top_row1 = 360
 
 	top_row2 = top_row1 + vstep
 	top_row3 = top_row1 + 2 * vstep
@@ -646,6 +652,123 @@ def test_Symbols2(capsys):
 
 	sc.addComment("End Suspension point 2")
 	# =========================================================================
+	
+	# -- Suspension point 3 ---------------------------------------------------
+	sc.addComment("Start Suspension point 3")
+
+	thisleft = thisleft + hstep
+	this_top = top_row2
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), susppt3.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("SuspPointSquare(32)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Suspension 3")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Suspension point 3")
+	# =========================================================================
+	
+	## ROW 3
+
+	# -- Star 1  ---------------------------------------------------
+	sc.addComment("Start Star 1")
+
+	thisleft = left
+	this_top = top_row3
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), star1.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("Star(32,24,5)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Star 1")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Star 1")
+	# =========================================================================
+
+	# -- Star 2 ---------------------------------------------------
+	sc.addComment("Start Star 2")
+
+	thisleft = thisleft + hstep
+	this_top = top_row3
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), star2.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("Star(32,24,8,rot=22.5)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Star 2")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Star")
+	# =========================================================================
+
+	# -- Pentagon ---------------------------------------------------
+	sc.addComment("Start Pentagon")
+
+	thisleft = thisleft + hstep
+	this_top = top_row3
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), penta.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("RegPoly(32, 5)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Pentagon")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Pentagon")
+	# =========================================================================
+
+
+	# -- Hexagon ---------------------------------------------------
+	sc.addComment("Start Hexagon")
+
+	thisleft = thisleft + hstep
+	this_top = top_row3
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), hexa.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("RegPoly(32,6,rot=20)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Hexagon")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Hexagon")
+	# =========================================================================
+
+
+
+
 
 
 	with open('outtest/test_Symbols2.svg', 'w') as fl:
@@ -661,3 +784,11 @@ def test_Symbols2(capsys):
 
 # 	with open('outtest/test_x.svg', 'w') as fl:
 # 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+
+
+# def test_X(capsys):
+
+# 	with capsys.disabled():
+# 		print("\n")
+# 		for i, pt in enumerate(circleDividers(Pt(10,8), 100, 4, 0)):
+# 			print(i,pt)

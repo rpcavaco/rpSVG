@@ -2,7 +2,7 @@
 from typing import Optional, Union
 from math import sqrt, pow
 
-from rpcbSVG.Basics import Pt, calc3rdPointInSegment, pA, pClose, pL, pM, polar2rectDegs, ptRemoveDecsep, removeDecsep, strictToNumber, toNumberAndUnit
+from rpcbSVG.Basics import Pt, calc3rdPointInSegment, circleDividers, pA, pClose, pL, pM, polar2rectDegs, ptRemoveDecsep, removeDecsep, strictToNumber, toNumberAndUnit
 from rpcbSVG.SVGLib import AnalyticalPath, Group, Rect
 
 class Diamond(AnalyticalPath):
@@ -185,7 +185,6 @@ class Asterisk(AnalyticalPath):
 		mw = self.width / 2
 
 		step = 30
-
 		def nextangle(p_ang, halve=False):
 			seed = 0
 			if halve:
@@ -432,29 +431,112 @@ class SuspPointTriang(AnalyticalPath):
 		
 		super().__init__()
 		self.radius = strictToNumber(p_radius)
+		self.interval = 3
 
 	def getComment(self):		
 		return f"SuspPointTriang, radius:{self.radius}"
 
 	def onAfterParentAdding(self):	
 		
-		p1 = polar2rectDegs(150, self.radius)
-		p2 = polar2rectDegs(120, self.radius)
-		self.addCmd(pM(*p1))
-		self.addCmd(pL(-p1.x, 0, relative=True))
+		pt = polar2rectDegs(270, self.radius)
+		pl = polar2rectDegs(150, self.radius)
+		pr = polar2rectDegs(30, self.radius)
+
+		h = pl.y - pt.y
+		b = pr.x - pl.x
+		mb = b / 2
+		rat = mb / h 
+		l0 = pt.y * rat 
+		l0t = (-self.interval + pt.y) * rat 
+		l0b = (self.interval + pt.y) * rat
+		tb = self.interval * rat
+
+		self.addCmd(pM(*pl))
+		self.addCmd(pL(-pl.x, 0, relative=True))
 		self.addCmd(pL(0, 0))
-		self.addCmd(pL(p1.x, 0))
+		self.addCmd(pL(l0, 0))
 		self.addCmd(pClose())
 
-		# TODO: INCOMPLETE
+		self.addCmd(pM(0,0))
+		self.addCmd(pL(-l0,0))
+		self.addCmd(pL(*pt))
+		self.addCmd(pClose())
+
+		self.addCmd(pM(3,pl.y))
+		self.addCmd(pL(*pr))
+		self.addCmd(pL(-l0t,self.interval)) 
+
+		self.addCmd(pM(-tb,pt.y+self.interval)) # --> replace
+		self.addCmd(pL(l0b,-self.interval)) 
 
 class Star(AnalyticalPath):
 
-	def __init__(self, p_radius) -> None:
+	def __init__(self, p_outradius, p_inoffset, p_nspikes, rot: Optional[Union[float, int]] = 0) -> None:
+		
+		super().__init__()
+		self.radius = strictToNumber(p_outradius)
+		self.offset = strictToNumber(p_inoffset)
+		self.nspikes = strictToNumber(p_nspikes)
+		self.rot = strictToNumber(rot)
+
+	def getComment(self):		
+		return f"Star, radius:{self.radius}, nspikes:{self.nspikes}, rot:{self.rot}"
+
+	def onAfterParentAdding(self):	
+
+		step = 360 / self.nspikes
+		rot = self.rot - 90 # 0 is vertical
+		hstep = step / 2
+		first = True
+		ct = Pt(0,0)
+
+		opts = list(circleDividers(ct, self.radius, self.nspikes, rot))
+		ipts = list(circleDividers(ct, self.radius-self.offset, self.nspikes, rot+hstep))
+
+		for i, opt in enumerate(opts):
+			ipt = ipts[i]
+			if first:
+				self.addCmd(pM(*opt))
+			else:
+				self.addCmd(pL(*opt))
+
+			self.addCmd(pL(*ipt))
+
+			first = False
+
+		if not first:
+			self.addCmd(pClose())
+
+class RegPoly(AnalyticalPath):
+
+	def __init__(self, p_radius, p_n, rot: Optional[Union[float, int]] = 0) -> None:
 		
 		super().__init__()
 		self.radius = strictToNumber(p_radius)
+		self.n = strictToNumber(p_n)
+		self.rot = strictToNumber(rot)
+
+	def getComment(self):		
+		return f"RegPoly, radius:{self.radius}, n:{self.n}, rot:{self.rot}"
 
 	def onAfterParentAdding(self):	
-		
-		p1 = polar2rectDegs(150, self.radius)
+
+		step = 360 / self.n
+		rot = self.rot - 90 # 0 is vertical
+		hstep = step / 2
+		first = True
+		ct = Pt(0,0)
+
+		opts = list(circleDividers(ct, self.radius, self.n, rot))
+
+		for i, opt in enumerate(opts):
+			if first:
+				self.addCmd(pM(*opt))
+			else:
+				self.addCmd(pL(*opt))
+			first = False
+
+		if not first:
+			self.addCmd(pClose())
+
+			
