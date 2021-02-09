@@ -283,9 +283,13 @@ class Wedge(AnalyticalPath):
 	def __init__(self, width, height, indent: Optional[Union[float, int]] = 0) -> None:
 		super().__init__()
 		self.dims = (width, height, indent)
+		self._rhr = True
 
 	def getComment(self):		
 		return f"Wedge, dims:{self.dims}"
+
+	def changeFillRule(self, filled=True):
+		self._rhr = filled
 
 	def onAfterParentAdding(self):	
 		w = strictToNumber(self.dims[0])
@@ -299,13 +303,23 @@ class Wedge(AnalyticalPath):
 		# r = sqrt(((s-a) * (s-a) * (s - w)) / s) -- inscribed
 		R = (a * a * w) / (4 * sqrt(s * (s-a) * (s-a) * (s-w))) # Circunscribed
 
-		self.addCmd(pM(0,-R))
-		self.addCmd(pL(-mw,h, relative=True))
-		if i != 0:
-			self.addCmd(pL(mw,-i, relative=True))
-			self.addCmd(pL(mw,i, relative=True))
+		pt = Pt(0,-R)
+
+		self.addCmd(pM(*pt))
+		if self._rhr:
+			self.addCmd(pL(-mw,h, relative=True))
+			if i != 0:
+				self.addCmd(pL(mw,-i, relative=True))
+				self.addCmd(pL(mw,i, relative=True))
+			else:
+				self.addCmd(pL(w,0, relative=True))
 		else:
-			self.addCmd(pL(w,0, relative=True))
+			self.addCmd(pL(mw,h, relative=True))
+			if i != 0:
+				self.addCmd(pL(-mw,-i, relative=True))
+				self.addCmd(pL(-mw,i, relative=True))
+			else:
+				self.addCmd(pL(-w,0, relative=True))
 		self.addCmd(pClose())
 
 		return R
@@ -320,6 +334,7 @@ class CircWedge(Wedge):
 		return f"{super().getComment()}, CircWedge, coffset:{self.coffset}"
 
 	def onAfterParentAdding(self):	
+		self.changeFillRule(filled=False)
 		R = super().onAfterParentAdding()
 		rad = self.coffset + R
 		self.addCmd(pM(-rad,0))

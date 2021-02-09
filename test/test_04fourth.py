@@ -52,7 +52,7 @@ def test_Symbols1():
 	tstyle = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 30, 'font-family', 'Helvetica', 'text-anchor', 'middle', 'stroke-width', 2)
 	txstyle_small = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 16, 'font-family', 'Monospace', 'text-anchor', 'middle', 'stroke-width', 2)
 	txstyle_xsmall = Sty('fill', 'black', 'stroke', '#404040', 'font-size', 14, 'font-family', 'Monospace', 'text-anchor', 'middle', 'stroke-width', 2)
-	symbstyle = Sty('stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round')
+	symbstyle = Sty('fill', 'red', 'fill-opacity', 0.3, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round')
 
 	def code_height_row1(p_topval):
 		return p_topval + 75
@@ -441,33 +441,31 @@ def test_Symbols1():
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
 
-def test_Symbols2(capsys):
+def genSymbols2(yinvert):
 
 	# Coordinates rounded to 1 dec.place
 	# GLOBAL_ENV["ROUND"]["places"] = 2
 
-	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
+	sc = SVGContent(Re(0,0,1600,1200), yinvert=yinvert).setIdentityViewbox()
 	sc.setBackground(Sty('fill', '#E7E8EA'))
 
 	sc.addChild(Title("Symbol library test 2"))
 
-	with capsys.disabled():
-
-		# SYMBOL DEFINITIONS ------------------------------------------------------
-		#
-		crsymb_centerMarker = sc.addChild(Cross(10,10), todefs=True)
-		tri = sc.addChild(Wedge(40,46), todefs=True)
-		circtri = sc.addChild(CircWedge(32,32,coffset=5), todefs=True)
-		wedge = sc.addChild(Wedge(40,46,indent=10), todefs=True)
-		circwedge = sc.addChild(CircWedge(32,32,indent=10,coffset=5), todefs=True)
-		cresc = sc.addChild(Crescent(32), todefs=True)
-		susppt1 = sc.addChild(SuspPointCirc(32), todefs=True)
-		susppt2 = sc.addChild(SuspPointSquare(32), todefs=True)
-		susppt3 = sc.addChild(SuspPointTriang(32), todefs=True)
-		star1 = sc.addChild(Star(32, 24, 5), todefs=True)
-		star2 = sc.addChild(Star(32, 24, 8, rot=22.5), todefs=True)
-		penta = sc.addChild(RegPoly(32, 5), todefs=True)
-		hexa = sc.addChild(RegPoly(32,6, rot=20), todefs=True)
+	# SYMBOL DEFINITIONS ------------------------------------------------------
+	#
+	crsymb_centerMarker = sc.addChild(Cross(10,10), todefs=True)
+	tri = sc.addChild(Wedge(40,46), todefs=True)
+	circtri = sc.addChild(CircWedge(32,32,coffset=5), todefs=True)
+	wedge = sc.addChild(Wedge(40,46,indent=10), todefs=True)
+	circwedge = sc.addChild(CircWedge(40,46,indent=10,coffset=5), todefs=True)
+	cresc = sc.addChild(Crescent(32), todefs=True)
+	susppt1 = sc.addChild(SuspPointCirc(32), todefs=True)
+	susppt2 = sc.addChild(SuspPointSquare(32), todefs=True)
+	susppt3 = sc.addChild(SuspPointTriang(32), todefs=True)
+	star1 = sc.addChild(Star(32, 24, 5), todefs=True)
+	star2 = sc.addChild(Star(32, 24, 8, rot=22.5), todefs=True)
+	penta = sc.addChild(RegPoly(32, 5), todefs=True)
+	hexa = sc.addChild(RegPoly(32,6, rot=20), todefs=True)
 
 		#
 		# =========================================================================
@@ -480,7 +478,7 @@ def test_Symbols2(capsys):
 	tstyle = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 30, 'font-family', 'Helvetica', 'text-anchor', 'middle', 'stroke-width', 2)
 	txstyle_small = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 16, 'font-family', 'Monospace', 'text-anchor', 'middle', 'stroke-width', 2)
 	# txstyle_xsmall = Sty('fill', 'black', 'stroke', '#404040', 'font-size', 14, 'font-family', 'Monospace', 'text-anchor', 'middle', 'stroke-width', 2)
-	symbstyle = Sty('stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round')
+	symbstyle = Sty('fill', 'red', 'fill-opacity', 0.3, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round')
 
 	def code_height_row1(p_topval):
 		return p_topval + 75
@@ -575,7 +573,7 @@ def test_Symbols2(capsys):
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
-		setText("CircWedge(32,32,indent=10,coffset=5)")
+		setText("CircWedge(40,46,indent=10,coffset=5)")
 
 	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
 		setStyle(tstyle).\
@@ -768,12 +766,22 @@ def test_Symbols2(capsys):
 
 
 
+	if yinvert:
+		fname = 'outtest/test_Symbols2_yinv.svg'
+	else:
+		fname = 'outtest/test_Symbols2.svg'
 
 
-
-	with open('outtest/test_Symbols2.svg', 'w') as fl:
+	with open(fname, 'w') as fl:
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
+
+def test_Symbols2(capsys):
+
+	with capsys.disabled():
+
+		genSymbols2(False)
+		genSymbols2(True)
 
 
 # 	with capsys.disabled():
