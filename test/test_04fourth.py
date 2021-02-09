@@ -459,34 +459,43 @@ def genSymbols2(yinvert):
 
 	# SYMBOL DEFINITIONS ------------------------------------------------------
 	#
-	crsymb_centerMarker = sc.addChild(Cross(10,10), todefs=True)
+	crsymb_centerMarker = sc.addChild(Cross(10,10), todefs=True, noyinvert=True)
 	#crosssight_centerMarker = sc.addChild(CrossSight(38,38, 10), todefs=True)
-	xsight_centerMarker = sc.addChild(XSight(26,26, 8), todefs=True)
-	tri = sc.addChild(Wedge(40,46), todefs=True)
-	circtri = sc.addChild(CircWedge(32,32,coffset=5), todefs=True)
-	wedge = sc.addChild(Wedge(40,46,indent=10), todefs=True)
-	circwedge = sc.addChild(CircWedge(40,46,indent=10,coffset=5), todefs=True)
-	cresc = sc.addChild(Crescent(32), todefs=True)
-	susppt1 = sc.addChild(SuspPointCirc(32), todefs=True)
-	susppt2 = sc.addChild(SuspPointSquare(40), todefs=True)
-	susppt3 = sc.addChild(SuspPointTriang(40), todefs=True)
-	star1 = sc.addChild(Star(32, 24, 5), todefs=True)
-	star2 = sc.addChild(Star(32, 24, 8, rot=22.5), todefs=True)
-	cstar = sc.addChild(CircStar(30, 14, 10, coffset=7), todefs=True)
-	penta = sc.addChild(RegPoly(32, 5), todefs=True)
-	hexa = sc.addChild(RegPoly(32,6, rot=20), todefs=True)
-	sun = sc.addChild(CircAsterisk(38, 22, separation=30), todefs=True)
-	cpenta = sc.addChild(CircRegPoly(32, 5, coffset=7), todefs=True)
-	chept = sc.addChild(CircRegPoly(38,8, rot=9, coffset=-14), todefs=True)
+	xsight_centerMarker = sc.addChild(XSight(26,26, 8), todefs=True, noyinvert=True)
+	tri = sc.addChild(Wedge(40,46), todefs=True, noyinvert=True)
+	circtri = sc.addChild(CircWedge(32,32,coffset=5), todefs=True, noyinvert=True)
+	wedge = sc.addChild(Wedge(40,46,indent=10), todefs=True, noyinvert=True)
+	circwedge = sc.addChild(CircWedge(40,46,indent=10,coffset=5), todefs=True, noyinvert=True)
+	cresc = sc.addChild(Crescent(32), todefs=True, noyinvert=True)
+	susppt1 = sc.addChild(SuspPointCirc(32), todefs=True, noyinvert=True)
+	susppt2 = sc.addChild(SuspPointSquare(40), todefs=True, noyinvert=True)
+	susppt3 = sc.addChild(SuspPointTriang(40), todefs=True, noyinvert=True)
+	star1 = sc.addChild(Star(32, 24, 5), todefs=True, noyinvert=True)
+	star2 = sc.addChild(Star(32, 24, 8, rot=22.5), todefs=True, noyinvert=True)
+	cstar = sc.addChild(CircStar(30, 14, 10, coffset=7), todefs=True, noyinvert=True)
+	penta = sc.addChild(RegPoly(32, 5), todefs=True, noyinvert=True)
+	hexa = sc.addChild(RegPoly(32,6, rot=20), todefs=True, noyinvert=True)
+	sun = sc.addChild(CircAsterisk(38, 22, separation=30), todefs=True, noyinvert=True)
+	cpenta = sc.addChild(CircRegPoly(32, 5, coffset=7), todefs=True, noyinvert=True)
+	chept = sc.addChild(CircRegPoly(38,8, rot=9, coffset=-14), todefs=True, noyinvert=True)
 
 
 	#
 	# =========================================================================
 
-	title_height = 140
+	if yinvert:
+		title_height = 1060
+	else:
+		title_height = 140
+
+	if yinvert:
+		titletext = "Symbol library test 2 (y-inverted)"
+	else:
+		titletext = "Symbol library test 2"
+
 	sc.addChild(Text(140,title_height)).\
 		setStyle(Sty('fill', '#7C7C7C', 'font-size', 60, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
-		setText("Symbol library test 2")
+		setText(titletext)
 
 	tstyle = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 30, 'font-family', 'Helvetica', 'text-anchor', 'middle', 'stroke-width', 2)
 	txstyle_small = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 16, 'font-family', 'Monospace', 'text-anchor', 'middle', 'stroke-width', 2)
@@ -494,20 +503,34 @@ def genSymbols2(yinvert):
 	symbstyle = Sty('fill', 'red', 'fill-opacity', 0.5, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round')
 
 	def code_height_row1(p_topval):
-		return p_topval + 75
+		if yinvert:
+			return p_topval - 75
+		else:
+			return p_topval + 75
 
 	def label_height_row1(p_topval):
-		return p_topval + 120
+		if yinvert:
+			return p_topval - 120
+		else:
+			return p_topval + 120
 
 	left = 320
 	hstep = 280
 	vstep = 230
 
-	top_row1 = 280
+	if yinvert:
+		top_row1 = 920
+		
+		top_row2 = top_row1 - vstep
+		top_row3 = top_row1 - 2 * vstep
+		top_row4 = top_row1 - 3 * vstep
 
-	top_row2 = top_row1 + vstep
-	top_row3 = top_row1 + 2 * vstep
-	top_row4 = top_row1 + 3 * vstep
+	else:
+		top_row1 = 280
+		
+		top_row2 = top_row1 + vstep
+		top_row3 = top_row1 + 2 * vstep
+		top_row4 = top_row1 + 3 * vstep
 
 
 	# -- Triangle -----------------------------------------------------------
