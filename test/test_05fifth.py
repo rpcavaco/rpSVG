@@ -1,4 +1,6 @@
 
+import cairosvg
+
 from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircRegPoly, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, RegPoly, Square, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
 
 from rpcbSVG.Basics import GLOBAL_ENV, Pt, circleDividers
@@ -101,3 +103,6 @@ def test_Diagramming(capsys):
 
 	with open('outtest/test_Diagramming.svg', 'w') as fl:
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+
+	cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to="outtest/test_Diagramming.png")
+

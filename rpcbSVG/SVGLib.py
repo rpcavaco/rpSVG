@@ -949,11 +949,8 @@ class TextParagraph(Group):
 		self._txtorig = (x, y)
 		self.tx = None
 
-	# def invertYGrowth(self):
-	# 	v, u = toNumberAndUnit(self._vsep)
-	# 	if not v < 0:
-	# 		v = -v
-	# 	self._vsep = fromNumberAndUnit(v,u)
+	def getComment(self):	
+		return f"TextParagraph {self._txtorig}"
 
 	def setText(self, textrows: Optional[Union[str, List[str]]]):
 		assert isinstance(textrows, List) or isinstance(textrows, str)
@@ -968,11 +965,10 @@ class TextParagraph(Group):
 		self.tx.clearChildren()
 		#first = True
 		for row in self._textrows:
-			# if first:
-			# 	self.tx.addChild(TSpan().setText(row))
-			# else:
-			self.tx.addChild(TSpan(0,None,None,self._vsep).setText(row))
-			#first = False
+			###########################################################################
+			#  !! IMPORTANT NOTICE - Non Y-inversion is forced on TSpan element    !! #
+			###########################################################################
+			self.tx.addChild(TSpan(0,None,None,self._vsep).setText(row), noyinvert=True)
 
 	def onAfterParentAdding(self):
 		if not self._parentadded:
@@ -995,8 +991,11 @@ class TextBoxA(Group):
 		self._txpara = None
 		self._rect = None
 
-	def getComment(self):		
-		return "TextBoxA"
+	def getComment(self):	
+		if self._re is None:	
+			return "TextBoxA"
+		else:	
+			return f"TextBoxA {self._re}"
 
 	def _getTextLines(self):
 		if not self.text is None and len(self.text) > 0:

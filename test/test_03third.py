@@ -1,10 +1,9 @@
 
-
+import cairosvg
 import pytest
 
 from rpcbSVG.Structs import VBox
-
-from rpcbSVG.Basics import GLOBAL_ENV, Pt, Rotate, pA, pC, pQ, pS, pT, polar2rectDegs, ptAdd, ptGetAngle
+from rpcbSVG.Basics import Pt, Rotate, pA, pC, pQ, pS, pT, polar2rectDegs, ptAdd, ptGetAngle
 from rpcbSVG.SVGStyleText import CSSSty, Sty
 from rpcbSVG.SVGLib import AnalyticalPath, Circle, Ellipse, GradientStop, Group, Image, Line, LinearGradient, Marker, MrkProps, Pattern, Polygon, Polyline, RadialGradient, Re, Rect, RectRC, SVGContent, TRef, TSpan, Text, TextParagraph, TextPath, Title, Use
 
@@ -163,6 +162,8 @@ def test_Text():
 
 	with open('outtest/test_Text.svg', 'w') as fl:
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+
+	cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to="outtest/test_Text.png")
 
 def test_Image():
 
