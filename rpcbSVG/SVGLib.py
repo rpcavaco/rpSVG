@@ -10,7 +10,7 @@ from warnings import warn
 from lxml import etree
 
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.Basics import MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, add, \
+from rpcbSVG.Basics import MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, add, fromNumberAndUnit, \
 	pClose, pH, pL, pM, pV, strictToNumber, subtr, toNumberAndUnit, transform_def, path_command, \
 	ptCoincidence, removeDecsep, ptEnsureStrings
 from rpcbSVG.Structs import Ci, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Patt, Pl, Pth, RaGra, Re, ReRC, Symb, Tx, TxPth, TxRf, Us, VBox
@@ -395,10 +395,10 @@ class GenericSVGElem(BaseSVGElem):
 	def __init__(self, tag: str, struct: Optional[_withunits_struct] = None) -> None:
 		self.content = []
 		self._noyinvert = False
-		self._yinvertheight = None
 		super().__init__(tag, struct=struct)
 
 	def addChild(self, p_child: BaseSVGElem, parent: Optional[Union[etree.Element, BaseSVGElem]]=None, nsmap=None, noyinvert=False):
+		
 		self._noyinvert = noyinvert
 
 		# Comments
@@ -420,8 +420,8 @@ class GenericSVGElem(BaseSVGElem):
 				newel = etree.SubElement(parent.getEl(), p_child.tag)
 
 		if not self._noyinvert:
-			if not self._yinvertheight is None and hasattr(p_child, 'yinvert'):
-				p_child.yinvert(self._yinvertheight)
+			if not self._yinvertdelta is None and hasattr(p_child, 'yinvert'):
+				p_child.yinvert(self._yinvertdelta)
 
 		p_child.setEl(newel)
 		self.content.append(p_child)
@@ -454,7 +454,6 @@ class GenericSVGElem(BaseSVGElem):
 
 	def yinvert(self, p_height: Union[float, int]):
 		if not self._noyinvert:
-			self._yinvertheight = p_height
 			return super().yinvert(p_height)
 
 class SVGContainer(GenericSVGElem):
@@ -470,13 +469,16 @@ class SVGContainer(GenericSVGElem):
 		self.genIDMethod = p_method
 
 	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None, noyinvert=False) -> BaseSVGElem:
-		self._noyinvert = noyinvert
+		if hasattr(self, '_forceNonYInvertChildren') and getattr(self, '_forceNonYInvertChildren'):
+			_noyinvert = True
+		else:
+			_noyinvert = noyinvert
 		if todefs:
 			if self._defs is None:
 				self._defs = super().addChild(Defs())
-			ret = super().addChild(p_child, parent=self._defs, nsmap=nsmap, noyinvert=noyinvert)
+			ret = super().addChild(p_child, parent=self._defs, nsmap=nsmap, noyinvert=_noyinvert)
 		else:
-			ret = super().addChild(p_child, nsmap=nsmap, noyinvert=noyinvert)
+			ret = super().addChild(p_child, nsmap=nsmap, noyinvert=_noyinvert)
 		if not self.genIDMethod is None and hasattr(ret, 'setGenIdMethod'):
 			ret.setGenIdMethod(self.genIDMethod)
 
@@ -554,6 +556,29 @@ class SVGContent(SVGRoot):
 		self._styleel = self._defs.addChild(Style())
 		self._yinvert = yinvert
 
+	def _calcYInvertDelta(self):
+		vb = self.getViewbox()
+		vbvals = vb.getValues()
+		miny = None
+		height = None
+		if len(vbvals) > 2:
+			miny = vbvals[1]
+			height = vbvals[3]
+		else:
+			strct = self.getStruct()
+			if hasattr(strct, 'height'):
+				height = strictToNumber(getattr(strct, 'height'))
+			if hasattr(strct, 'y'):
+				miny = strictToNumber(getattr(strct, 'y'))
+		assert not miny is None and not height is None
+		return 2 * miny + height
+
+	def getYInvertFlag(self):
+		return self._yinvert
+
+	def getYInvertDelta(self):
+		return self._calcYInvertDelta()
+
 	def nextIDSerial(self):
 		ret = self._id_serial
 		self._id_serial = self._id_serial + 1
@@ -562,32 +587,17 @@ class SVGContent(SVGRoot):
 		# self._autoGenerateSubIds = False
 
 	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None, noyinvert=False) -> BaseSVGElem:
-		self._noyinvert = noyinvert
 		if p_child.tag in self.forbidden_user_tags:
 			raise TagOutOfDirectUserManipulation(p_child.tag)
-		if not self._noyinvert:
+		if not noyinvert:
 			if self._yinvert and hasattr(p_child, 'yinvert'):
-				vb = self.getViewbox()
-				vbvals = vb.getValues()
-				miny = None
-				height = None
-				if len(vbvals) > 2:
-					miny = vbvals[1]
-					height = vbvals[3]
-				else:
-					strct = self.getStruct()
-					if hasattr(strct, 'height'):
-						height = strictToNumber(getattr(strct, 'height'))
-					if hasattr(strct, 'y'):
-						miny = strictToNumber(getattr(strct, 'y'))
-				assert not miny is None and not height is None
-				delta = 2 * miny + height
+				delta = self._calcYInvertDelta()
 				p_child.yinvert(delta)
 		if todefs or (hasattr(p_child, "_forceToDefs") and getattr(p_child, "_forceToDefs")):
 			assert not self._defs is None
-			ret = self._defs.addChild(p_child, nsmap=nsmap)
+			ret = self._defs.addChild(p_child, nsmap=nsmap, noyinvert=noyinvert)
 		else:
-			ret = super().addChild(p_child, nsmap=nsmap)
+			ret = super().addChild(p_child, nsmap=nsmap, noyinvert=noyinvert)
 		if not ret.hasId():
 			ret.setId(p_child.idprefix + str(self.nextIDSerial()))
 		if isinstance(ret, SVGContainer):
@@ -708,7 +718,10 @@ class Style(BaseSVGElem):
 class Rect(GenericSVGElem):
 	"Plain rectangle, no round corners"
 	def __init__(self, *args) -> None:
-		super().__init__("rect", struct=Re(*args))
+		if len(args) == 1 and isinstance(args[0], Re):
+			super().__init__("rect", struct=args[0])
+		else:
+			super().__init__("rect", struct=Re(*args))
 
 class RectRC(GenericSVGElem):
 	"Round cornered rectangle"
@@ -790,8 +803,8 @@ class AnalyticalPath(Path):
 
 	def addCmd(self, p_cmd: path_command):
 		if hasattr(p_cmd, 'yinvert'):
-			if not self._noyinvert and not self._yinvertheight is None:
-				p_cmd.yinvert(self._yinvertheight)
+			if not self._noyinvert and not self._yinvertdelta is None:
+				p_cmd.yinvert(self._yinvertdelta)
 		self.cmds.append(p_cmd)
 		self._refresh()
 		return self
@@ -809,8 +822,8 @@ class AnalyticalPath(Path):
 		new_list = []
 		for pi, pt in enumerate(p_list):
 			wkpt = [strictToNumber(pt.x), strictToNumber(pt.y)]
-			if not self._noyinvert and not self._yinvertheight is None:
-				wkpt[1] = self._yinvertheight - wkpt[1]
+			if not self._noyinvert and not self._yinvertdelta is None:
+				wkpt[1] = self._yinvertdelta - wkpt[1]
 			new_list.append(wkpt)
 			cmd_added = False
 			if pi == 0: # first point
@@ -843,7 +856,7 @@ class AnalyticalPath(Path):
 
 	def yinvert(self, p_height: Union[float, int]):
 		if not self._noyinvert:
-			self._yinvertheight = p_height
+			self._yinvertdelta = p_height
 
 class _pointsElement(MarkeableSVGElem):
 	def __init__(self, tag, *args, marker_props: Optional[MrkProps] = None) -> None:
@@ -862,15 +875,15 @@ class _pointsElement(MarkeableSVGElem):
 				if ptCoincidence(pt, self.initialpoint, mindelta=mindelta) and self.omitclosingpoint:
 					continue
 			wkpt = [strictToNumber(pt.x), strictToNumber(pt.y)]
-			if not self._noyinvert and not self._yinvertheight is None:
-				wkpt[1] = self._yinvertheight - wkpt[1]
+			if not self._noyinvert and not self._yinvertdelta is None:
+				wkpt[1] = self._yinvertdelta - wkpt[1]
 			buf.append("{0},{1}".format(*ptEnsureStrings(wkpt)))
 		self.getStruct().setall(" ".join(buf))
 		self.updateStructAttrs()
 		return self
 	def yinvert(self, p_height: Union[float, int]):
 		if not self._noyinvert:
-			self._yinvertheight = p_height
+			self._yinvertdelta = p_height
 			if self.hasPoints():
 				warn(UserWarning("points already defined prior to yinvert activation on this object, their y coord won't be changed."))
 
@@ -921,9 +934,9 @@ class Pattern(GenericSVGElem):
 
 class TextParagraph(Group):
 
-	def __init__(self, x, y, textrows: Optional[Union[str, List[str]]] = None, vsep="-1.2em", anchor="ul", padding=10):
+	def __init__(self, x, y, textrows: Optional[Union[str, List[str]]] = None, vsep="1.2em"): #, anchor="ul"):
 		"""anchor - anchor point of box encolsing all text lines:
-					 'ul' upper left corner """
+					 'ul' upper left corner"""
 		super().__init__()
 		if isinstance(textrows, List):
 			self._textrows = textrows
@@ -932,10 +945,15 @@ class TextParagraph(Group):
 		else:
 			self._textrows = []
 		self._vsep = vsep
-		self._anchor = anchor
-		self._padding = padding
-		self._txtorig = (add(x,padding), subtr(y,padding))
+		#self._anchor = anchor
+		self._txtorig = (x, y)
 		self.tx = None
+
+	# def invertYGrowth(self):
+	# 	v, u = toNumberAndUnit(self._vsep)
+	# 	if not v < 0:
+	# 		v = -v
+	# 	self._vsep = fromNumberAndUnit(v,u)
 
 	def setText(self, textrows: Optional[Union[str, List[str]]]):
 		assert isinstance(textrows, List) or isinstance(textrows, str)
@@ -967,13 +985,15 @@ class TextParagraph(Group):
 
 class TextBoxA(Group):
 
-	def __init__(self, *args, text: Optional[str] = None) -> None:
+	def __init__(self, *args, text: Optional[str] = None, padding=(10,10)) -> None:
 		"consumes rect args"
 		super().__init__()
-		self.args = args
+		self._forceNonYInvertChildren = True
+		self._re = Re(*args)
 		self.text = text
+		self._padding = padding
 		self._txpara = None
-		self._rect = Rect(*args)
+		self._rect = None
 
 	def getComment(self):		
 		return "TextBoxA"
@@ -1003,33 +1023,22 @@ class TextBoxA(Group):
 		else:
 		 	return
 		# rect = Rect(*self.args)
-		assert not self._rect is None
-		strct = self._rect.getStruct()
+		assert self._rect is None
+
+		self.addTransform(Trans(self._re.get('x'), self._re.get('y')))
+
+
+		self._rect = Rect(0,0,self._re.get('width'), self._re.get('height'))
 		self.addChild(self._rect)
+
 		textrows = self._getTextLines()
 
-		y, _u = toNumberAndUnit(strct.get('y'))  
-		h, _u = toNumberAndUnit(strct.get('height'))  
-		cota = y + h
+		# y, _u = toNumberAndUnit(self._re.get('y'))  
+		# h, _u = toNumberAndUnit(self._re.get('height'))  
+		# cota = y + h
 
-		self._txpara = self.addChild(TextParagraph(strct.get('x'), cota, textrows))
+		self._txpara = self.addChild(TextParagraph(*self._padding, textrows))
 
-# 
-# test/test_05fifth.py:74: 
-# _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-# rpcbSVG/SVGLib.py:584: in addChild
-#     ret = super().addChild(p_child, nsmap=nsmap)
-# rpcbSVG/SVGLib.py:477: in addChild
-#     ret.onAfterParentAdding()
-# _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
-
-
-#
-# test/test_05fifth.py:74: 
-# _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-# rpcbSVG/SVGLib.py:590: in addChild
-#     ret.onAfterParentAdding()
-# _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
 
 

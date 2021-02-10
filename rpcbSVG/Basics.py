@@ -67,6 +67,9 @@ def toNumberAndUnit(p_val):
 		un = None
 	return removeDecsep(float(''.join(numchars))), un
 
+def fromNumberAndUnit(p_val, p_unit):
+	return f"{removeDecsep(p_val)}{p_unit}"
+
 def strictToNumber(p_val):
 	base = str(p_val)
 	numchars = []

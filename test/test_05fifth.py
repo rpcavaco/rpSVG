@@ -3,7 +3,7 @@ from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircRegPol
 
 from rpcbSVG.Basics import GLOBAL_ENV, Pt, circleDividers
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.SVGLib import Re, SVGContent, Text, TextBoxA, Title, Use
+from rpcbSVG.SVGLib import Line, Re, SVGContent, Text, TextBoxA, Title, Use
 
 
 def test_Diagramming(capsys):
@@ -11,7 +11,11 @@ def test_Diagramming(capsys):
 	# Coordinates rounded to 1 dec.place
 	GLOBAL_ENV["ROUND"]["places"] = 1
 
-	sc = SVGContent(Re(0,0,1600,1200), yinvert=True).setIdentityViewbox()
+	if True:
+		sc = SVGContent(Re(0,0,1600,1200), yinvert=True).setIdentityViewbox()
+	else:
+		sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
+
 	sc.setBackground(Sty('fill', '#E7E8EA'))
 
 	sc.addChild(Title("Diagramming elements"))
@@ -22,12 +26,18 @@ def test_Diagramming(capsys):
 	#
 	# =========================================================================
 
-	title_height = 1060
+	if sc.getYInvertFlag():
+		title_height = 1060
+	else:
+		title_height = 140
+
 	sc.addChild(Text(140,title_height)).\
 		setStyle(Sty('fill', '#7C7C7C', 'font-size', 60, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
 		setText("Diagramming elements")
 
 	sc.addStyleRule(CSSSty('fill', '#434343', 'font-size', 20, 'font-family', 'Helvetica', selector='.tb1'))
+	sc.addStyleRule(CSSSty('fill', 'none', 'stroke', 'red', 'stroke-width', 4, selector='.caixas'))
+	sc.addStyleRule(CSSSty('stroke', '#E1E1E8', 'stroke-width', 2, selector='.aid1'))
 
 	def code_height_row1(p_topval):
 		return p_topval + 75
@@ -69,16 +79,24 @@ def test_Diagramming(capsys):
 	# sc.addComment("End Triangle")
 	# # =========================================================================
 
+	if sc.getYInvertFlag():
+		tb1Y = 1000
+	else:
+		tb1Y = 200
+
+
 	with capsys.disabled():
 
-		tb = sc.addChild(TextBoxA(240, 490, 500, 150))
+		tb = sc.addChild(TextBoxA(240, tb1Y, 500, 150))
 		tb.getParagraph().setClass("tb1")
+		tb.getRect().setClass("caixas")
 		tb.setText("""O condutor individual não tem essa percepção 
 		imaginando que, de forma irrealista, se lhe fosse dado 
 		um corredor livre poderia ultrapassar todos os outros 
 		automobilistas e, finalmente liberto, chegar 
 		atempadamente e com total conforto ao seu destino.""")
 
+		sc.addChild(Line(80,1100,240,tb1Y).setClass('aid1'))
 
 
 	with open('outtest/test_Diagramming.svg', 'w') as fl:
