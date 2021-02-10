@@ -2,11 +2,11 @@
 from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircRegPoly, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, RegPoly, Square, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
 
 from rpcbSVG.Basics import GLOBAL_ENV, Pt, circleDividers
-from rpcbSVG.SVGStyleText import Sty
+from rpcbSVG.SVGStyleText import CSSSty, Sty
 from rpcbSVG.SVGLib import Re, SVGContent, Text, TextBoxA, Title, Use
 
 
-def test_Diagramming():
+def test_Diagramming(capsys):
 
 	# Coordinates rounded to 1 dec.place
 	GLOBAL_ENV["ROUND"]["places"] = 1
@@ -27,10 +27,7 @@ def test_Diagramming():
 		setStyle(Sty('fill', '#7C7C7C', 'font-size', 60, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
 		setText("Diagramming elements")
 
-	tstyle = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 30, 'font-family', 'Helvetica', 'text-anchor', 'middle', 'stroke-width', 2)
-	txstyle_small = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 16, 'font-family', 'Monospace', 'text-anchor', 'middle', 'stroke-width', 2)
-	# txstyle_xsmall = Sty('fill', 'black', 'stroke', '#404040', 'font-size', 14, 'font-family', 'Monospace', 'text-anchor', 'middle', 'stroke-width', 2)
-	symbstyle = Sty('stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round')
+	sc.addStyleRule(CSSSty('fill', '#434343', 'font-size', 20, 'font-family', 'Helvetica', selector='.tb1'))
 
 	def code_height_row1(p_topval):
 		return p_topval + 75
@@ -72,12 +69,16 @@ def test_Diagramming():
 	# sc.addComment("End Triangle")
 	# # =========================================================================
 
+	with capsys.disabled():
 
+		tb = sc.addChild(TextBoxA(240, 490, 500, 150))
+		tb.getParagraph().setClass("tb1")
+		tb.setText("""O condutor individual não tem essa percepção 
+		imaginando que, de forma irrealista, se lhe fosse dado 
+		um corredor livre poderia ultrapassar todos os outros 
+		automobilistas e, finalmente liberto, chegar 
+		atempadamente e com total conforto ao seu destino.""")
 
-	tb = sc.addChild(TextBoxA(240, 490, 500, 380).setStyle(Sty('stroke', 'black')))
-	tb.setText("""O condutor individual não tem essa percepção imaginando que, de forma irrealista, 
-	se lhe fosse dado um corredor livre poderia ultrapassar todos os outros automobilistas e, finalmente liberto, chegar atempadamente e com total conforto ao seu destino. 
-Assim, quando lhe surge a visão de um corredor ciclável, a "miragem do canal livre" toma forma e a tentação de o invadir torna-se irresistível. Se não contrariássemos essa tentação, nem o trânsito andaria melhor nem os novos ciclistas teriam a proteção que merecem e que a cidade procura dar-lhes.""")
 
 
 	with open('outtest/test_Diagramming.svg', 'w') as fl:

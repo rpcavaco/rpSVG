@@ -10,8 +10,8 @@ from warnings import warn
 from lxml import etree
 
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.Basics import MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, \
-	pClose, pH, pL, pM, pV, strictToNumber, toNumberAndUnit, transform_def, path_command, \
+from rpcbSVG.Basics import MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, add, \
+	pClose, pH, pL, pM, pV, strictToNumber, subtr, toNumberAndUnit, transform_def, path_command, \
 	ptCoincidence, removeDecsep, ptEnsureStrings
 from rpcbSVG.Structs import Ci, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Patt, Pl, Pth, RaGra, Re, ReRC, Symb, Tx, TxPth, TxRf, Us, VBox
 
@@ -56,6 +56,7 @@ class BaseSVGElem(object):
 		self.el = None
 		self._pendingXMLDependentOps = []
 		self._yinvertdelta = None
+		self._parentadded = False
 		self.setStruct(struct)
 
 	def clone(self):
@@ -381,8 +382,13 @@ class BaseSVGElem(object):
 		return ret
 
 	def onAfterParentAdding(self):
-		"to be extended, actions to run after being added to parent"
-		pass
+		"""To be extended, actions to run after being added to parent. 
+		   Extending classes must check self._parentadded state and return immediately if this is True"""
+		# if not self._parentadded:
+		# 	self._parentadded = True
+		# else:
+		# 	return
+
 
 class GenericSVGElem(BaseSVGElem):
 
@@ -657,6 +663,7 @@ class Desc(SVGContainer):
 
 class Title(BaseSVGElem):
 	def __init__(self, p_titletext: str) -> None:
+		self._autoGenerateId = False
 		super().__init__("title")
 		self.dispatchXMLDependentOp(self.setText, args=(p_titletext,))
 
@@ -914,7 +921,9 @@ class Pattern(GenericSVGElem):
 
 class TextParagraph(Group):
 
-	def __init__(self, x, y, textrows: Optional[Union[str, List[str]]] = None, vsep="-1.2em"):
+	def __init__(self, x, y, textrows: Optional[Union[str, List[str]]] = None, vsep="-1.2em", anchor="ul", padding=10):
+		"""anchor - anchor point of box encolsing all text lines:
+					 'ul' upper left corner """
 		super().__init__()
 		if isinstance(textrows, List):
 			self._textrows = textrows
@@ -923,7 +932,9 @@ class TextParagraph(Group):
 		else:
 			self._textrows = []
 		self._vsep = vsep
-		self._orig = (x, y)
+		self._anchor = anchor
+		self._padding = padding
+		self._txtorig = (add(x,padding), subtr(y,padding))
 		self.tx = None
 
 	def setText(self, textrows: Optional[Union[str, List[str]]]):
@@ -937,26 +948,35 @@ class TextParagraph(Group):
 	def _build(self):
 		assert not self.tx is None
 		self.tx.clearChildren()
-		first = True
+		#first = True
 		for row in self._textrows:
-			if first:
-				self.tx.addChild(TSpan().setText(row))
-			else:
-				self.tx.addChild(TSpan(0,None,None,self._vsep).setText(row))
-			first = False
+			# if first:
+			# 	self.tx.addChild(TSpan().setText(row))
+			# else:
+			self.tx.addChild(TSpan(0,None,None,self._vsep).setText(row))
+			#first = False
 
 	def onAfterParentAdding(self):
-		self.addTransform(Trans(*self._orig))
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
+		self.addTransform(Trans(*self._txtorig))
 		self.tx = self.addChild(Text())
 		self._build()
 
 class TextBoxA(Group):
 
 	def __init__(self, *args, text: Optional[str] = None) -> None:
+		"consumes rect args"
 		super().__init__()
 		self.args = args
 		self.text = text
-		self.txpara = None
+		self._txpara = None
+		self._rect = Rect(*args)
+
+	def getComment(self):		
+		return "TextBoxA"
 
 	def _getTextLines(self):
 		if not self.text is None and len(self.text) > 0:
@@ -965,23 +985,52 @@ class TextBoxA(Group):
 			textrows = []
 		return textrows
 
+	def getParagraph(self):
+		return self._txpara
+
+	def getRect(self):
+		return self._rect
+
 	def setText(self, p_text: str):
 		self.text = p_text
-		if not self.txpara is None:
-			self.txpara.setText(self._getTextLines())
+		if not self._txpara is None:
+			self._txpara.setText(self._getTextLines())
 		return self
 
 	def onAfterParentAdding(self):	
-		rect = Rect(*self.args)
-		strct = rect.getStruct()
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
+		# rect = Rect(*self.args)
+		assert not self._rect is None
+		strct = self._rect.getStruct()
+		self.addChild(self._rect)
 		textrows = self._getTextLines()
 
 		y, _u = toNumberAndUnit(strct.get('y'))  
 		h, _u = toNumberAndUnit(strct.get('height'))  
 		cota = y + h
 
-		self.txpara = self.addChild(TextParagraph(strct.get('x'), cota, textrows))
-		self.addChild(rect)
+		self._txpara = self.addChild(TextParagraph(strct.get('x'), cota, textrows))
+
+# 
+# test/test_05fifth.py:74: 
+# _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+# rpcbSVG/SVGLib.py:584: in addChild
+#     ret = super().addChild(p_child, nsmap=nsmap)
+# rpcbSVG/SVGLib.py:477: in addChild
+#     ret.onAfterParentAdding()
+# _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+
+#
+# test/test_05fifth.py:74: 
+# _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+# rpcbSVG/SVGLib.py:590: in addChild
+#     ret.onAfterParentAdding()
+# _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
 
 
 

@@ -77,6 +77,12 @@ def strictToNumber(p_val):
 			raise ValueWithUnitsError(p_val)
 	return removeDecsep(float(''.join(numchars)))
 
+def add(a, b):
+	return strictToNumber(a) + strictToNumber(b)
+
+def subtr(a, b):
+	return strictToNumber(a) - strictToNumber(b)
+
 def getUnit(p_val):
 	base = str(p_val)
 	unitchars = []

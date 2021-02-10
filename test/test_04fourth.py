@@ -478,8 +478,6 @@ def genSymbols2(yinvert):
 	sun = sc.addChild(CircAsterisk(38, 22, separation=30), todefs=True, noyinvert=True)
 	cpenta = sc.addChild(CircRegPoly(32, 5, coffset=7), todefs=True, noyinvert=True)
 	chept = sc.addChild(CircRegPoly(38,8, rot=9, coffset=-14), todefs=True, noyinvert=True)
-
-
 	#
 	# =========================================================================
 

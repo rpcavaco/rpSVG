@@ -18,6 +18,10 @@ class Diamond(AnalyticalPath):
 		return f"Diamond symbol, dims:{self.dims} handle:{self.handle}"
 
 	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
 		mw = removeDecsep(w / 2)
@@ -64,6 +68,10 @@ class Cross(AnalyticalPath):
 		return f"Cross symbol, dims:{self.dims}"
 
 	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
 		mw = removeDecsep(w / 2)
@@ -84,6 +92,10 @@ class XSymb(AnalyticalPath):
 		return f"XSymb symbol, dims:{self.dims}"
 
 	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
 		mw = removeDecsep(w / 2)
@@ -104,6 +116,10 @@ class XSight(AnalyticalPath):
 		return f"XSight symbol, dims:{self.dims}"
 
 	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
 		sep, _u = toNumberAndUnit(self.dims[2])
@@ -137,6 +153,10 @@ class CrossSight(AnalyticalPath):
 		return f"CrossSight symbol, dims:{self.dims}"
 
 	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
 		sep, _u = toNumberAndUnit(self.dims[2])
@@ -182,6 +202,10 @@ class Asterisk(AnalyticalPath):
 		return f"Asterisk symbol, width:{self.radius} separation:{self.separation}"
 
 	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
 
 		step = 30
 		def nextangle(p_ang, halve=False):
@@ -232,6 +256,10 @@ class Arrow(AnalyticalPath):
 		return f"Arrow, dims:{self.dims}"
 
 	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
 		length, basewidth, headwidth, headlength, handle = self.dims
 		baselength = length - headlength
 		mw = basewidth / 2
@@ -291,6 +319,10 @@ class Wedge(AnalyticalPath):
 		self._rhr = filled
 
 	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return -1
 		w = strictToNumber(self.dims[0])
 		h = strictToNumber(self.dims[1])
 		i = strictToNumber(self.dims[2])
@@ -335,6 +367,8 @@ class CircWedge(Wedge):
 	def onAfterParentAdding(self):	
 		self.changeFillRule(filled=False)
 		R = super().onAfterParentAdding()
+		if R < 0:
+			return
 		rad = self.coffset + R
 		self.addCmd(pM(-rad,0))
 		self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
@@ -351,6 +385,10 @@ class Crescent(Symbol):
 		return f"Crescent, radius:{self.radius}"
 
 	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
 
 		self.addChild(Desc().setText(self.getComment()))
 		ap = self.addChild(AnalyticalPath())
@@ -381,6 +419,10 @@ class SuspPointCirc(Symbol):
 		return f"SuspPointCirc, radius:{self.radius}"
 
 	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
 
 		self.addChild(Desc().setText(self.getComment()))
 		ap = self.addChild(AnalyticalPath())
@@ -417,6 +459,10 @@ class SuspPointSquare(Symbol):
 		return f"SuspPointSquare, radius:{self.radius}"
 
 	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
 
 		self.addChild(Desc().setText(self.getComment()))
 		ap = self.addChild(AnalyticalPath())
@@ -457,6 +503,10 @@ class SuspPointTriang(Symbol):
 		return f"SuspPointTriang, radius:{self.radius}"
 
 	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
 
 		self.addChild(Desc().setText(self.getComment()))
 
@@ -506,6 +556,10 @@ class Star(AnalyticalPath):
 		return f"Star, radius:{self.radius}, nspikes:{self.nspikes}, rot:{self.rot}"
 
 	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
 
 		step = 360 / self.nspikes
 		rot = self.rot - 90 # 0 is vertical
@@ -560,6 +614,10 @@ class RegPoly(AnalyticalPath):
 		return f"RegPoly, radius:{self.radius}, n:{self.n}, rot:{self.rot}"
 
 	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
 
 		step = 360 / self.n
 		rot = self.rot - 90 # 0 is vertical
