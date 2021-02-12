@@ -934,9 +934,9 @@ class Pattern(GenericSVGElem):
 
 class TextParagraph(Group):
 
-	def __init__(self, x, y, textrows: Optional[Union[str, List[str]]] = None, vsep="1.2em"): #, anchor="ul"):
+	def __init__(self, x, y, textrows: Optional[Union[str, List[str]]] = None, vsep="1.2em", justify="left"):
 		"""anchor - anchor point of box encolsing all text lines:
-					 'ul' upper left corner"""
+					 'lt' left-top - upper left corner"""
 		super().__init__()
 		if isinstance(textrows, List):
 			self._textrows = textrows
@@ -945,12 +945,12 @@ class TextParagraph(Group):
 		else:
 			self._textrows = []
 		self._vsep = vsep
-		#self._anchor = anchor
-		self._txtorig = (x, y)
+		self._justify = justify
+		self._txtanchorpt = (x, y)
 		self.tx = None
 
 	def getComment(self):	
-		return f"TextParagraph {self._txtorig}"
+		return f"TextParagraph justify:{self._justify} pt:{self._txtanchorpt}"
 
 	def setText(self, textrows: Optional[Union[str, List[str]]]):
 		assert isinstance(textrows, List) or isinstance(textrows, str)
@@ -975,19 +975,28 @@ class TextParagraph(Group):
 			self._parentadded = True
 		else:
 		 	return
-		self.addTransform(Trans(*self._txtorig))
+		self.addTransform(Trans(*self._txtanchorpt))
 		self.tx = self.addChild(Text())
+		if self._justify == "left":
+			self.tx.setStyle(Sty('fill', 'inherit', 'text-anchor', 'start'))
+		elif self._justify == "center":
+			self.tx.setStyle(Sty('fill', 'inherit', 'text-anchor', 'middle'))
+		elif self._justify == "right":
+			self.tx.setStyle(Sty('fill', 'inherit', 'text-anchor', 'end'))
 		self._build()
 
 class TextBoxA(Group):
 
-	def __init__(self, *args, text: Optional[str] = None, padding=(10,10)) -> None:
+	def __init__(self, *args, text: Optional[str] = None, padding=(10,10), vsep="1.2em", anchor="lt", tjustify="left") -> None:
 		"consumes rect args"
 		super().__init__()
 		self._forceNonYInvertChildren = True
 		self._re = Re(*args)
 		self.text = text
 		self._padding = padding
+		self._vsep = vsep
+		self._anchor = anchor.lower()
+		self._tjustify = tjustify.lower()
 		self._txpara = None
 		self._rect = None
 
@@ -1023,20 +1032,80 @@ class TextBoxA(Group):
 		 	return
 		# rect = Rect(*self.args)
 		assert self._rect is None
+		
+		mwdelta = lambda z,w: z - w / 2 
+		mwdelta_plus = lambda z,w: z + w / 2 
 
-		self.addTransform(Trans(self._re.get('x'), self._re.get('y')))
+		yinverting = not self._yinvertdelta is None
+			
+		x, y, width, height = list(self._re.iterUnitsRemovedNum())
+		ax = x
+		ay = y
+		tx, ty = self._padding
+
+		if self._tjustify == "center":
+			tx = width / 2
+			ty = self._padding[1] 
+		elif self._tjustify == "right":
+			tx = width - self._padding[0]
+			ty = self._padding[1] 
+
+		if self._anchor.startswith('l'):
+			if self._anchor.endswith('c'):
+				ax = x
+				if yinverting:
+					ay = mwdelta_plus(y, height)
+				else:
+					ay = mwdelta(y, height)
+			elif self._anchor.endswith('b'):
+				ax = x
+				if yinverting:
+					ay = y + height
+				else:
+					ay = y - height
+		elif self._anchor.startswith('c'):
+			if self._anchor.endswith('t'):
+				ax = mwdelta(x, width)
+				ay = y
+			elif self._anchor.endswith('c'):
+				ax = mwdelta(x, width)
+				if yinverting:
+					ay = mwdelta_plus(y, height)
+				else:
+					ay = mwdelta(y, height)
+			elif self._anchor.endswith('b'):
+				ax = mwdelta(x, width)
+				if yinverting:
+					ay = y + height
+				else:
+					ay = y - height
+		elif self._anchor.startswith('r'):
+			if self._anchor.endswith('t'):
+				ax = x - width
+				ay = y
+			elif self._anchor.endswith('c'):
+				ax = x - width
+				if yinverting:
+					ay = mwdelta_plus(y, height)
+				else:
+					ay = mwdelta(y, height)
+			elif self._anchor.endswith('b'):
+				ax = x - width
+				if yinverting:
+					ay = y + height
+				else:
+					ay = y - height
+
+		self.addTransform(Trans(ax, ay))
 
 
-		self._rect = Rect(0,0,self._re.get('width'), self._re.get('height'))
+		self._rect = Rect(0,0, width, height)
 		self.addChild(self._rect)
 
 		textrows = self._getTextLines()
 
-		# y, _u = toNumberAndUnit(self._re.get('y'))  
-		# h, _u = toNumberAndUnit(self._re.get('height'))  
-		# cota = y + h
+		self._txpara = self.addChild(TextParagraph(tx, ty, textrows, vsep=self._vsep, justify=self._tjustify))
 
-		self._txpara = self.addChild(TextParagraph(*self._padding, textrows))
 
 
 

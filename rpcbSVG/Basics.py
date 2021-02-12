@@ -418,6 +418,10 @@ class _withunits_struct(_attrs_struct):
 				val = val.replace(self._units, '')
 			yield val
 
+	def iterUnitsRemovedNum(self):
+		for val in self.iterUnitsRemoved():
+			yield removeDecsep(float(val))
+
 	def getNumeric(self, p_attr: str) -> float:
 		ret = None
 		if self.has(p_attr) and hasattr(self, p_attr):
