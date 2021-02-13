@@ -314,7 +314,7 @@ class Arrow(AnalyticalPath):
 		return True
 
 class CircArrow(Arrow):
-	"Only on handle = 'cc'"
+	"Only on arrow handle = 'cc'"
 	def __init__(self, length, basewidth, headwidth, headlength, coffset: Optional[Union[float, int]] = None) -> None:
 		super().__init__(length, basewidth, headwidth, headlength, handle='cc')
 		self.coffset = coffset
@@ -333,7 +333,27 @@ class CircArrow(Arrow):
 			self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
 			self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
 
-# Squared Arrow
+class SquaredArrow(Arrow):
+	"Only on arrow handle = 'cc'"
+	def __init__(self, length, basewidth, headwidth, headlength, coffset: Optional[Union[float, int]] = None) -> None:
+		super().__init__(length, basewidth, headwidth, headlength, handle='cc')
+		self.coffset = coffset
+
+	def getComment(self):		
+		return f"{super().getComment()}, CircArrow, coffset:{self.coffset}"
+
+	def onAfterParentAdding(self):	
+		self.changeFillRule(filled=False)
+		if super().onAfterParentAdding():
+
+			length = self.dims[0]
+			rad = self.coffset + (length / 2)
+
+			self.addCmd(pM(rad,rad))
+			self.addCmd(pL(rad,-rad))
+			self.addCmd(pL(-rad,-rad))
+			self.addCmd(pL(-rad,rad))
+			self.addCmd(pClose())
 
 class Wedge(AnalyticalPath):
 	
@@ -633,6 +653,26 @@ class CircStar(Star):
 			self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
 			self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
 
+def addRegPolyToPath(p_analytic_path, p_rot, p_radius, p_n, p_rhr):
+	rot = p_rot - 90 # 0 is vertical
+	ct = Pt(0,0)
+	opts = list(circleDividers(ct, p_radius, p_n, rot))
+	
+	first = True
+
+	if p_rhr:
+		opts.reverse()
+
+	for opt in opts:
+		if first:
+			p_analytic_path.addCmd(pM(*opt))
+		else:
+			p_analytic_path.addCmd(pL(*opt))
+		first = False
+
+	if not first:
+		p_analytic_path.addCmd(pClose())
+
 class RegPoly(AnalyticalPath):
 
 	def __init__(self, p_radius, p_n, rot: Optional[Union[float, int]] = 0) -> None:
@@ -641,9 +681,14 @@ class RegPoly(AnalyticalPath):
 		self.radius = strictToNumber(p_radius)
 		self.n = strictToNumber(p_n)
 		self.rot = strictToNumber(rot)
+		self._rhr = True
+		assert self.n > 2
 
 	def getComment(self):		
 		return f"RegPoly, radius:{self.radius}, n:{self.n}, rot:{self.rot}"
+
+	def changeFillRule(self, filled=True):
+		self._rhr = filled
 
 	def onAfterParentAdding(self):	
 		if not self._parentadded:
@@ -651,23 +696,7 @@ class RegPoly(AnalyticalPath):
 		else:
 		 	return False
 
-		step = 360 / self.n
-		rot = self.rot - 90 # 0 is vertical
-		hstep = step / 2
-		first = True
-		ct = Pt(0,0)
-
-		opts = list(circleDividers(ct, self.radius, self.n, rot))
-
-		for i, opt in enumerate(opts):
-			if first:
-				self.addCmd(pM(*opt))
-			else:
-				self.addCmd(pL(*opt))
-			first = False
-
-		if not first:
-			self.addCmd(pClose())
+		addRegPolyToPath(self, self.rot, self.radius, self.n, self._rhr)
 
 		return True
 
@@ -682,11 +711,33 @@ class CircRegPoly(RegPoly):
 		return f"{super().getComment()}, CircPoly, coffset:{self.coffset}"
 
 	def onAfterParentAdding(self):	
+		self.changeFillRule(filled=False)
 		if super().onAfterParentAdding():
 			rad = self.coffset + self.radius
 			self.addCmd(pM(-rad,0))
 			self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
 			self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
+
+class DonutPoly(RegPoly):
+
+	def __init__(self, p_radius, p_n, out_n: Optional[int] = 0, rot: Optional[Union[float, int]] = 0, inrot: Optional[Union[float, int]] = 0, coffset: Optional[Union[float, int]] = None) -> None:
+		
+		super().__init__(p_radius, p_n, rot=inrot)
+		self._outrot = rot
+		self._coffset = coffset
+		self._out_n = out_n
+
+	def getComment(self):		
+		return f"{super().getComment()}, DonutPoly, coffset:{self._coffset}"
+
+	def onAfterParentAdding(self):	
+		if super().onAfterParentAdding():
+			rad = self._coffset + self.radius
+			if self._out_n < 3:
+				n = self.n
+			else:
+				n = self._out_n
+			addRegPolyToPath(self, self._outrot, rad, n, False)
 
 class Donut(AnalyticalPath):
 

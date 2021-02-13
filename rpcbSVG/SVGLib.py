@@ -802,7 +802,6 @@ class AnalyticalPath(Path):
 		self.updateStructAttrs()
 
 	def addCmd(self, p_cmd: path_command, tostart=False, refresh=True):
-		print("addCmd", p_cmd, self.__class__.__name__)
 		if hasattr(p_cmd, 'yinvert'):
 			if not self._noyinvert and not self._yinvertdelta is None:
 				p_cmd.yinvert(self._yinvertdelta)

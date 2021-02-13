@@ -1,6 +1,6 @@
 
 
-from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircRegPoly, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, Donut, RegPoly, Square, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
+from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircRegPoly, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, Donut, DonutPoly, RegPoly, Square, SquaredArrow, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
 
 from rpcbSVG.Basics import GLOBAL_ENV, Pt, circleDividers
 from rpcbSVG.SVGStyleText import Sty
@@ -41,7 +41,9 @@ def test_Symbols1():
 	arr = sc.addChild(Arrow(65, 30, 60, 30), todefs=True)
 	arrlc = sc.addChild(Arrow(36, 12, 24, 14, handle='cb'), todefs=True)
 	circarr = sc.addChild(CircArrow(58, 16, 38, 20, coffset=8), todefs=True)
+	sqrarr = sc.addChild(SquaredArrow(58, 16, 38, 20, coffset=8), todefs=True)
 	donut = sc.addChild(Donut(32, 10), todefs=True)
+	donutpoly = sc.addChild(DonutPoly(32, 6, inrot=30, coffset=12), todefs=True)
 	#
 	# =========================================================================
 
@@ -452,12 +454,12 @@ def test_Symbols1():
 	thisleft = thisleft + hstep
 	this_top = top_row4
 
-	us = sc.addChild(Use(Pt(thisleft,this_top), circarr.getSel()).setStyle(symbstyle))
+	us = sc.addChild(Use(Pt(thisleft,this_top), sqrarr.getSel()).setStyle(symbstyle))
 	#us = sc.addChild(Use(Pt(thisleft,this_top), xx.getSel()).setStyle(symbstyle))
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
-		setText("CircArrow(58,16,38,20,8)")
+		setText("SquaredArrow(58,16,38,20,8)")
 
 	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
 		setStyle(tstyle).\
@@ -500,12 +502,12 @@ def test_Symbols1():
 	thisleft = thisleft + hstep
 	this_top = top_row4
 
-	#us = sc.addChild(Use(Pt(thisleft,this_top), circarr.getSel()).setStyle(symbstyle))
+	sc.addChild(Use(Pt(thisleft,this_top), donutpoly.getSel()).setStyle(symbstyle))
 	#us = sc.addChild(Use(Pt(thisleft,this_top), xx.getSel()).setStyle(symbstyle))
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
-		setText("........(58,16,38,20,8)")
+		setText("DonutPoly(32,6,30,coffset=12)")
 
 	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
 		setStyle(tstyle).\
