@@ -1,11 +1,11 @@
 
 import cairosvg
 
-from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircRegPoly, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, RegPoly, Square, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
+from rpcbSVG.Symbols import XSight
 
 from rpcbSVG.Basics import GLOBAL_ENV, Pt, circleDividers
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.SVGLib import Circle, Line, Re, SVGContent, Text, TextBoxA, TextParagraph, Title, Use
+from rpcbSVG.SVGLib import Circle, Line, Re, SVGContent, Text, TextBox, TextParagraph, Title, Use
 
 LARGE_TEXT = """O condutor individual não tem essa 
 percepção imaginando que, de forma 
@@ -45,9 +45,25 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 	else:
 		title_height = 140
 
+	if p_ynvert:
+		if p_textjustify == "right":
+			mainlabel = "Textbox and paragraph (y-inverted) - text right justified"
+		elif p_textjustify == "center":
+			mainlabel = "Textbox and paragraph (y-inverted) - text centered"
+		else:
+			mainlabel = "Textbox and paragraph (y-inverted) - text left justified"
+	else:
+		if p_textjustify == "right":
+			mainlabel = "Textbox and paragraph - text right justified"
+		elif p_textjustify == "center":
+			mainlabel = "Textbox and paragraph - text centered"
+		else:
+			mainlabel = "Textbox and paragraph - text left justified"
+
+
 	sc.addChild(Text(140,title_height)).\
-		setStyle(Sty('fill', '#7C7C7C', 'font-size', 60, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
-		setText("Textbox and paragraph")
+		setStyle(Sty('fill', '#7C7C7C', 'font-size', 40, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
+		setText(mainlabel)
 
 	def code_height_row1(p_topval):
 		return p_topval + 75
@@ -96,7 +112,7 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 		sc.addChild(Use(p_anchor, xsight.getSel()).setClass('aid1'))
 
 		
-		tb = sc.addChild(TextBoxA(*p_anchor, *p_boxdims, anchor=p_tbanchoring, tjustify=p_text_just))
+		tb = sc.addChild(TextBox(*p_anchor, *p_boxdims, anchor=p_tbanchoring, tjustify=p_text_just))
 		tb.getParagraph().setClass("tb1")
 		tb.getRect().setClass("caixas")
 		tb.setText(LARGE_TEXT)
@@ -113,7 +129,7 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 	anchor = Pt(thisleft, boxy)
 	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
 
-	boxinsertion("TextBoxA LT", "Left - Top anchoring", lbl_anchor, anchor, 'lt', boxdims, p_textjustify)
+	boxinsertion("TextBox LT", "Left - Top anchoring", lbl_anchor, anchor, 'lt', boxdims, p_textjustify)
 
 	# # =========================================================================
 	thisleft = left		
@@ -126,7 +142,7 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 	anchor = Pt(thisleft+boxwidth/2, boxy)
 	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
 
-	boxinsertion("TextBoxA CT", "Center - Top anchoring", lbl_anchor, anchor, 'ct', boxdims, p_textjustify)
+	boxinsertion("TextBox CT", "Center - Top anchoring", lbl_anchor, anchor, 'ct', boxdims, p_textjustify)
 
 	# # =========================================================================
 	thisleft = left		
@@ -139,7 +155,7 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 	anchor = Pt(thisleft+boxwidth, boxy)
 	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
 
-	boxinsertion("TextBoxA RT", "Right - Top anchoring", lbl_anchor, anchor, 'rt', boxdims, p_textjustify)
+	boxinsertion("TextBox RT", "Right - Top anchoring", lbl_anchor, anchor, 'rt', boxdims, p_textjustify)
 
 	# # =========================================================================
 	thisleft = left	+ hstep	
@@ -153,7 +169,7 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 		
 	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
 
-	boxinsertion("TextBoxA LC", "Left - Center anchoring", lbl_anchor, anchor, 'lc', boxdims, p_textjustify)
+	boxinsertion("TextBox LC", "Left - Center anchoring", lbl_anchor, anchor, 'lc', boxdims, p_textjustify)
 
 	# # =========================================================================
 	thisleft = left	+ hstep	
@@ -167,10 +183,10 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 	anchor = Pt(thisleft+boxwidth/2, boxy)
 	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
 
-	boxinsertion("TextBoxA CC", "Center - Center anchoring", lbl_anchor, anchor, 'cc', boxdims, p_textjustify)
+	boxinsertion("TextBox CC", "Center - Center anchoring", lbl_anchor, anchor, 'cc', boxdims, p_textjustify)
 
 	# # =========================================================================
-	nome = "TextBoxA RC"
+	nome = "TextBox RC"
 	sc.addComment(f"Start {nome}")
 
 	thisleft = left	+ hstep	
@@ -187,7 +203,7 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 	boxinsertion(nome, "Right - Center anchoring", lbl_anchor, anchor, 'rc', boxdims, p_textjustify)
 
 	# # =========================================================================
-	nome = "TextBoxA LB"
+	nome = "TextBox LB"
 
 	thisleft = left	+ 2 * hstep	
 	top = tb1Y
@@ -202,7 +218,7 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 	boxinsertion(nome, "Left - Bottom anchoring", lbl_anchor, anchor, 'lb', boxdims, p_textjustify)
 
 	# # =========================================================================
-	nome = "TextBoxA CB"
+	nome = "TextBox CB"
 
 	thisleft = left	+ 2 * hstep	
 	if sc.getYInvertFlag():
@@ -218,7 +234,7 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 	boxinsertion(nome, "Center - Bottom anchoring", lbl_anchor, anchor, 'cb', boxdims, p_textjustify)
 
 	# # =========================================================================
-	nome = "TextBoxA RB"
+	nome = "TextBox RB"
 
 	thisleft = left	+ 2 * hstep	
 	if sc.getYInvertFlag():

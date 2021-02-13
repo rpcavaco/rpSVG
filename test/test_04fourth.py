@@ -1,6 +1,6 @@
 
 
-from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircRegPoly, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, RegPoly, Square, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
+from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircRegPoly, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, Donut, RegPoly, Square, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
 
 from rpcbSVG.Basics import GLOBAL_ENV, Pt, circleDividers
 from rpcbSVG.SVGStyleText import Sty
@@ -41,6 +41,7 @@ def test_Symbols1():
 	arr = sc.addChild(Arrow(65, 30, 60, 30), todefs=True)
 	arrlc = sc.addChild(Arrow(36, 12, 24, 14, handle='cb'), todefs=True)
 	circarr = sc.addChild(CircArrow(58, 16, 38, 20, coffset=8), todefs=True)
+	donut = sc.addChild(Donut(32, 10), todefs=True)
 	#
 	# =========================================================================
 
@@ -287,7 +288,7 @@ def test_Symbols1():
 	# -- Asterisk -----------------------------------------------------------
 	sc.addComment("Start Asterisk")
 
-	thisleft = left + hstep / 2
+	thisleft = left
 	this_top = top_row3
 
 	us = sc.addChild(Use(Pt(thisleft,this_top), asteri.getSel()).setStyle(symbstyle))
@@ -372,12 +373,36 @@ def test_Symbols1():
 	sc.addComment("End Circled Fan")
 	# =========================================================================
 
+
+	# -- Circled Fan -----------------------------------------------------------
+	sc.addComment("Start Donut")
+
+	thisleft = thisleft + hstep
+	this_top = top_row3
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), donut.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("Donut(32, 10)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Donut")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Donut")
+	# =========================================================================
+
+
 	## FOURTH ROW ### 
 
 	# -- Arrow ----------------------------------------------------------------
 	sc.addComment("Start Arrow")
 
-	thisleft = left  + 0.5 * hstep
+	thisleft = left
 	# thisleft = thisleft + hstep
 	this_top = top_row4
 
@@ -401,7 +426,7 @@ def test_Symbols1():
 	sc.addComment("Start Arrow CB")
 
 	#thisleft = left
-	thisleft = thisleft + 1.5 * hstep
+	thisleft = thisleft + hstep
 	this_top = top_row4
 
 	us = sc.addChild(Use(Pt(thisleft,this_top), arrlc.getSel()).setStyle(symbstyle))
@@ -420,14 +445,39 @@ def test_Symbols1():
 	sc.addComment("End Arrow CB")
 	# =========================================================================
 
+	# -- Squared Arrow ----------------------------------------------------------------
+	sc.addComment("Start Squared Arrow")
+
+	# thisleft = left
+	thisleft = thisleft + hstep
+	this_top = top_row4
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), circarr.getSel()).setStyle(symbstyle))
+	#us = sc.addChild(Use(Pt(thisleft,this_top), xx.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("CircArrow(58,16,38,20,8)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Squared Arrow")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Squared Arrow")
+	# =========================================================================
+
 	# -- Circled Arrow ----------------------------------------------------------------
 	sc.addComment("Start Circled Arrow")
 
 	# thisleft = left
-	thisleft = thisleft + 1.5 * hstep
+	thisleft = thisleft + hstep
 	this_top = top_row4
 
 	us = sc.addChild(Use(Pt(thisleft,this_top), circarr.getSel()).setStyle(symbstyle))
+	#us = sc.addChild(Use(Pt(thisleft,this_top), xx.getSel()).setStyle(symbstyle))
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
@@ -442,6 +492,31 @@ def test_Symbols1():
 
 	sc.addComment("End Circled Arrow")
 	# =========================================================================
+
+	# -- Donut Poly ----------------------------------------------------------------
+	sc.addComment("Start Donut Poly")
+
+	# thisleft = left
+	thisleft = thisleft + hstep
+	this_top = top_row4
+
+	#us = sc.addChild(Use(Pt(thisleft,this_top), circarr.getSel()).setStyle(symbstyle))
+	#us = sc.addChild(Use(Pt(thisleft,this_top), xx.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("........(58,16,38,20,8)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Donut Poly")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Donut Poly")
+	# =========================================================================
+
 
 	with open('outtest/test_Symbols1.svg', 'w') as fl:
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
@@ -512,19 +587,19 @@ def genSymbols2(yinvert):
 		else:
 			return p_topval + 120
 
-	left = 320
+	left = 240
 	hstep = 280
 	vstep = 230
 
 	if yinvert:
-		top_row1 = 920
+		top_row1 = 940
 		
 		top_row2 = top_row1 - vstep
 		top_row3 = top_row1 - 2 * vstep
 		top_row4 = top_row1 - 3 * vstep
 
 	else:
-		top_row1 = 280
+		top_row1 = 260
 		
 		top_row2 = top_row1 + vstep
 		top_row3 = top_row1 + 2 * vstep
@@ -622,8 +697,8 @@ def genSymbols2(yinvert):
 	# -- Crescent -------------------------------------------------------------
 	sc.addComment("Start Crescent")
 
-	thisleft = left
-	this_top = top_row2
+	thisleft = thisleft + hstep
+	this_top = top_row1
 
 	us = sc.addChild(Use(Pt(thisleft,this_top), cresc.getSel()).setStyle(symbstyle))
 
@@ -644,7 +719,7 @@ def genSymbols2(yinvert):
 	# -- Suspension point 1 ---------------------------------------------------
 	sc.addComment("Start Suspension point 1")
 
-	thisleft = thisleft + hstep
+	thisleft = left
 	this_top = top_row2
 
 	us = sc.addChild(Use(Pt(thisleft,this_top), susppt1.getSel()).setStyle(symbstyle))
@@ -898,12 +973,10 @@ def genSymbols2(yinvert):
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
 
-def test_Symbols2(capsys):
+def test_Symbols2():
 
-	with capsys.disabled():
-
-		genSymbols2(False)
-		genSymbols2(True)
+	genSymbols2(False)
+	genSymbols2(True)
 
 
 # 	with capsys.disabled():

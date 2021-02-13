@@ -205,7 +205,7 @@ class Asterisk(AnalyticalPath):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+		 	return False
 
 		step = 30
 		def nextangle(p_ang, halve=False):
@@ -228,6 +228,8 @@ class Asterisk(AnalyticalPath):
 				p2 = ptRemoveDecsep(*polar2rectDegs(ang, self.separation))
 				self.addCmd(pM(*p1)).addCmd(pL(*p2))
 
+		return True
+
 class CircAsterisk(Asterisk):
 	
 	def __init__(self, p_radius, circrad, separation: Optional[Union[float, int]] = None) -> None:
@@ -238,10 +240,10 @@ class CircAsterisk(Asterisk):
 		return f"{super().getComment()}, CircAsterisk, circrad:{self.circrad}"
 
 	def onAfterParentAdding(self):	
-		super().onAfterParentAdding()
-		self.addCmd(pM(-self.circrad,0))
-		self.addCmd(pA(self.circrad, self.circrad, 0, 1, 0, self.circrad, 0))
-		self.addCmd(pA(self.circrad, self.circrad, 0, 1, 0, -self.circrad, 0))
+		if super().onAfterParentAdding():
+			self.addCmd(pM(-self.circrad,0))
+			self.addCmd(pA(self.circrad, self.circrad, 0, 1, 0, self.circrad, 0))
+			self.addCmd(pA(self.circrad, self.circrad, 0, 1, 0, -self.circrad, 0))
 
 class Arrow(AnalyticalPath):
 	
@@ -250,16 +252,20 @@ class Arrow(AnalyticalPath):
 		assert length > headlength
 		assert handle in ('cb', 'cc')
 		super().__init__()
+		self._rhr = True
 		self.dims = (length, basewidth, headwidth, headlength, handle)
 
 	def getComment(self):		
 		return f"Arrow, dims:{self.dims}"
 
+	def changeFillRule(self, filled=True):
+		self._rhr = filled
+
 	def onAfterParentAdding(self):	
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+		 	return False
 		length, basewidth, headwidth, headlength, handle = self.dims
 		baselength = length - headlength
 		mw = basewidth / 2
@@ -267,23 +273,45 @@ class Arrow(AnalyticalPath):
 		hmw = headwidth / 2
 		hhmw = (headwidth-basewidth) / 2
 		if handle == 'cb':
-			self.addCmd(pM(mw,0))
-			self.addCmd(pL(-mw,0))
-			self.addCmd(pL(-mw,-baselength))
-			self.addCmd(pL(-hmw,-baselength))
-			self.addCmd(pL(0,-length))
-			self.addCmd(pL(hmw,headlength, relative=True))
-			self.addCmd(pL(-hhmw,0, relative=True))
-			self.addCmd(pClose())
+			if self._rhr:
+				self.addCmd(pM(0,-length))
+				self.addCmd(pL(-hmw,headlength, relative=True))
+				self.addCmd(pL(hhmw,0, relative=True))
+				self.addCmd(pL(0,baselength, relative=True))
+				self.addCmd(pL(basewidth,0, relative=True))
+				self.addCmd(pL(0,-baselength, relative=True))
+				self.addCmd(pL(hhmw,0, relative=True))
+				self.addCmd(pClose())
+			else: # Filled = False	
+				self.addCmd(pM(0,-length))
+				self.addCmd(pL(hmw,headlength, relative=True))
+				self.addCmd(pL(-hhmw,0, relative=True))
+				self.addCmd(pL(0,baselength, relative=True))
+				self.addCmd(pL(-basewidth,0, relative=True))
+				self.addCmd(pL(0,-baselength, relative=True))
+				self.addCmd(pL(-hhmw,0, relative=True))
+				self.addCmd(pClose())
 		elif handle == 'cc':
-			self.addCmd(pM(mw,ml))
-			self.addCmd(pL(-mw,ml))
-			self.addCmd(pL(0,-baselength, relative=True))
-			self.addCmd(pL(-hhmw,0, relative=True))
-			self.addCmd(pL(0,-ml))
-			self.addCmd(pL(hmw,headlength, relative=True))
-			self.addCmd(pL(-hhmw,0, relative=True))
-			self.addCmd(pClose())
+			if self._rhr:
+				self.addCmd(pM(0,-ml))
+				self.addCmd(pL(-hmw,headlength, relative=True))
+				self.addCmd(pL(hhmw,0, relative=True))
+				self.addCmd(pL(0,baselength, relative=True))
+				self.addCmd(pL(basewidth,0, relative=True))
+				self.addCmd(pL(0, -baselength, relative=True))
+				self.addCmd(pL(hhmw,0, relative=True))
+				self.addCmd(pClose())
+			else: # Filled = False				
+				self.addCmd(pM(0,-ml))
+				self.addCmd(pL(hmw,headlength, relative=True))
+				self.addCmd(pL(-hhmw,0, relative=True))
+				self.addCmd(pL(mw,ml))
+				self.addCmd(pL(-basewidth,0, relative=True))
+				self.addCmd(pL(0,-baselength, relative=True))
+				self.addCmd(pL(-hhmw,0, relative=True))
+				self.addCmd(pClose())
+
+		return True
 
 class CircArrow(Arrow):
 	"Only on handle = 'cc'"
@@ -295,15 +323,17 @@ class CircArrow(Arrow):
 		return f"{super().getComment()}, CircArrow, coffset:{self.coffset}"
 
 	def onAfterParentAdding(self):	
-		super().onAfterParentAdding()
-		length, _basewidth, _headwidth, _headlength, handle = self.dims
-		# if handle == 'cb':
-		# 	rad = self.coffset + length
-		# elif handle == 'cc':
-		rad = self.coffset + (length / 2)
-		self.addCmd(pM(-rad,0))
-		self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
-		self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
+		self.changeFillRule(filled=False)
+		if super().onAfterParentAdding():
+
+			length = self.dims[0]
+			rad = self.coffset + (length / 2)
+
+			self.addCmd(pM(-rad,0))
+			self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
+			self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
+
+# Squared Arrow
 
 class Wedge(AnalyticalPath):
 	
@@ -559,7 +589,7 @@ class Star(AnalyticalPath):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+		 	return False
 
 		step = 360 / self.nspikes
 		rot = self.rot - 90 # 0 is vertical
@@ -584,6 +614,8 @@ class Star(AnalyticalPath):
 		if not first:
 			self.addCmd(pClose())
 
+		return True
+
 class CircStar(Star):
 
 	def __init__(self, p_outradius, p_inoffset, p_nspikes, rot: Optional[Union[float, int]] = 0, coffset: Optional[Union[float, int]] = None) -> None:
@@ -595,11 +627,11 @@ class CircStar(Star):
 		return f"{super().getComment()}, CircStar, coffset:{self.coffset}"
 
 	def onAfterParentAdding(self):	
-		super().onAfterParentAdding()
-		rad = self.coffset + self.radius
-		self.addCmd(pM(-rad,0))
-		self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
-		self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
+		if super().onAfterParentAdding():
+			rad = self.coffset + self.radius
+			self.addCmd(pM(-rad,0))
+			self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
+			self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
 
 class RegPoly(AnalyticalPath):
 
@@ -617,7 +649,7 @@ class RegPoly(AnalyticalPath):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+		 	return False
 
 		step = 360 / self.n
 		rot = self.rot - 90 # 0 is vertical
@@ -637,6 +669,8 @@ class RegPoly(AnalyticalPath):
 		if not first:
 			self.addCmd(pClose())
 
+		return True
+
 class CircRegPoly(RegPoly):
 
 	def __init__(self, p_radius, p_n, rot: Optional[Union[float, int]] = 0, coffset: Optional[Union[float, int]] = None) -> None:
@@ -648,9 +682,35 @@ class CircRegPoly(RegPoly):
 		return f"{super().getComment()}, CircPoly, coffset:{self.coffset}"
 
 	def onAfterParentAdding(self):	
-		super().onAfterParentAdding()
-		rad = self.coffset + self.radius
-		self.addCmd(pM(-rad,0))
-		self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
-		self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
-			
+		if super().onAfterParentAdding():
+			rad = self.coffset + self.radius
+			self.addCmd(pM(-rad,0))
+			self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
+			self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
+
+class Donut(AnalyticalPath):
+
+	def __init__(self, p_outradius, p_inoffset) -> None:
+		
+		super().__init__()
+		self.radius = strictToNumber(p_outradius)
+		self.offset = strictToNumber(p_inoffset)
+
+	def getComment(self):		
+		return f"Donut, radius:{self.radius}, offset:{self.offset}"
+
+	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
+
+		r2 = self.radius - self.offset
+
+		self.addCmd(pM(self.radius,0))
+		self.addCmd(pA(self.radius, self.radius, 0, 1, 1, -self.radius, 0))
+		self.addCmd(pA(self.radius, self.radius, 0, 1, 1, self.radius, 0))
+		self.addCmd(pM(r2,0))
+		self.addCmd(pA(r2, r2, 0, 1, 0, -r2, 0))
+		self.addCmd(pA(r2, r2, 0, 1, 0, r2, 0))
+

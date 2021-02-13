@@ -801,12 +801,17 @@ class AnalyticalPath(Path):
 		self.getStruct().setall("".join(buf))
 		self.updateStructAttrs()
 
-	def addCmd(self, p_cmd: path_command):
+	def addCmd(self, p_cmd: path_command, tostart=False, refresh=True):
+		print("addCmd", p_cmd, self.__class__.__name__)
 		if hasattr(p_cmd, 'yinvert'):
 			if not self._noyinvert and not self._yinvertdelta is None:
 				p_cmd.yinvert(self._yinvertdelta)
-		self.cmds.append(p_cmd)
-		self._refresh()
+		if tostart:
+			self.cmds.insert(0,p_cmd)
+		else:
+			self.cmds.append(p_cmd)
+		if refresh:
+			self._refresh()
 		return self
 
 	def delCmd(self, p_idx: int):
@@ -985,7 +990,7 @@ class TextParagraph(Group):
 			self.tx.setStyle(Sty('fill', 'inherit', 'text-anchor', 'end'))
 		self._build()
 
-class TextBoxA(Group):
+class TextBox(Group):
 
 	def __init__(self, *args, text: Optional[str] = None, padding=(10,10), vsep="1.2em", anchor="lt", tjustify="left") -> None:
 		"consumes rect args"
@@ -1002,9 +1007,9 @@ class TextBoxA(Group):
 
 	def getComment(self):	
 		if self._re is None:	
-			return "TextBoxA"
+			return "TextBox"
 		else:	
-			return f"TextBoxA {self._re}"
+			return f"TextBox {self._re}"
 
 	def _getTextLines(self):
 		if not self.text is None and len(self.text) > 0:
