@@ -144,6 +144,7 @@ def test_Paths():
 	p2 = pM(120, 240, relative=True)	
 	ap = sc.addChild(AnalyticalPath())
 	ap.addCmd(p2)
+	ap.refresh()
 
 	condens = re.sub(r"[\s]+"," ", sc.toString(pretty_print=False))
 
@@ -199,6 +200,7 @@ def test_PathCommands():
 	ap.addCmd(pA(50,80, -14, 0,0, *pts[13]))
 	# "rx", "ry", "x-axis-rotation", "large-arc-flag", "sweep-flag", "x", "y"
 	ap.addCmd(pA(5,8, -14, 0,1, -100, -240, relative=True))
+	ap.refresh()
 
 	gr1 = sc.addChild(Group())
 	gr1.setStyle(Sty('fill', 'white', 'stroke', 'green', 'stroke-width', '4'))
@@ -229,6 +231,7 @@ def test_PathCommands():
 
 	ap2.addCmd(pM(*pts[11]))
 	ap2.addCmd(pL(*pts[12]))
+	ap2.refresh()
 
 	with open('outtest/test_PathCommands.svg', 'w') as fl:
 		fl.write(sc.toString(pretty_print=True))

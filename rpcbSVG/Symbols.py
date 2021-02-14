@@ -81,6 +81,7 @@ class Cross(AnalyticalPath):
 		self.addCmd(pL(0,-mh))
 		self.addCmd(pM(-mw,0))
 		self.addCmd(pL(mw,0))
+		self.refresh()
 
 class XSymb(AnalyticalPath):
 	
@@ -105,6 +106,7 @@ class XSymb(AnalyticalPath):
 		self.addCmd(pL(mw,mh))
 		self.addCmd(pM(-mw,mh))
 		self.addCmd(pL(mw,-mh))
+		self.refresh()
 
 class XSight(AnalyticalPath):
 	
@@ -142,6 +144,7 @@ class XSight(AnalyticalPath):
 		self.addCmd(pM(*ll)).addCmd(pL(*lls))
 		self.addCmd(pM(*ur)).addCmd(pL(*urs))
 		self.addCmd(pM(*lr)).addCmd(pL(*lrs))
+		self.refresh()
 
 class CrossSight(AnalyticalPath):
 	
@@ -179,6 +182,7 @@ class CrossSight(AnalyticalPath):
 		self.addCmd(pM(*l)).addCmd(pL(*ls))
 		self.addCmd(pM(*b)).addCmd(pL(*bs))
 		self.addCmd(pM(*r)).addCmd(pL(*rs))
+		self.refresh()
 
 class Square(Rect):
 	
@@ -227,6 +231,7 @@ class Asterisk(AnalyticalPath):
 				p1 = ptRemoveDecsep(*polar2rectDegs(ang, self.radius))
 				p2 = ptRemoveDecsep(*polar2rectDegs(ang, self.separation))
 				self.addCmd(pM(*p1)).addCmd(pL(*p2))
+		self.refresh()
 
 		return True
 
@@ -244,6 +249,7 @@ class CircAsterisk(Asterisk):
 			self.addCmd(pM(-self.circrad,0))
 			self.addCmd(pA(self.circrad, self.circrad, 0, 1, 0, self.circrad, 0))
 			self.addCmd(pA(self.circrad, self.circrad, 0, 1, 0, -self.circrad, 0))
+			self.refresh()
 
 class Arrow(AnalyticalPath):
 	
@@ -332,6 +338,7 @@ class CircArrow(Arrow):
 			self.addCmd(pM(-rad,0))
 			self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
 			self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
+			self.refresh()
 
 class SquaredArrow(Arrow):
 	"Only on arrow handle = 'cc'"
@@ -423,6 +430,7 @@ class CircWedge(Wedge):
 		self.addCmd(pM(-rad,0))
 		self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
 		self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
+		self.refresh()
 
 class Crescent(Symbol):
 
@@ -452,11 +460,13 @@ class Crescent(Symbol):
 		ap.addCmd(pA(self.radius, self.radius, 0, 1, 0, *p2))
 		ap.addCmd(pM(*p2))
 		ap.addCmd(pA(rad2, rad2, 0, 0, 1, *p1))
+		ap.refresh()
 
 		ap2 = self.addChild(AnalyticalPath().setStyle(Sty('fill', 'none')))
 
 		ap2.addCmd(pM(*p1))
 		ap2.addCmd(pA(self.radius, self.radius, 0, 0, 1, *p2))
+		ap2.refresh()
 
 class SuspPointCirc(Symbol):
 
@@ -497,6 +507,7 @@ class SuspPointCirc(Symbol):
 
 		ap2.addCmd(pM(*p1))
 		ap2.addCmd(pA(self.radius, self.radius, 0, 0, 1, *p4))
+		ap2.refresh()
 
 class SuspPointSquare(Symbol):
 
@@ -540,6 +551,7 @@ class SuspPointSquare(Symbol):
 		ap2.addCmd(pM(0, p2.y))
 		ap2.addCmd(pL(p1.x, p2.y))
 		ap2.addCmd(pL(p1.x, 0))
+		ap2.refresh()
 
 class SuspPointTriang(Symbol):
 
@@ -591,6 +603,7 @@ class SuspPointTriang(Symbol):
 
 		ap2.addCmd(pM(*pt))
 		ap2.addCmd(pL(l0,0)) 
+		ap2.refresh()
 
 class Star(AnalyticalPath):
 
@@ -652,6 +665,7 @@ class CircStar(Star):
 			self.addCmd(pM(-rad,0))
 			self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
 			self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
+			self.refresh()
 
 def addRegPolyToPath(p_analytic_path, p_rot, p_radius, p_n, p_rhr):
 	rot = p_rot - 90 # 0 is vertical
@@ -717,6 +731,7 @@ class CircRegPoly(RegPoly):
 			self.addCmd(pM(-rad,0))
 			self.addCmd(pA(rad, rad, 0, 1, 0, rad, 0))
 			self.addCmd(pA(rad, rad, 0, 1, 0, -rad, 0))
+			self.refresh()
 
 class DonutPoly(RegPoly):
 
@@ -764,4 +779,4 @@ class Donut(AnalyticalPath):
 		self.addCmd(pM(r2,0))
 		self.addCmd(pA(r2, r2, 0, 1, 0, -r2, 0))
 		self.addCmd(pA(r2, r2, 0, 1, 0, r2, 0))
-
+		self.refresh()

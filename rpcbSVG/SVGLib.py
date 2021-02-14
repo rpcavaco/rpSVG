@@ -779,7 +779,7 @@ class AnalyticalPath(Path):
 		super().__init__("", marker_props=marker_props)
 		self.cmds = []
 
-	def _refresh(self):
+	def refresh(self):
 		prevcmd = None
 		buf = []
 		for cmd in self.cmds:
@@ -801,7 +801,7 @@ class AnalyticalPath(Path):
 		self.getStruct().setall("".join(buf))
 		self.updateStructAttrs()
 
-	def addCmd(self, p_cmd: path_command, tostart=False, refresh=True):
+	def addCmd(self, p_cmd: path_command, tostart=False, refresh=False):
 		if hasattr(p_cmd, 'yinvert'):
 			if not self._noyinvert and not self._yinvertdelta is None:
 				p_cmd.yinvert(self._yinvertdelta)
@@ -809,17 +809,17 @@ class AnalyticalPath(Path):
 			self.cmds.insert(0,p_cmd)
 		else:
 			self.cmds.append(p_cmd)
-		if refresh:
-			self._refresh()
+		if isinstance(p_cmd, pClose) or refresh:
+			self.refresh()
 		return self
 
 	def delCmd(self, p_idx: int):
 		del self.cmds[p_idx]
-		self._refresh()
+		self.refresh()
 
 	def insCmd(self, p_idx: int, p_cmd: path_command):
 		self.cmds.insert(p_idx, p_cmd)
-		self._refresh()
+		self.refresh()
 
 	def addPolylinePList(self, p_list: List[Pt]):
 		l = len(p_list)
@@ -856,7 +856,7 @@ class AnalyticalPath(Path):
 						self.cmds.append(pL(removeDecsep(diffX), removeDecsep(diffY), relative=True))
 					else:
 						self.cmds.append(pL(*wkpt))
-		self._refresh()
+		self.refresh()
 
 	def yinvert(self, p_height: Union[float, int]):
 		if not self._noyinvert:

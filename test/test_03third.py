@@ -247,6 +247,7 @@ def test_YInvert():
 	ap.addCmd(pC(940,750,1030,760,1050,690))
 	ap.addCmd(pS(1150,690,1160,710))
 	ap.addCmd(pA(80, 60, 32, 0,1, 1450, 450))
+	ap.refresh()
 
 	sc.setBackground(Sty('stroke', 'black', 'fill', 'url(#the_grad)'))
 
