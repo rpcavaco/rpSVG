@@ -3,9 +3,10 @@ import cairosvg
 
 from rpcbSVG.Symbols import XSight
 
-from rpcbSVG.Basics import GLOBAL_ENV, Pt, circleDividers
+from rpcbSVG.Basics import GLOBAL_ENV, Pt
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.SVGLib import Circle, Line, Re, SVGContent, Text, TextBox, TextParagraph, Title, Use
+from rpcbSVG.SVGLib import Re, SVGContent, Text, Title, Use
+from rpcbSVG.Constructs import TextBox
 
 LARGE_TEXT = """O condutor individual não tem essa 
 percepção imaginando que, de forma 
@@ -26,13 +27,14 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 
 	sc.setBackground(Sty('fill', '#E7E8EA'))
 
-	sc.addChild(Title("Textbox and paragraph"))
 
 	# Styles to DEFS
 	sc.addStyleRule(CSSSty('fill', '#434343', 'font-size', '14pt', 'font-family', 'Helvetica', selector='.tb1'))
 	sc.addStyleRule(CSSSty('fill', 'none', 'stroke', 'red', 'stroke-width', 4, selector='.caixas'))
 	sc.addStyleRule(CSSSty('stroke', 'blue', 'stroke-width', 3, selector='.aid1'))
-	sc.addStyleRule(CSSSty('fill', 'blue', 'font-size', 28, 'font-family', 'Helvetica', selector='.lbls'))
+	#sc.addStyleRule(CSSSty('fill', 'blue', 'font-size', 28, 'font-family', 'Helvetica', selector='.lbls'))
+
+	sc.addStyleRule(CSSSty('fill', 'none', 'stroke', '#404040', 'font-size', 28, 'font-family', 'Helvetica','stroke-width', 2, selector='.lbls'))
 
 	# SYMBOL DEFINITIONS ------------------------------------------------------
 	#
@@ -60,6 +62,7 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 		else:
 			mainlabel = "Textbox and paragraph - text left justified"
 
+	sc.addChild(Title(mainlabel))
 
 	sc.addChild(Text(140,title_height)).\
 		setStyle(Sty('fill', '#7C7C7C', 'font-size', 40, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
@@ -112,9 +115,9 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 		sc.addChild(Use(p_anchor, xsight.getSel()).setClass('aid1'))
 
 		
-		tb = sc.addChild(TextBox(*p_anchor, *p_boxdims, anchor=p_tbanchoring, tjustify=p_text_just))
+		tb = sc.addChild(TextBox(*p_anchor, *p_boxdims, anchor=p_tbanchoring, hjustify=p_text_just))
 		tb.getParagraph().setClass("tb1")
-		tb.getRect().setClass("caixas")
+		tb.getShape().setClass("caixas")
 		tb.setText(LARGE_TEXT)
 
 		sc.addComment(f"End {p_nome_interno}")
@@ -304,3 +307,5 @@ def test_TxBoxParagraph_RightJust():
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
 	cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to="outtest/test_TxBoxParagraph_RightJust.png")
+
+

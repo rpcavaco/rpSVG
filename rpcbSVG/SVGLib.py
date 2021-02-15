@@ -10,8 +10,8 @@ from warnings import warn
 from lxml import etree
 
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.Basics import MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, add, fromNumberAndUnit, \
-	pClose, pH, pL, pM, pV, strictToNumber, subtr, toNumberAndUnit, transform_def, path_command, \
+from rpcbSVG.Basics import MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, \
+	pClose, pH, pL, pM, pV, strictToNumber, transform_def, path_command, \
 	ptCoincidence, removeDecsep, ptEnsureStrings
 from rpcbSVG.Structs import Ci, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Patt, Pl, Pth, RaGra, Re, ReRC, Symb, Tx, TxPth, TxRf, Us, VBox
 
@@ -289,6 +289,10 @@ class BaseSVGElem(object):
 		if len(self._transforms) > 0:
 			self.dispatchXMLDependentOp(self._updateTransformAttr)
 		return self
+
+	def getTransformN(self, p_n: int):
+		assert p_n < len(self._transforms)
+		return self._transforms[p_n]
 
 	def getTransformsList(self):
 		return self._transforms
@@ -727,6 +731,9 @@ class RectRC(GenericSVGElem):
 	"Round cornered rectangle"
 	def __init__(self, *args) -> None:
 		super().__init__("rect", struct=ReRC(*args))
+	def setRCRadiuses(self, rx, ry=None):
+		self.getStruct().setRCRadiuses(rx,ry=ry)
+		return self
 
 class Circle(GenericSVGElem):
 	def __init__(self, *args) -> None:
@@ -816,6 +823,11 @@ class AnalyticalPath(Path):
 	def delCmd(self, p_idx: int):
 		del self.cmds[p_idx]
 		self.refresh()
+
+	def clear(self, refresh=True):
+		del self.cmds[:]
+		if refresh:
+			self.refresh()
 
 	def insCmd(self, p_idx: int, p_cmd: path_command):
 		self.cmds.insert(p_idx, p_cmd)
@@ -953,6 +965,17 @@ class TextParagraph(Group):
 		self._txtanchorpt = (x, y)
 		self.tx = None
 
+	def setAnchoring(self, x=None, y=None):
+		assert not x is None or not y is None
+		if x is None:
+			if not y is None:
+				self._txtanchorpt[1] = y
+		else:
+			if y is None:
+				self._txtanchorpt[0] = x
+			else:
+				self._txtanchorpt = (x, y)
+
 	def getComment(self):	
 		return f"TextParagraph justify:{self._justify} pt:{self._txtanchorpt}"
 
@@ -988,129 +1011,6 @@ class TextParagraph(Group):
 		elif self._justify == "right":
 			self.tx.setStyle(Sty('fill', 'inherit', 'text-anchor', 'end'))
 		self._build()
-
-class TextBox(Group):
-
-	def __init__(self, *args, text: Optional[str] = None, padding=(10,10), vsep="1.2em", anchor="lt", tjustify="left") -> None:
-		"consumes rect args"
-		super().__init__()
-		self._forceNonYInvertChildren = True
-		self._re = Re(*args)
-		self.text = text
-		self._padding = padding
-		self._vsep = vsep
-		self._anchor = anchor.lower()
-		self._tjustify = tjustify.lower()
-		self._txpara = None
-		self._rect = None
-
-	def getComment(self):	
-		if self._re is None:	
-			return "TextBox"
-		else:	
-			return f"TextBox {self._re}"
-
-	def _getTextLines(self):
-		if not self.text is None and len(self.text) > 0:
-			textrows = self.text.split('\n')
-		else:
-			textrows = []
-		return textrows
-
-	def getParagraph(self):
-		return self._txpara
-
-	def getRect(self):
-		return self._rect
-
-	def setText(self, p_text: str):
-		self.text = p_text
-		if not self._txpara is None:
-			self._txpara.setText(self._getTextLines())
-		return self
-
-	def onAfterParentAdding(self):	
-		if not self._parentadded:
-			self._parentadded = True
-		else:
-		 	return
-		# rect = Rect(*self.args)
-		assert self._rect is None
-		
-		mwdelta = lambda z,w: z - w / 2 
-		mwdelta_plus = lambda z,w: z + w / 2 
-
-		yinverting = not self._yinvertdelta is None
-			
-		x, y, width, height = list(self._re.iterUnitsRemovedNum())
-		ax = x
-		ay = y
-		tx, ty = self._padding
-
-		if self._tjustify == "center":
-			tx = width / 2
-			ty = self._padding[1] 
-		elif self._tjustify == "right":
-			tx = width - self._padding[0]
-			ty = self._padding[1] 
-
-		if self._anchor.startswith('l'):
-			if self._anchor.endswith('c'):
-				ax = x
-				if yinverting:
-					ay = mwdelta_plus(y, height)
-				else:
-					ay = mwdelta(y, height)
-			elif self._anchor.endswith('b'):
-				ax = x
-				if yinverting:
-					ay = y + height
-				else:
-					ay = y - height
-		elif self._anchor.startswith('c'):
-			if self._anchor.endswith('t'):
-				ax = mwdelta(x, width)
-				ay = y
-			elif self._anchor.endswith('c'):
-				ax = mwdelta(x, width)
-				if yinverting:
-					ay = mwdelta_plus(y, height)
-				else:
-					ay = mwdelta(y, height)
-			elif self._anchor.endswith('b'):
-				ax = mwdelta(x, width)
-				if yinverting:
-					ay = y + height
-				else:
-					ay = y - height
-		elif self._anchor.startswith('r'):
-			if self._anchor.endswith('t'):
-				ax = x - width
-				ay = y
-			elif self._anchor.endswith('c'):
-				ax = x - width
-				if yinverting:
-					ay = mwdelta_plus(y, height)
-				else:
-					ay = mwdelta(y, height)
-			elif self._anchor.endswith('b'):
-				ax = x - width
-				if yinverting:
-					ay = y + height
-				else:
-					ay = y - height
-
-		self.addTransform(Trans(ax, ay))
-
-
-		self._rect = Rect(0,0, width, height)
-		self.addChild(self._rect)
-
-		textrows = self._getTextLines()
-
-		self._txpara = self.addChild(TextParagraph(tx, ty, textrows, vsep=self._vsep, justify=self._tjustify))
-
-
 
 
 

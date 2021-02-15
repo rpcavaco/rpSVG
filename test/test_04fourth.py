@@ -981,6 +981,149 @@ def test_Symbols2():
 	genSymbols2(True)
 
 
+def genSymbols3(yinvert):
+
+	# Coordinates rounded to 1 dec.place
+	# GLOBAL_ENV["ROUND"]["places"] = 2
+
+	sc = SVGContent(Re(0,0,1600,1200), yinvert=yinvert).setIdentityViewbox()
+	sc.setBackground(Sty('fill', '#E7E8EA'))
+
+	sc.addChild(Title("Symbol library test 3"))
+
+	# SYMBOL DEFINITIONS ------------------------------------------------------
+	#
+	crsymb_centerMarker = sc.addChild(Cross(10,10), todefs=True, noyinvert=True)
+	#crosssight_centerMarker = sc.addChild(CrossSight(38,38, 10), todefs=True)
+	xsight_centerMarker = sc.addChild(XSight(26,26, 8), todefs=True, noyinvert=True)
+	tri = sc.addChild(Wedge(40,46), todefs=True, noyinvert=True)
+	circtri = sc.addChild(CircWedge(32,32,coffset=5), todefs=True, noyinvert=True)
+	wedge = sc.addChild(Wedge(40,46,indent=10), todefs=True, noyinvert=True)
+	circwedge = sc.addChild(CircWedge(40,46,indent=10,coffset=5), todefs=True, noyinvert=True)
+	cresc = sc.addChild(Crescent(32), noyinvert=True)
+	susppt1 = sc.addChild(SuspPointCirc(32), noyinvert=True)
+	susppt2 = sc.addChild(SuspPointSquare(40), noyinvert=True)
+	susppt3 = sc.addChild(SuspPointTriang(40), noyinvert=True)
+	star1 = sc.addChild(Star(32, 24, 5), todefs=True, noyinvert=True)
+	star2 = sc.addChild(Star(32, 24, 8, rot=22.5), todefs=True, noyinvert=True)
+	cstar = sc.addChild(CircStar(30, 14, 10, coffset=7), todefs=True, noyinvert=True)
+	penta = sc.addChild(RegPoly(32, 5), todefs=True, noyinvert=True)
+	hexa = sc.addChild(RegPoly(32,6, rot=20), todefs=True, noyinvert=True)
+	sun = sc.addChild(CircAsterisk(38, 22, separation=30), todefs=True, noyinvert=True)
+	cpenta = sc.addChild(CircRegPoly(32, 5, coffset=7), todefs=True, noyinvert=True)
+	chept = sc.addChild(CircRegPoly(38,8, rot=9, coffset=-14), todefs=True, noyinvert=True)
+	#
+	# =========================================================================
+
+	if yinvert:
+		title_height = 1060
+	else:
+		title_height = 140
+
+	if yinvert:
+		titletext = "Symbol library test 2 (y-inverted)"
+	else:
+		titletext = "Symbol library test 2"
+
+	sc.addChild(Text(140,title_height)).\
+		setStyle(Sty('fill', '#7C7C7C', 'font-size', 60, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
+		setText(titletext)
+
+	tstyle = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 30, 'font-family', 'Helvetica', 'text-anchor', 'middle', 'stroke-width', 2)
+	txstyle_small = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 16, 'font-family', 'Monospace', 'text-anchor', 'middle', 'stroke-width', 2)
+	# txstyle_xsmall = Sty('fill', 'black', 'stroke', '#404040', 'font-size', 14, 'font-family', 'Monospace', 'text-anchor', 'middle', 'stroke-width', 2)
+	symbstyle = Sty('fill', 'red', 'fill-opacity', 0.5, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round')
+
+	def code_height_row1(p_topval):
+		if yinvert:
+			return p_topval - 75
+		else:
+			return p_topval + 75
+
+	def label_height_row1(p_topval):
+		if yinvert:
+			return p_topval - 120
+		else:
+			return p_topval + 120
+
+	left = 240
+	hstep = 280
+	vstep = 230
+
+	if yinvert:
+		top_row1 = 940
+		
+		top_row2 = top_row1 - vstep
+		top_row3 = top_row1 - 2 * vstep
+		top_row4 = top_row1 - 3 * vstep
+
+	else:
+		top_row1 = 260
+		
+		top_row2 = top_row1 + vstep
+		top_row3 = top_row1 + 2 * vstep
+		top_row4 = top_row1 + 3 * vstep
+
+
+	# -- Triangle -----------------------------------------------------------
+	sc.addComment("Start Barrel")
+
+	thisleft = left
+	this_top = top_row1
+
+	us = sc.addChild(Use(Pt(thisleft,this_top), tri.getSel()).setStyle(symbstyle))
+
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("Wedge(40,46)")
+
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Barrel")
+
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	sc.addComment("End Barrel")
+	# =========================================================================
+
+	# # -- Circled Triangle -----------------------------------------------------------
+	# sc.addComment("Start Circled Triangle")
+
+	# thisleft = thisleft + hstep
+	# this_top = top_row1
+
+	# us = sc.addChild(Use(Pt(thisleft,this_top), circtri.getSel()).setStyle(symbstyle))
+
+	# sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+	# 	setStyle(txstyle_small).\
+	# 	setText("CircWedge(32,32,5)")
+
+	# sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+	# 	setStyle(tstyle).\
+	# 	setText("Circled Triangle")
+
+	# # small center cross
+	# sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+
+	# sc.addComment("End Circled Triangle")
+	# # =========================================================================
+
+
+	if yinvert:
+		fname = 'outtest/test_Symbols3_yinv.svg'
+	else:
+		fname = 'outtest/test_Symbols3.svg'
+
+
+	with open(fname, 'w') as fl:
+		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+
+def test_Symbols2():
+
+	genSymbols3(False)
+	genSymbols3(True)
+
 # 	with capsys.disabled():
 
 # 		#sc = SVGContent(Re(0,0,1600,1200))

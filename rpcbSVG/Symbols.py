@@ -1,27 +1,36 @@
 
+from rpcbSVG.Structs import Re
 from rpcbSVG.SVGStyleText import Sty
 from typing import Optional, Union
 from math import sqrt, pow
 
-from rpcbSVG.Basics import Pt, calc3rdPointInSegment, circleDividers, pA, pClose, pL, pM, polar2rectDegs, ptRemoveDecsep, removeDecsep, strictToNumber, toNumberAndUnit
-from rpcbSVG.SVGLib import AnalyticalPath, Desc, Group, Rect, Symbol
+from rpcbSVG.Basics import Pt, Trans, calc3rdPointInSegment, circleDividers, pA, pClose, pL, pM, polar2rectDegs, ptRemoveDecsep, removeDecsep, strictToNumber, toNumberAndUnit
+from rpcbSVG.SVGLib import AnalyticalPath, Desc, Rect, Symbol
 
 class Diamond(AnalyticalPath):
 
-	def __init__(self, width, height, handle='cc') -> None:
-		super().__init__()
+	def __init__(self, width=0, height=0, x=0, y=0, handle='cc') -> None:			
 		assert handle in ('cc', 'lc', 'rc', 'cb', 'ct')
+		super().__init__()
 		self.dims = (width, height)
 		self.handle = handle
-
+		self.xv, _u = toNumberAndUnit(x)
+		self.yv, _u = toNumberAndUnit(y)
+	
 	def getComment(self):
-		return f"Diamond symbol, dims:{self.dims} handle:{self.handle}"
+		return f"Diamond symbol, dims:{self.dims} x:{self.xv} y:{self.yv} handle:{self.handle}"
 
-	def onAfterParentAdding(self):	
-		if not self._parentadded:
-			self._parentadded = True
-		else:
-		 	return
+	def setDims(self, p_re: Re):
+		vals = p_re.getValues()
+		self.dims = (vals[0], vals[1])
+		self.xv = vals[2]
+		self.yv = vals[3]
+
+	def build(self):
+		self.clearTransforms()
+		self.clear()
+		if self.xv != 0 or self.yv != 0:
+			self.addTransform(Trans(self.xv,self.yv))
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
 		mw = removeDecsep(w / 2)
@@ -57,6 +66,13 @@ class Diamond(AnalyticalPath):
 			self.addCmd(pL(mw,-mh))
 			self.addCmd(pL(0,0))
 			self.addCmd(pClose())
+
+	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
+		self.build()
 
 class Cross(AnalyticalPath):
 
@@ -743,7 +759,7 @@ class DonutPoly(RegPoly):
 		self._out_n = out_n
 
 	def getComment(self):		
-		return f"{super().getComment()}, DonutPoly, coffset:{self._coffset}"
+		return f"{super().getComment()}, DonutPoly, out-n:{self._out_n}, outrot:{self._outrot}, coffset:{self._coffset}"
 
 	def onAfterParentAdding(self):	
 		if super().onAfterParentAdding():

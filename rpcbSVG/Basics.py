@@ -21,6 +21,13 @@ class ValueWithUnitsError(RuntimeError):
 	def __str__(self):
 		return f"no units allowed here, found: {self.val}"
 
+class UnknownUnitsError(RuntimeError):
+	def __init__(self, p_unitsstr) -> None:
+		super().__init__()
+		self.unitsstr = p_unitsstr
+	def __str__(self):
+		return f"unknown units: {self.unitsstr}"
+
 GLOBAL_ENV = {
 	"ROUND": {
 		"flag": True,
@@ -201,6 +208,43 @@ def hashed_href(p_text):
 		v_text = p_text
 	return v_text
 
+def unitValueToVPUnits(p_val, units=None, emModifier=1):
+	ret = None
+	val = emModifier * strictToNumber(p_val)
+	if units is None or units == "px":
+		ret = val
+	elif units == 'pt':
+		ret = val * 1.25
+	elif units == 'pc':
+		ret = val * 15
+	elif units == 'mm':
+		ret = val * 3.543307
+	elif units == 'cm':
+		ret = val * 35.43307
+	elif units == 'in':
+		ret = val * 90
+	else:
+		UnknownUnitsError(units)
+	return ret
+
+def fontSizeToVPUnits(fontsize=None, possibleEmModifier=None):
+	assert not fontsize is None or not possibleEmModifier is None
+	ret = None
+	if not fontsize is None:
+		fsz, ufsz = toNumberAndUnit(fontsize)
+	else:
+		ufsz = fsz = None
+	emm = 1.0
+	if not possibleEmModifier is None:
+		_emm, uemm = toNumberAndUnit(possibleEmModifier)
+		if uemm == "em":
+			emm = _emm
+		else:
+			ret = unitValueToVPUnits(_emm, units=uemm)
+	if ret is None:
+		ret = unitValueToVPUnits(fsz, units=ufsz, emModifier=emm)
+	return ret
+
 class WrongValueTransformDef(RuntimeError):
 	def __init__(self, p_class_instance, p_attr):
 		self.classname = p_class_instance.__class__.__name__
@@ -298,8 +342,7 @@ class _attrs_struct(object):
 	def getNumeric(self, p_attr: str) -> float:
 		ret = None
 		if self.has(p_attr) and hasattr(self, p_attr):
-			val = getattr(self, p_attr)
-			ret = float(val)
+			ret, _u = toNumberAndUnit(getattr(self, p_attr))
 		return ret
 
 	def __repr__(self):
@@ -421,15 +464,6 @@ class _withunits_struct(_attrs_struct):
 	def iterUnitsRemovedNum(self):
 		for val in self.iterUnitsRemoved():
 			yield removeDecsep(float(val))
-
-	def getNumeric(self, p_attr: str) -> float:
-		ret = None
-		if self.has(p_attr) and hasattr(self, p_attr):
-			val = getattr(self, p_attr)
-			if not self._units is None:
-				val = val.replace(self._units, '')
-			ret = float(val)
-		return ret
 
 class _kwarg_attrs_struct(object):
 	

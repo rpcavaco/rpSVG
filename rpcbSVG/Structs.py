@@ -3,7 +3,7 @@ from typing import Optional, Union
 from math import atan, degrees
 from re import split as re_split
 
-from rpcbSVG.Basics import MINDELTA, Pt, Env, XLINK_NAMESPACE, _attrs_struct, _withunits_struct, _kwarg_attrs_struct, hashed_href, isNumeric, strictToNumber, toNumberAndUnit
+from rpcbSVG.Basics import MINDELTA, Pt, Env, XLINK_NAMESPACE, _attrs_struct, _withunits_struct, _kwarg_attrs_struct, hashed_href, isNumeric, removeDecsep, strictToNumber, toNumberAndUnit
 
 
 class Re(_withunits_struct):
@@ -45,7 +45,7 @@ class VBox(_attrs_struct):
 			super().__init__(*args)
 	def cloneFromRect(self, p_rect: Re, scale: Optional[float] = None):
 		if not scale is None:
-			cont = " ".join([str(round(float(at) * scale)) for at in p_rect.iterUnitsRemoved()])
+			cont = " ".join([str(removeDecsep(round(float(at)) * scale)) for at in p_rect.iterUnitsRemoved()])
 		else:
 			cont = " ".join(list(p_rect.iterUnitsRemoved()))
 		setattr(self, 'viewBox', cont)
@@ -70,6 +70,12 @@ class ReRC(Re):
 	_fields = ("x",  "y", "width", "height", "rx", "ry") 
 	def __init__(self, *args) -> None:
 		super().__init__(*args, defaults=None)
+	def setRCRadiuses(self, rx, ry=None):
+		self.rx = rx
+		if ry is None:
+			self.ry = rx
+		else:
+			self.ry = ry
 
 class Ci(_withunits_struct):
 	_fields = ("cx",  "cy", "r") 
