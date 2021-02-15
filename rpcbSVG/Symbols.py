@@ -2,9 +2,9 @@
 from rpcbSVG.Structs import Re
 from rpcbSVG.SVGStyleText import Sty
 from typing import Optional, Union
-from math import sqrt, pow
+from math import cos, radians, sin, sqrt, pow
 
-from rpcbSVG.Basics import Pt, Trans, calc3rdPointInSegment, circleDividers, pA, pClose, pL, pM, polar2rectDegs, ptRemoveDecsep, removeDecsep, strictToNumber, toNumberAndUnit
+from rpcbSVG.Basics import Pt, Trans, calc3rdPointInSegment, circleDividers, glRd, pA, pClose, pL, pM, polar2rectDegs, ptAdd, ptRemoveDecsep, removeDecsep, strictToNumber, toNumberAndUnit
 from rpcbSVG.SVGLib import AnalyticalPath, Desc, Rect, Symbol
 
 class Diamond(AnalyticalPath):
@@ -782,6 +782,7 @@ class Donut(AnalyticalPath):
 		return f"Donut, radius:{self.radius}, offset:{self.offset}"
 
 	def onAfterParentAdding(self):	
+
 		if not self._parentadded:
 			self._parentadded = True
 		else:
@@ -796,3 +797,114 @@ class Donut(AnalyticalPath):
 		self.addCmd(pA(r2, r2, 0, 1, 0, -r2, 0))
 		self.addCmd(pA(r2, r2, 0, 1, 0, r2, 0))
 		self.refresh()
+
+class Cylinder(Symbol):
+
+	def __init__(self, p_width, p_height, pitch_ratio=0.5) -> None:
+
+		super().__init__()
+		self.height = strictToNumber(p_height)
+		self.width = strictToNumber(p_width)
+		self.pitch_ratio = strictToNumber(pitch_ratio)
+
+	def getComment(self):		
+		return f"Cylinder, height:{self.height}, radius:{self.width}, pitch_ratio:{self.pitch_ratio}"
+
+	def onAfterParentAdding(self):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
+
+		self.addChild(Desc().setText(self.getComment()))
+
+		rad = self.width / 2.0
+		hh = self.height / 2.0
+		vrad = rad * self.pitch_ratio
+
+		with self.addChild(AnalyticalPath()).setClass("symbfilllight") as pth:
+			pth.addCmd(pM(-rad,-hh))
+			pth.addCmd(pA(rad, vrad, 0, 1, 0, rad, -hh))
+			pth.addCmd(pA(rad, vrad, 0, 1, 0, -rad, -hh))
+
+		with self.addChild(AnalyticalPath()).setClass("symbfillmed") as ap2:
+			ap2.addCmd(pM(-rad,-hh))
+			ap2.addCmd(pL(-rad,hh))
+			ap2.addCmd(pA(rad, vrad, 0, 1, 0, rad, hh))
+			ap2.addCmd(pL(rad,-hh))
+			ap2.addCmd(pA(rad, vrad, 0, 1, 1, -rad, -hh))
+
+class Server(Symbol):
+
+	def __init__(self, p_width, p_height, p_depth, rotation=30, projangle=120) -> None:
+
+		super().__init__()
+		self.height = strictToNumber(p_height)
+		self.width = strictToNumber(p_width)
+		self.depth = strictToNumber(p_depth)
+		self.rotation = strictToNumber(rotation)
+		self.projangle = strictToNumber(projangle)
+
+	def getComment(self):		
+		return f"Server, height:{self.height}, radius:{self.width}, depth:{self.depth}, rotation:{self.rotation}"
+
+	def onAfterParentAdding(self):	
+
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
+
+		self.addChild(Desc().setText(self.getComment()))
+
+		beta = self.rotation + self.projangle
+		lright = glRd(cos(radians(self.rotation)) * self.depth)
+		lleft = abs(glRd(cos(radians(beta)) * self.width))
+		planar_width = lright + lleft
+		hw = planar_width / 2
+
+		low_hh = self.height / 3
+
+		pzero_x = hw - lright
+		right_deltay = glRd(sin(radians(self.rotation)) * self.depth)
+		left_deltay = glRd(sin(radians(beta)) * self.width)
+		pzero_y = low_hh + right_deltay
+
+		pth = self.addChild(AnalyticalPath()).setClass("symbfillmed")
+		pth.addCmd(pM(pzero_x, pzero_y))
+		pth.addCmd(pL(lright, -right_deltay, relative=True))
+		pth.addCmd(pL(0, -self.height, relative=True))
+		pth.addCmd(pL(-lright, right_deltay, relative=True))
+		pth.addCmd(pClose())
+
+		ap2 = self.addChild(AnalyticalPath()).setClass("symbfilldark")
+		ap2.addCmd(pM(pzero_x, pzero_y))
+		ap2.addCmd(pL(0,-self.height, relative=True))
+		ap2.addCmd(pL(-lleft, -left_deltay, relative=True))
+		ap2.addCmd(pL(0, self.height, relative=True))
+		ap2.addCmd(pClose())
+
+		ap3 = self.addChild(AnalyticalPath()).setClass("symbfilllight")
+		ap3.addCmd(pM(pzero_x, pzero_y))
+		ap3.addCmd(pM(0, -self.height, relative=True))
+		ap3.addCmd(pL(lright, -right_deltay, relative=True))
+		ap3.addCmd(pL(-lleft, -left_deltay, relative=True))
+		ap3.addCmd(pL(-lright, right_deltay, relative=True))
+		ap3.addCmd(pClose())
+
+		left_diagonal = sqrt(pow(lleft,2) + pow(left_deltay,2))
+
+		with self.addChild(AnalyticalPath()).setClass("symbinnerstroke") as ap4:
+
+			for i in range(4):
+				pt1 = Pt(pzero_x, pzero_y-(right_deltay/2)-(i*8))
+				ap4.addCmd(pM(*pt1))
+				ptx = polar2rectDegs(-beta, 0.7 * left_diagonal)
+				pt2 = ptAdd(pt1, ptx)
+				ap4.addCmd(pL(*pt2))
+
+
+
+		#ap2.addCmd(pL(0, self.height, relative=True))
+		#ap2.addCmd(pClose())
+

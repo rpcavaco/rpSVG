@@ -1,9 +1,9 @@
 
 
-from rpcbSVG.Symbols import Arrow, Asterisk, CircArrow, CircAsterisk, CircRegPoly, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, Donut, DonutPoly, RegPoly, Square, SquaredArrow, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
+from rpcbSVG.Symbols import Arrow, Asterisk, Cylinder, CircArrow, CircAsterisk, CircRegPoly, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, Donut, DonutPoly, RegPoly, Server, Square, SquaredArrow, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
 
 from rpcbSVG.Basics import GLOBAL_ENV, Pt, circleDividers
-from rpcbSVG.SVGStyleText import Sty
+from rpcbSVG.SVGStyleText import CSSSty, Sty
 from rpcbSVG.SVGLib import Re, SVGContent, Text, Title, Use
 
 
@@ -995,23 +995,10 @@ def genSymbols3(yinvert):
 	#
 	crsymb_centerMarker = sc.addChild(Cross(10,10), todefs=True, noyinvert=True)
 	#crosssight_centerMarker = sc.addChild(CrossSight(38,38, 10), todefs=True)
-	xsight_centerMarker = sc.addChild(XSight(26,26, 8), todefs=True, noyinvert=True)
-	tri = sc.addChild(Wedge(40,46), todefs=True, noyinvert=True)
-	circtri = sc.addChild(CircWedge(32,32,coffset=5), todefs=True, noyinvert=True)
-	wedge = sc.addChild(Wedge(40,46,indent=10), todefs=True, noyinvert=True)
-	circwedge = sc.addChild(CircWedge(40,46,indent=10,coffset=5), todefs=True, noyinvert=True)
-	cresc = sc.addChild(Crescent(32), noyinvert=True)
-	susppt1 = sc.addChild(SuspPointCirc(32), noyinvert=True)
-	susppt2 = sc.addChild(SuspPointSquare(40), noyinvert=True)
-	susppt3 = sc.addChild(SuspPointTriang(40), noyinvert=True)
-	star1 = sc.addChild(Star(32, 24, 5), todefs=True, noyinvert=True)
-	star2 = sc.addChild(Star(32, 24, 8, rot=22.5), todefs=True, noyinvert=True)
-	cstar = sc.addChild(CircStar(30, 14, 10, coffset=7), todefs=True, noyinvert=True)
-	penta = sc.addChild(RegPoly(32, 5), todefs=True, noyinvert=True)
-	hexa = sc.addChild(RegPoly(32,6, rot=20), todefs=True, noyinvert=True)
-	sun = sc.addChild(CircAsterisk(38, 22, separation=30), todefs=True, noyinvert=True)
-	cpenta = sc.addChild(CircRegPoly(32, 5, coffset=7), todefs=True, noyinvert=True)
-	chept = sc.addChild(CircRegPoly(38,8, rot=9, coffset=-14), todefs=True, noyinvert=True)
+	barrel = sc.addChild(Cylinder(84,58,pitch_ratio=0.3), todefs=True, noyinvert=True)
+	server = sc.addChild(Server(26, 60, 50, rotation=18, projangle=145), todefs=True, noyinvert=True)
+	
+
 	#
 	# =========================================================================
 
@@ -1021,9 +1008,9 @@ def genSymbols3(yinvert):
 		title_height = 140
 
 	if yinvert:
-		titletext = "Symbol library test 2 (y-inverted)"
+		titletext = "Symbol library test 3 (y-inverted)"
 	else:
-		titletext = "Symbol library test 2"
+		titletext = "Symbol library test 3"
 
 	sc.addChild(Text(140,title_height)).\
 		setStyle(Sty('fill', '#7C7C7C', 'font-size', 60, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
@@ -1032,7 +1019,12 @@ def genSymbols3(yinvert):
 	tstyle = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 30, 'font-family', 'Helvetica', 'text-anchor', 'middle', 'stroke-width', 2)
 	txstyle_small = Sty('fill', 'none', 'stroke', '#404040', 'font-size', 16, 'font-family', 'Monospace', 'text-anchor', 'middle', 'stroke-width', 2)
 	# txstyle_xsmall = Sty('fill', 'black', 'stroke', '#404040', 'font-size', 14, 'font-family', 'Monospace', 'text-anchor', 'middle', 'stroke-width', 2)
-	symbstyle = Sty('fill', 'red', 'fill-opacity', 0.5, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round')
+
+	sc.addStyleRule(CSSSty('fill', 'red', 'fill-opacity', 0.45, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round', selector='.symbfilldark'))
+	sc.addStyleRule(CSSSty('fill', 'red', 'fill-opacity', 0.3, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round', selector='.symbfillmed'))
+	sc.addStyleRule(CSSSty('fill', 'red', 'fill-opacity', 0.1, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round', selector='.symbfilllight'))
+	sc.addStyleRule(CSSSty('stroke', '#5E5E5E', 'stroke-width', 4, 'stroke-linejoin', 'round', selector='.symbinnerstroke'))
+
 
 	def code_height_row1(p_topval):
 		if yinvert:
@@ -1066,47 +1058,47 @@ def genSymbols3(yinvert):
 
 
 	# -- Triangle -----------------------------------------------------------
-	sc.addComment("Start Barrel")
+	sc.addComment("Start Cylinder")
 
 	thisleft = left
 	this_top = top_row1
 
-	us = sc.addChild(Use(Pt(thisleft,this_top), tri.getSel()).setStyle(symbstyle))
+	us = sc.addChild(Use(Pt(thisleft,this_top), barrel.getSel()))
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
-		setText("Wedge(40,46)")
+		setText("Cylinder(84,58,pitch_ratio=0.3)")
 
 	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
 		setStyle(tstyle).\
-		setText("Barrel")
+		setText("Cylinder")
 
 	# small center cross
 	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
 
-	sc.addComment("End Barrel")
+	sc.addComment("End Cylinder")
 	# =========================================================================
 
 	# # -- Circled Triangle -----------------------------------------------------------
-	# sc.addComment("Start Circled Triangle")
+	sc.addComment("Start Server")
 
-	# thisleft = thisleft + hstep
-	# this_top = top_row1
+	thisleft = thisleft + hstep
+	this_top = top_row1
 
-	# us = sc.addChild(Use(Pt(thisleft,this_top), circtri.getSel()).setStyle(symbstyle))
+	us = sc.addChild(Use(Pt(thisleft,this_top), server.getSel()))
 
-	# sc.addChild(Text(thisleft,code_height_row1(this_top))).\
-	# 	setStyle(txstyle_small).\
-	# 	setText("CircWedge(32,32,5)")
+	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
+		setStyle(txstyle_small).\
+		setText("Server(26,60,50,18,145)")
 
-	# sc.addChild(Text(thisleft,label_height_row1(this_top))).\
-	# 	setStyle(tstyle).\
-	# 	setText("Circled Triangle")
+	sc.addChild(Text(thisleft,label_height_row1(this_top))).\
+		setStyle(tstyle).\
+		setText("Server")
 
-	# # small center cross
-	# sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
+	# small center cross
+	sc.addChild(Use(Pt(thisleft,this_top), crsymb_centerMarker.getSel()).setStyle(Sty('stroke', 'black')))
 
-	# sc.addComment("End Circled Triangle")
+	sc.addComment("End Server")
 	# # =========================================================================
 
 
@@ -1119,10 +1111,11 @@ def genSymbols3(yinvert):
 	with open(fname, 'w') as fl:
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
-def test_Symbols2():
+def test_Symbols2(capsys):
 
-	genSymbols3(False)
-	genSymbols3(True)
+	with capsys.disabled():
+		genSymbols3(False)
+		genSymbols3(True)
 
 # 	with capsys.disabled():
 

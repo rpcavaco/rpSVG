@@ -32,8 +32,12 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 	sc.addStyleRule(CSSSty('fill', '#434343', 'font-size', '12pt', 'font-family', 'Helvetica', selector='.tb1'))
 	sc.addStyleRule(CSSSty('fill', 'none', 'stroke', 'red', 'stroke-width', 4, selector='.caixas'))
 	sc.addStyleRule(CSSSty('stroke', 'black', 'stroke-width', 1, selector='.aid1'))
-	# sc.addStyleRule(CSSSty('fill', 'blue', 'font-size', 28, 'font-family', 'Helvetica', selector='.lbls'))
 	sc.addStyleRule(CSSSty('fill', 'none', 'stroke', '#404040', 'font-size', 28, 'font-family', 'Helvetica','stroke-width', 2, 'text-anchor', 'middle', selector='.lbls'))
+
+	sc.addStyleRule(CSSSty('fill', 'red', 'fill-opacity', 0.45, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round', selector='.symbfilldark'))
+	sc.addStyleRule(CSSSty('fill', 'red', 'fill-opacity', 0.3, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round', selector='.symbfillmed'))
+	sc.addStyleRule(CSSSty('fill', 'red', 'fill-opacity', 0.1, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round', selector='.symbfilllight'))
+	sc.addStyleRule(CSSSty('stroke', '#5E5E5E', 'stroke-width', 4, 'stroke-linejoin', 'round', selector='.symbinnerstroke'))
 
 	# SYMBOL DEFINITIONS ------------------------------------------------------
 	#

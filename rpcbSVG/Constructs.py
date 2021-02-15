@@ -58,9 +58,6 @@ class TextBox(Group):
 		else:
 			_l = len(self._getTextLines())
 
-		print("_adjustTextVertical----------------------")
-
-
 		if _l > 0 and not self._vcenter_fontszpx is None and not self._txpara is None:			
 			yinverting = not self._yinvertdelta is None
 			boxheight = self._re.getNumeric("height")

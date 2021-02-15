@@ -805,8 +805,9 @@ class AnalyticalPath(Path):
 						do_omit = True
 			buf.append(cmd.get(omitletter=do_omit))
 			prevcmd = cmd
-		self.getStruct().setall("".join(buf))
-		self.updateStructAttrs()
+		if len(buf) > 0:
+			self.getStruct().setall("".join(buf))
+			self.updateStructAttrs()
 
 	def addCmd(self, p_cmd: path_command, tostart=False, refresh=False):
 		if hasattr(p_cmd, 'yinvert'):
@@ -874,6 +875,12 @@ class AnalyticalPath(Path):
 		if not self._noyinvert:
 			self._yinvertdelta = p_height
 
+	def __enter__(self):
+	 	return self
+
+	def __exit__(self, exc_type, exc_value, traceback):
+		self.refresh()
+
 class _pointsElement(MarkeableSVGElem):
 	def __init__(self, tag, *args, marker_props: Optional[MrkProps] = None) -> None:
 		super().__init__(tag, struct=Pl(*args), marker_props=marker_props)
@@ -902,6 +909,7 @@ class _pointsElement(MarkeableSVGElem):
 			self._yinvertdelta = p_height
 			if self.hasPoints():
 				warn(UserWarning("points already defined prior to yinvert activation on this object, their y coord won't be changed."))
+
 
 class Polyline(_pointsElement):
 	def __init__(self, *args, marker_props: Optional[MrkProps] = None) -> None:
