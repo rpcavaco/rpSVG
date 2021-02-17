@@ -123,7 +123,7 @@ class Us(_withunits_struct):
 	_fields = ("x",  "y", "width", "height", f"{{{XLINK_NAMESPACE}}}href") 
 	def __init__(self, *args) -> None:
 		l =  len(args)
-		argslist = None
+		argslist = []
 		if l != 5:
 			if l == 2:
 				if isinstance(args[0], Pt) and isinstance(args[1], str):
@@ -132,9 +132,13 @@ class Us(_withunits_struct):
 					argslist = (glRd(args[0].x), glRd(args[0].y), glRd(args[0].width), glRd(args[0].height), args[1])
 				else:
 					raise TypeError(f"'Us' element was given 2 arguments with types ({str(type(args[0]))},{str(type(args[1]))}), expected Pt+str or Re+str")
-		if argslist is None:
+		if len(argslist) == 0:
 			if l >= 4:
-				argslist = [glRd(x) for x in args[:4]]
+				for x in args[:4]:
+					if x is None or not isNumeric(x):
+						argslist.append(x)
+					else:
+						argslist.append(glRd(x))
 				if l > 4:
 					argslist.extend(args[4:])
 			else:

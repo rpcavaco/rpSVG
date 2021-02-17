@@ -460,7 +460,7 @@ class GenericSVGElem(BaseSVGElem):
 					do_gen_id = True
 
 		gotid = False
-		if do_gen_id:
+		if do_gen_id and not p_child.hasId():
 			idval = self.genNextId()
 			if not idval is None:
 				p_child.setId(p_child.idprefix + str(idval))
