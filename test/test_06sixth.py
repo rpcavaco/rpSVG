@@ -3,23 +3,34 @@
 
 import cairosvg
 
-from rpcbSVG.Symbols import Cross, Diamond, XSight
+from rpcbSVG.Symbols import Cross, Cylinder, Diamond, Server, XSight
 
 from rpcbSVG.Basics import GLOBAL_ENV, Pt
 from rpcbSVG.SVGStyleText import CSSSty, Sty
 from rpcbSVG.SVGLib import Circle, Re, RectRC, SVGContent, Text, Title, Use
 from rpcbSVG.Constructs import TextBox
 
-SMALLTXT = """Ürümqi
+SMALLTXT2 = """Ürümqi
 Yiwu"""
 
-SMALLTXT = """Ürümqi
+SMALLTXT3 = """Ürümqi
 Yiwu
 Shèngsì"""
 
+SMALLTXT4 = """Ürümqi
+Yiwu
+Shèngsì
+Shenzhen"""
+
 SMALLTXT1 = "Ürümqi"
 
-def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
+SMALLTXT5 = """Ürümqi
+Yiwu
+Shèngsì
+Shenzhen
+Gaozhou"""
+
+def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 
 	# Coordinates rounded to 1 dec.place
 	GLOBAL_ENV["ROUND"]["places"] = 1
@@ -28,11 +39,13 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 
 	sc.setBackground(Sty('fill', '#E7E8EA'))
 
+	vcenter_fontszpx = p_vcenter_fontszpx
+
 	# Styles to DEFS
-	sc.addStyleRule(CSSSty('fill', '#434343', 'font-size', '12pt', 'font-family', 'Helvetica', selector='.tb1'))
+	sc.addStyleRule(CSSSty('fill', '#434343', 'font-size', vcenter_fontszpx, 'font-family', 'Helvetica', selector='.tb1'))
 	sc.addStyleRule(CSSSty('fill', 'none', 'stroke', 'red', 'stroke-width', 4, selector='.caixas'))
-	sc.addStyleRule(CSSSty('stroke', 'black', 'stroke-width', 1, selector='.aid1'))
-	sc.addStyleRule(CSSSty('fill', 'none', 'stroke', '#404040', 'font-size', 28, 'font-family', 'Helvetica','stroke-width', 2, 'text-anchor', 'middle', selector='.lbls'))
+	sc.addStyleRule(CSSSty('stroke', 'grey', 'stroke-width', 1, selector='.aid1'))
+	sc.addStyleRule(CSSSty('fill', 'none', 'stroke', '#404040', 'font-size', 24, 'font-family', 'Helvetica','stroke-width', 2, 'text-anchor', 'middle', selector='.lbls'))
 
 	sc.addStyleRule(CSSSty('fill', 'red', 'fill-opacity', 0.45, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round', selector='.symbfilldark'))
 	sc.addStyleRule(CSSSty('fill', 'red', 'fill-opacity', 0.3, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round', selector='.symbfillmed'))
@@ -41,7 +54,7 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 
 	# SYMBOL DEFINITIONS ------------------------------------------------------
 	#
-	xsight = sc.addChild(XSight(46,46,2), todefs=True, noyinvert=True)
+	xsight = sc.addChild(XSight(46,46,8), todefs=True, noyinvert=True)
 	crsymb_centerMarker = sc.addChild(Cross(20,20), todefs=True)
 	#
 	# =========================================================================
@@ -52,19 +65,9 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 		title_height = 140
 
 	if p_ynvert:
-		if p_textjustify == "right":
-			mainlabel = "Textbox and paragraph (y-inverted) - text right justified"
-		elif p_textjustify == "center":
-			mainlabel = "Textbox and paragraph (y-inverted) - text centered"
-		else:
-			mainlabel = "Textbox and paragraph (y-inverted) - text left justified"
+		mainlabel = "Textbox, multiline and various shapes (y-inverted) - text centered"
 	else:
-		if p_textjustify == "right":
-			mainlabel = "Textbox and paragraph - text right justified"
-		elif p_textjustify == "center":
-			mainlabel = "Textbox and paragraph - text centered"
-		else:
-			mainlabel = "Textbox and paragraph - text left justified"
+		mainlabel = "Textbox, multiline and various shapes - text centered"
 
 	sc.addChild(Title(mainlabel))
 
@@ -91,18 +94,18 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 	top_row4 = top_row1 + 3 * vstep
 
 	if sc.getYInvertFlag():
-		tb1Y = 940
+		tb1Y = 1000
 	else:
-		tb1Y = 250
+		tb1Y = 200
 
 	left = 140
-	vstep = 280
-	hstep = 480
-	boxwidth = 190
-	boxheight = 110
+	vstep = 190
+	hstep = 270
+	boxwidth = 170
+	boxheight = 90
 	boxdims = (boxwidth, boxheight)
-	label_offset = 40
-	left_offset = 20
+	label_offset = -10
+	left_offset = 10
 	vert_offset = 90
 
 	def lbly(p_sc, p_top, p_lbloffset):
@@ -112,31 +115,35 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 			lbly = p_top - p_lbloffset
 		return lbly
 
-	def boxinsertion(p_nome_interno, p_label, p_lblanchor, p_anchor, p_tbanchoring, p_boxdims, p_text_just, p_paddingv, p_shape):
+	def boxinsertion(p_nome_interno, p_label, p_lblanchor, p_anchor, p_tbanchoring, p_boxdims, p_text_just, p_paddingv, p_shape, txt=None):
 		
 		sc.addComment(f"Start {p_nome_interno}")
 
 		# sc.addChild(Use(Pt(*p_anchor), crsymb_centerMarker.getSel()).setClass('aid1'))
 
-		sc.addChild(Text(*p_lblanchor)).\
-			setClass('lbls').\
-			setText(p_label)
+		if len(p_label) > 0:
+			sc.addChild(Text(*p_lblanchor)).\
+				setClass('lbls').\
+				setText(p_label)
 
 		sc.addChild(Use(p_anchor, xsight.getSel()).setClass('aid1'))
 
-		tb = TextBox(*p_anchor, *p_boxdims, anchor=p_tbanchoring, hjustify=p_text_just, paddingv=p_paddingv, vcenter_fontszpx='12pt')
+		tb = TextBox(*p_anchor, *p_boxdims, anchor=p_tbanchoring, hjustify=p_text_just, paddingv=p_paddingv, vcenter_fontszpx=vcenter_fontszpx)
 		if p_shape == "rc":
 			tb.setBaseShape(RectRC().setRCRadiuses(14).setClass("caixas"))
 		elif p_shape == "circ":
 			tb.setBaseShape(Circle().setClass("caixas"))
 		elif p_shape == "dia":
 			tb.setBaseShape(Diamond().setClass("caixas"))
+		elif p_shape == "cyl":
+			tb.setBaseShape(Cylinder(0,0,pitch_ratio=0.3))
+		elif p_shape == "srv":
+		 	tb.setBaseShape(Server(0,0,0, rotation=18, projangle=145))
 
-		#def __init__(self, width, height, x=0, y=0, handle='cc') -> None:			
-
-		sc.addChild(tb)
-		tb.getParagraph().setClass("tb1")
-		tb.setText(SMALLTXT)
+		if not txt is None:
+			sc.addChild(tb)
+			tb.getParagraph().setClass("tb1")
+			tb.setText(txt)
 
 		sc.addComment(f"End {p_nome_interno}")
 
@@ -145,6 +152,7 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 	thisleft = left + left_offset + boxwidth/2
 	top = tb1Y
 	boxy = top
+	rc_boxdims = (boxdims[0], 1.5*boxdims[1])
 
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
@@ -154,12 +162,11 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 	anchor = Pt(thisleft, boxy)
 	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
 
-	boxinsertion("TextBox RC", "Rounded corners", lbl_anchor, anchor, 'cc', boxdims, "center", 88, "rc")
+	boxinsertion("TextBox RC", "Rounded corners", lbl_anchor, anchor, 'cc', boxdims, "center", 88, "rc",  txt=SMALLTXT1)
 
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	top = tb1Y
 	boxy = top
 
 	if sc.getYInvertFlag():
@@ -170,12 +177,11 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 	anchor = Pt(thisleft, boxy)
 	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
 
-	boxinsertion("TextBox CircC", "Circular", lbl_anchor, anchor, 'cc', boxdims, "center", 30, "circ")
+	boxinsertion("TextBox CircC", "Circular", lbl_anchor, anchor, 'cc', (boxdims[1], boxdims[1]), "center", 30, "circ",  txt=SMALLTXT1)
 
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	top = tb1Y
 	boxy = top
 
 	if sc.getYInvertFlag():
@@ -186,18 +192,402 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 	anchor = Pt(thisleft, boxy)
 	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
 
-	boxinsertion("TextBox Diamond", "Diamond", lbl_anchor, anchor, 'cc', (220,140), "center", 140, "dia")
+	boxinsertion("TextBox Diamond", "Diamond", lbl_anchor, anchor, 'cc',  (boxdims[0], boxdims[1]), "center", 140, "dia",  txt=SMALLTXT1)
 
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox DB", "Database", lbl_anchor, anchor, 'cc', (boxdims[0], 0.8*boxdims[1]), "center", 140, "cyl",  txt=SMALLTXT1)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox SRV", "Server", lbl_anchor, anchor, 'cc', boxdims, "center", 140, "srv",  txt=SMALLTXT1)
+
+	# # =========================================================================
+	#   NEXT Line
+	# # =========================================================================
+	# # =========================================================================
+
+
+	thisleft = left + left_offset + boxwidth/2
+	top = top + vstep - 40
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox RC", "", lbl_anchor, anchor, 'cc', boxdims, "center", 88, "rc",  txt=SMALLTXT2)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox CircC", "", lbl_anchor, anchor, 'cc', boxdims, "center", 30, "circ",  txt=SMALLTXT2)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox Diamond", "", lbl_anchor, anchor, 'cc', (220,140), "center", 140, "dia",  txt=SMALLTXT2)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox DB", "", lbl_anchor, anchor, 'cc', boxdims, "center", 140, "cyl",  txt=SMALLTXT2)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox SRV", "", lbl_anchor, anchor, 'cc', boxdims, "center", 140, "srv",  txt=SMALLTXT2)
+
+
+	# # =========================================================================
+	#   NEXT Line
+	# # =========================================================================
+	# # =========================================================================
+
+
+	thisleft = left + left_offset + boxwidth/2
+	top = top + vstep
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox RC", "", lbl_anchor, anchor, 'cc', rc_boxdims, "center", 88, "rc",  txt=SMALLTXT3)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox CircC", "", lbl_anchor, anchor, 'cc', boxdims, "center", 30, "circ",  txt=SMALLTXT3)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox Diamond", "", lbl_anchor, anchor, 'cc', (220,140), "center", 140, "dia",  txt=SMALLTXT3)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox DB", "", lbl_anchor, anchor, 'cc', boxdims, "center", 140, "cyl",  txt=SMALLTXT3)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox SRV", "", lbl_anchor, anchor, 'cc', boxdims, "center", 140, "srv",  txt=SMALLTXT3)
+
+	# # =========================================================================
+	#   NEXT Line
+	# # =========================================================================
+	# # =========================================================================
+
+
+	thisleft = left + left_offset + boxwidth/2
+	top = top + vstep
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox RC", "", lbl_anchor, anchor, 'cc', rc_boxdims, "center", 88, "rc",  txt=SMALLTXT4)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox CircC", "", lbl_anchor, anchor, 'cc', boxdims, "center", 30, "circ",  txt=SMALLTXT4)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox Diamond", "", lbl_anchor, anchor, 'cc', (220,140), "center", 140, "dia",  txt=SMALLTXT4)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox DB", "", lbl_anchor, anchor, 'cc', boxdims, "center", 140, "cyl",  txt=SMALLTXT4)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox SRV", "", lbl_anchor, anchor, 'cc', boxdims, "center", 140, "srv",  txt=SMALLTXT4)
+
+	# # =========================================================================
+	#   NEXT Line
+	# # =========================================================================
+	# # =========================================================================
+
+
+	thisleft = left + left_offset + boxwidth/2
+	top = top + vstep
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox RC", "", lbl_anchor, anchor, 'cc', rc_boxdims, "center", 88, "rc",  txt=SMALLTXT5)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox CircC", "", lbl_anchor, anchor, 'cc', boxdims, "center", 30, "circ",  txt=SMALLTXT5)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox Diamond", "", lbl_anchor, anchor, 'cc', (220,140), "center", 140, "dia",  txt=SMALLTXT5)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox DB", "", lbl_anchor, anchor, 'cc', boxdims, "center", 140, "cyl",  txt=SMALLTXT5)
+
+	# # =========================================================================
+
+	thisleft = thisleft + hstep	
+	boxy = top
+
+	if sc.getYInvertFlag():
+		boxy = top - vert_offset
+	else:
+		boxy = top + vert_offset
+
+	anchor = Pt(thisleft, boxy)
+	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
+
+	boxinsertion("TextBox SRV", "", lbl_anchor, anchor, 'cc', boxdims, "center", 140, "srv",  txt=SMALLTXT5)
 
 	return sc
 
 
-def test_X(capsys):
+def test_TextBoxMultilineShapesSmall(capsys):
 	with capsys.disabled():
 		
-		sc = genTxBoxParagraph(False, "left", capsys)
+		sc = genTxBoxParagraph(False, '12pt', capsys)
 
-		with open('outtest/test_X.svg', 'w') as fl:
+		fname = "outtest/test_TextBoxMultilineShapesSmall"
+		with open(fname+".svg", 'w') as fl:
 			fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
-		cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to="outtest/test_X.png")
+		cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to=fname+".png")
+
+def test_TextBoxMultilineShapesSmallYI(capsys):
+	with capsys.disabled():
+		
+		sc = genTxBoxParagraph(False, '12pt', capsys)
+
+		fname = "outtest/test_TextBoxMultilineShapesSmallYI"
+		with open(fname+".svg", 'w') as fl:
+			fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+
+		cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to=fname+".png")
+
+def test_TextBoxMultilineShapesNormal(capsys):
+	with capsys.disabled():
+		
+		sc = genTxBoxParagraph(False, '16pt', capsys)
+
+		fname = "outtest/test_TextBoxMultilineShapesNormal"
+		with open(fname+".svg", 'w') as fl:
+			fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+
+		cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to=fname+".png")
+
+def test_TextBoxMultilineShapesNormalYI(capsys):
+	with capsys.disabled():
+		
+		sc = genTxBoxParagraph(False, '16pt', capsys)
+
+		fname = "outtest/test_TextBoxMultilineShapesNormalYI"
+		with open(fname+".svg", 'w') as fl:
+			fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+
+		cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to=fname+".png")

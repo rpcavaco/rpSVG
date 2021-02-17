@@ -14,6 +14,8 @@ MINCOORD = -MAXCOORD
 MINDELTA = 0.001
 NANODELTA = 0.000001
 
+DONTYINVERT_CHILDREN = ["symbol"]
+
 class ValueWithUnitsError(RuntimeError):
 	def __init__(self, p_val) -> None:
 		super().__init__()

@@ -1,5 +1,5 @@
 
-from rpcbSVG.Structs import Re
+from rpcbSVG.Structs import Re, VBox
 from rpcbSVG.SVGStyleText import Sty
 from typing import Optional, Union
 from math import cos, radians, sin, sqrt, pow
@@ -67,7 +67,7 @@ class Diamond(AnalyticalPath):
 			self.addCmd(pL(0,0))
 			self.addCmd(pClose())
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if not self._parentadded:
 			self._parentadded = True
 		else:
@@ -83,7 +83,7 @@ class Cross(AnalyticalPath):
 	def getComment(self):
 		return f"Cross symbol, dims:{self.dims}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if not self._parentadded:
 			self._parentadded = True
 		else:
@@ -108,7 +108,7 @@ class XSymb(AnalyticalPath):
 	def getComment(self):
 		return f"XSymb symbol, dims:{self.dims}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if not self._parentadded:
 			self._parentadded = True
 		else:
@@ -133,7 +133,7 @@ class XSight(AnalyticalPath):
 	def getComment(self):
 		return f"XSight symbol, dims:{self.dims}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if not self._parentadded:
 			self._parentadded = True
 		else:
@@ -171,7 +171,7 @@ class CrossSight(AnalyticalPath):
 	def getComment(self):
 		return f"CrossSight symbol, dims:{self.dims}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if not self._parentadded:
 			self._parentadded = True
 		else:
@@ -221,7 +221,7 @@ class Asterisk(AnalyticalPath):
 	def getComment(self):
 		return f"Asterisk symbol, width:{self.radius} separation:{self.separation}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if not self._parentadded:
 			self._parentadded = True
 		else:
@@ -260,7 +260,7 @@ class CircAsterisk(Asterisk):
 	def getComment(self):		
 		return f"{super().getComment()}, CircAsterisk, circrad:{self.circrad}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if super().onAfterParentAdding():
 			self.addCmd(pM(-self.circrad,0))
 			self.addCmd(pA(self.circrad, self.circrad, 0, 1, 0, self.circrad, 0))
@@ -283,7 +283,7 @@ class Arrow(AnalyticalPath):
 	def changeFillRule(self, filled=True):
 		self._rhr = filled
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if not self._parentadded:
 			self._parentadded = True
 		else:
@@ -344,7 +344,7 @@ class CircArrow(Arrow):
 	def getComment(self):		
 		return f"{super().getComment()}, CircArrow, coffset:{self.coffset}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		self.changeFillRule(filled=False)
 		if super().onAfterParentAdding():
 
@@ -365,7 +365,7 @@ class SquaredArrow(Arrow):
 	def getComment(self):		
 		return f"{super().getComment()}, CircArrow, coffset:{self.coffset}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		self.changeFillRule(filled=False)
 		if super().onAfterParentAdding():
 
@@ -391,7 +391,7 @@ class Wedge(AnalyticalPath):
 	def changeFillRule(self, filled=True):
 		self._rhr = filled
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if not self._parentadded:
 			self._parentadded = True
 		else:
@@ -437,7 +437,7 @@ class CircWedge(Wedge):
 	def getComment(self):		
 		return f"{super().getComment()}, CircWedge, coffset:{self.coffset}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		self.changeFillRule(filled=False)
 		R = super().onAfterParentAdding()
 		if R < 0:
@@ -458,7 +458,7 @@ class Crescent(Symbol):
 	def getComment(self):		
 		return f"Crescent, radius:{self.radius}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if not self._parentadded:
 			self._parentadded = True
 		else:
@@ -494,7 +494,7 @@ class SuspPointCirc(Symbol):
 	def getComment(self):		
 		return f"SuspPointCirc, radius:{self.radius}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if not self._parentadded:
 			self._parentadded = True
 		else:
@@ -535,7 +535,7 @@ class SuspPointSquare(Symbol):
 	def getComment(self):		
 		return f"SuspPointSquare, radius:{self.radius}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if not self._parentadded:
 			self._parentadded = True
 		else:
@@ -576,11 +576,19 @@ class SuspPointTriang(Symbol):
 		super().__init__()
 		self.radius = strictToNumber(p_radius)
 		self.interval = 3
+		self.use_dims = (0,0,0,0)
+
+	def getUseDims(self):
+		return self.use_dims
+
+	def getUseTuple(self, use_x, use_y):
+		x, y , w, h = self.use_dims
+		return (x+use_x, y+use_y, w, h)
 
 	def getComment(self):		
 		return f"SuspPointTriang, radius:{self.radius}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if not self._parentadded:
 			self._parentadded = True
 		else:
@@ -621,6 +629,17 @@ class SuspPointTriang(Symbol):
 		ap2.addCmd(pL(l0,0)) 
 		ap2.refresh()
 
+		offset = 1
+		minx = pl.x-offset
+		maxx = pr.x+offset
+		wid = maxx - minx 
+		miny = pt.y - offset
+		maxy = pl.y + offset
+		hei = maxy-miny
+
+		self.setViewbox(VBox(minx, miny, wid, hei))
+		self.use_dims = (minx, miny, wid, hei)
+
 class Star(AnalyticalPath):
 
 	def __init__(self, p_outradius, p_inoffset, p_nspikes, rot: Optional[Union[float, int]] = 0) -> None:
@@ -634,7 +653,7 @@ class Star(AnalyticalPath):
 	def getComment(self):		
 		return f"Star, radius:{self.radius}, nspikes:{self.nspikes}, rot:{self.rot}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if not self._parentadded:
 			self._parentadded = True
 		else:
@@ -675,7 +694,7 @@ class CircStar(Star):
 	def getComment(self):		
 		return f"{super().getComment()}, CircStar, coffset:{self.coffset}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if super().onAfterParentAdding():
 			rad = self.coffset + self.radius
 			self.addCmd(pM(-rad,0))
@@ -720,7 +739,7 @@ class RegPoly(AnalyticalPath):
 	def changeFillRule(self, filled=True):
 		self._rhr = filled
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if not self._parentadded:
 			self._parentadded = True
 		else:
@@ -740,7 +759,7 @@ class CircRegPoly(RegPoly):
 	def getComment(self):		
 		return f"{super().getComment()}, CircPoly, coffset:{self.coffset}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		self.changeFillRule(filled=False)
 		if super().onAfterParentAdding():
 			rad = self.coffset + self.radius
@@ -761,7 +780,7 @@ class DonutPoly(RegPoly):
 	def getComment(self):		
 		return f"{super().getComment()}, DonutPoly, out-n:{self._out_n}, outrot:{self._outrot}, coffset:{self._coffset}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 		if super().onAfterParentAdding():
 			rad = self._coffset + self.radius
 			if self._out_n < 3:
@@ -781,7 +800,7 @@ class Donut(AnalyticalPath):
 	def getComment(self):		
 		return f"Donut, radius:{self.radius}, offset:{self.offset}"
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 
 		if not self._parentadded:
 			self._parentadded = True
@@ -806,15 +825,22 @@ class Cylinder(Symbol):
 		self.height = strictToNumber(p_height)
 		self.width = strictToNumber(p_width)
 		self.pitch_ratio = strictToNumber(pitch_ratio)
+		self.use_dims = (0,0,0,0)
+
+	def setDims(self, p_width, p_height):
+		self.height = strictToNumber(p_height)
+		self.width = strictToNumber(p_width)
+
+	def getUseDims(self):
+		return self.use_dims
 
 	def getComment(self):		
-		return f"Cylinder, height:{self.height}, radius:{self.width}, pitch_ratio:{self.pitch_ratio}"
+		return f"Cylinder, height:{self.height}, width:{self.width}, pitch_ratio:{self.pitch_ratio}"
 
-	def onAfterParentAdding(self):	
-		if not self._parentadded:
-			self._parentadded = True
-		else:
-		 	return
+	def refresh(self):
+
+		if self.hasEl():
+			self.clear()
 
 		self.addChild(Desc().setText(self.getComment()))
 
@@ -834,6 +860,28 @@ class Cylinder(Symbol):
 			ap2.addCmd(pL(rad,-hh))
 			ap2.addCmd(pA(rad, vrad, 0, 1, 1, -rad, -hh))
 
+		minx = -rad-1
+		wid = 2 * (rad+1)
+		miny = -rad - vrad -1
+		maxy = -miny
+		hei = maxy-miny
+
+		self.setViewbox(VBox(minx, miny, wid, hei))
+		self.use_dims = (minx, miny, wid, hei)
+
+	def onAfterParentAdding(self, defselement=None):	
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
+
+		self.refresh()
+
+	def yinvert(self, p_height: Union[float, int]):
+		print("  yinvert Cyl")
+		self._yinverting = True
+
+
 class Server(Symbol):
 
 	def __init__(self, p_width, p_height, p_depth, rotation=30, projangle=120) -> None:
@@ -844,16 +892,21 @@ class Server(Symbol):
 		self.depth = strictToNumber(p_depth)
 		self.rotation = strictToNumber(rotation)
 		self.projangle = strictToNumber(projangle)
+		self.use_dims = (0,0,0,0)
+
+	def setDims(self, p_width, p_height, depth=None):
+		self.height = strictToNumber(p_height)
+		self.width = strictToNumber(p_width)
+		if not depth is None:
+			self.depth = strictToNumber(depth)
+
+	def getUseDims(self):
+		return self.use_dims
 
 	def getComment(self):		
-		return f"Server, height:{self.height}, radius:{self.width}, depth:{self.depth}, rotation:{self.rotation}"
+		return f"Server, height:{self.height}, width:{self.width}, depth:{self.depth}, rotation:{self.rotation}"
 
-	def onAfterParentAdding(self):	
-
-		if not self._parentadded:
-			self._parentadded = True
-		else:
-		 	return
+	def refresh(self):	
 
 		self.addChild(Desc().setText(self.getComment()))
 
@@ -903,8 +956,28 @@ class Server(Symbol):
 				pt2 = ptAdd(pt1, ptx)
 				ap4.addCmd(pL(*pt2))
 
+	
+		offset = 2
+		minx = pzero_x-lleft-offset
+		maxx = pzero_x+lright+offset
+		wid = maxx - minx
+		maxy = pzero_y + offset
+		miny = pzero_y - self.height - right_deltay - left_deltay - offset
 
+		hei = maxy-miny
 
-		#ap2.addCmd(pL(0, self.height, relative=True))
-		#ap2.addCmd(pClose())
+		self.setViewbox(VBox(minx, miny, wid, hei))
+		self.use_dims = (minx, miny, wid, hei)
 
+	def onAfterParentAdding(self, defselement=None):	
+
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
+
+		self.refresh()
+
+	def yinvert(self, p_height: Union[float, int]):
+		print("  yinvert Server")
+		self._yinverting = True

@@ -10,7 +10,7 @@ from warnings import warn
 from lxml import etree
 
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.Basics import MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, \
+from rpcbSVG.Basics import DONTYINVERT_CHILDREN, MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, \
 	pClose, pH, pL, pM, pV, strictToNumber, transform_def, path_command, \
 	ptCoincidence, removeDecsep, ptEnsureStrings
 from rpcbSVG.Structs import Ci, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Patt, Pl, Pth, RaGra, Re, ReRC, Symb, Tx, TxPth, TxRf, Us, VBox
@@ -29,19 +29,26 @@ SVG_ROOT = """<svg
 DECLARATION_ROOT = """<?xml version="1.0" standalone="no"?>
 {0}""".format(SVG_ROOT)
 
+# childtag is mandatory, parenttag optional
+DBG_FILTER_ADDCHILD = [
+	# {
+	# 	"childtag": "path"
+	# }
+]
+
+
 class TagOutOfDirectUserManipulation(RuntimeError):
 	def __init__(self, p_tag):
 		self.tag = p_tag
 	def __str__(self):
 		return f"Tag '{self.tag}' not to be manipulated by user."
 
-# def renderToFile(svgstr, w, h, filename):
-# 	img = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
-# 	ctx = cairo.Context(img)
-# 	svg = rsvg.Handle(data=svgstr)
-# 	svg.render_cairo(ctx)
-# 	img.write_to_png(filename)
-						
+class TagOutOfDirectUserManipulation(RuntimeError):
+	def __init__(self, p_tag):
+		self.tag = p_tag
+	def __str__(self):
+		return f"Tag '{self.tag}' not to be manipulated by user."
+
 class BaseSVGElem(object):
 
 	NO_XML_EL = "XML Element not created yet. Must add this to SVGContainer to auto create it."
@@ -162,6 +169,8 @@ class BaseSVGElem(object):
 		out = [
 			f"tag={str(self.tag)}"
 		]
+		if hasattr(self, '_parenttag'):
+			out.append(f"parent={getattr(self, '_parenttag')}")
 		if self.hasEl():
 			for x in self.getEl().keys():
 				out.append(f"{x}={self.getEl().get(x)}")
@@ -236,7 +245,7 @@ class BaseSVGElem(object):
 		assert select in (None, "id", "class", "tag")
 		sel = None
 		if select == 'id':
-			assert self.hasId()
+			assert self.hasId(), f"in getSelector, no 'id' found on: {self}"
 			sel = '#' + self.getId()
 		elif select == 'class':
 			assert self.hasClass()
@@ -373,19 +382,22 @@ class BaseSVGElem(object):
 		return tr
 
 	def yinvert(self, p_height: Union[float, int]):
-		self._yinvertdelta = p_height
-		if self.hasStruct():
-			strct = self.getStruct()
-			if hasattr(strct, 'yinvert'):
-				strct.yinvert(p_height)
-				ret = self.updateStructAttrs()
+		if not getattr(self, '_parenttag', '') in DONTYINVERT_CHILDREN:
+			self._yinvertdelta = p_height
+			if self.hasStruct():
+				strct = self.getStruct()
+				if hasattr(strct, 'yinvert'):
+					strct.yinvert(p_height)
+					ret = self.updateStructAttrs()
+				else:
+					ret = self
 			else:
 				ret = self
+			return ret
 		else:
-			ret = self
-		return ret
+		 	return self
 
-	def onAfterParentAdding(self):
+	def onAfterParentAdding(self, defselement=None):
 		"""To be extended, actions to run after being added to parent. 
 		   Extending classes must check self._parentadded state and return immediately if this is True"""
 		# if not self._parentadded:
@@ -405,6 +417,14 @@ class GenericSVGElem(BaseSVGElem):
 		
 		self._noyinvert = noyinvert
 
+		if parent is None:
+			_parent = self
+		else:
+			_parent = parent
+
+		if hasattr(p_child, "_FATTR_forceToDefs") and getattr(p_child, "_FATTR_forceToDefs") and _parent.getTag() != "defs":
+			warn(RuntimeWarning(f"adding _FATTR_forceToDefs child to non-defs GenericSVGElem, parent:{_parent} child:{p_child}"))
+
 		# Comments
 		if hasattr(p_child, 'getComment'):
 			self.getEl().append(etree.Comment(p_child.getComment()))
@@ -423,19 +443,34 @@ class GenericSVGElem(BaseSVGElem):
 				assert self.hasEl()
 				newel = etree.SubElement(parent.getEl(), p_child.tag)
 
+		p_child.setEl(newel)
+		p_child._parenttag = _parent.tag
+		self.content.append(p_child)
+
 		if not self._noyinvert:
 			if not self._yinvertdelta is None and hasattr(p_child, 'yinvert'):
 				p_child.yinvert(self._yinvertdelta)
 
-		p_child.setEl(newel)
-		self.content.append(p_child)
+		do_gen_id = False
+		if hasattr(self, 'genNextId'):
+			if getattr(p_child, '_FATTR_forceIdAutoGeneration', False):
+				do_gen_id = True
+			else:
+				if getattr(_parent, '_FATTR_doSubIdAutoGeneration', True) \
+						and getattr(p_child, '_FATTR_doIdAutoGeneration', True):
+					do_gen_id = True
 
-		if not hasattr(self, "_autoGenerateSubIds") or getattr(self, "_autoGenerateSubIds"):
-			if not hasattr(p_child, '_autoGenerateId') or getattr(p_child, '_autoGenerateId'):		
-				if not p_child.hasId() and hasattr(self, 'genNextId'):
-					idval = self.genNextId()
-					if not idval is None:
-						p_child.setId(p_child.idprefix + str(idval))
+		gotid = False
+		if do_gen_id:
+			idval = self.genNextId()
+			if not idval is None:
+				p_child.setId(p_child.idprefix + str(idval))
+				gotid = True
+
+		for filter in DBG_FILTER_ADDCHILD:
+			if not "parenttag" in filter.keys() or filter["parenttag"] == _parent.tag:
+				if filter["childtag"] == p_child.tag:
+					print(f"GenericSVGElem.addChild {_parent.tag} > {p_child.tag}, gotid here:{gotid}, this has genNextId:{hasattr(self, 'genNextId')}")
 
 		return p_child
 
@@ -457,7 +492,8 @@ class GenericSVGElem(BaseSVGElem):
 		return out
 
 	def yinvert(self, p_height: Union[float, int]):
-		if not self._noyinvert:
+		#print("GenericSVGElem yinvert:", self.tag, self.getId(), getattr(self, '_parenttag', 'NADA'))
+		if not self._noyinvert: # and not getattr(self, '_parenttag', '') in DONTYINVERT_CHILDREN:
 			return super().yinvert(p_height)
 
 class SVGContainer(GenericSVGElem):
@@ -473,7 +509,11 @@ class SVGContainer(GenericSVGElem):
 		self.genIDMethod = p_method
 
 	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None, noyinvert=False) -> BaseSVGElem:
-		if hasattr(self, '_forceNonYInvertChildren') and getattr(self, '_forceNonYInvertChildren'):
+
+		if False and hasattr(p_child, "_FATTR_forceToDefs") and getattr(p_child, "_FATTR_forceToDefs"):
+			raise RuntimeError(f"Aquilo SVGContainer: {p_child}  todefs:{todefs}")
+
+		if hasattr(self, '_FATTR_forceNonYInvertChildren') and getattr(self, '_FATTR_forceNonYInvertChildren'):
 			_noyinvert = True
 		else:
 			_noyinvert = noyinvert
@@ -486,7 +526,14 @@ class SVGContainer(GenericSVGElem):
 		if not self.genIDMethod is None and hasattr(ret, 'setGenIdMethod'):
 			ret.setGenIdMethod(self.genIDMethod)
 
-		ret.onAfterParentAdding()
+		for filter in DBG_FILTER_ADDCHILD:
+			if not "parenttag" in filter.keys() or filter["parenttag"] == self.tag:
+				if filter["childtag"] == p_child.tag:
+					print(f"SVGContainer.addChild {self.tag} > {p_child.tag}, this has genNextId:{hasattr(self, 'genNextId')}")
+
+		ret._parenttag = self.tag
+
+		ret.onAfterParentAdding(defselement=self._defs)
 
 		return ret
 
@@ -557,6 +604,7 @@ class SVGContent(SVGRoot):
 		super().__init__(rect, viewbox=viewbox)
 		self._id_serial = 0
 		self._defs = super().addChild(Defs())
+		self._defs.setGenIdMethod(self.nextIDSerial)
 		self._styleel = self._defs.addChild(Style())
 		self._yinvert = yinvert
 
@@ -588,26 +636,44 @@ class SVGContent(SVGRoot):
 		self._id_serial = self._id_serial + 1
 		return ret
 
-		# self._autoGenerateSubIds = False
-
 	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None, noyinvert=False) -> BaseSVGElem:
+		gotid = False
 		if p_child.tag in self.forbidden_user_tags:
 			raise TagOutOfDirectUserManipulation(p_child.tag)
-		if not noyinvert:
-			if self._yinvert and hasattr(p_child, 'yinvert'):
-				delta = self._calcYInvertDelta()
-				p_child.yinvert(delta)
-		if todefs or (hasattr(p_child, "_forceToDefs") and getattr(p_child, "_forceToDefs")):
+		if todefs or getattr(p_child, "_FATTR_forceToDefs", False):
 			assert not self._defs is None
 			ret = self._defs.addChild(p_child, nsmap=nsmap, noyinvert=noyinvert)
 		else:
 			ret = super().addChild(p_child, nsmap=nsmap, noyinvert=noyinvert)
-		if not ret.hasId():
-			ret.setId(p_child.idprefix + str(self.nextIDSerial()))
 		if isinstance(ret, SVGContainer):
 			ret.setGenIdMethod(self.nextIDSerial)
 
-		ret.onAfterParentAdding()
+		do_gen_id = False
+		if hasattr(self, 'genNextId'):
+			if getattr(p_child, '_FATTR_forceIdAutoGeneration', False):
+				do_gen_id = True
+			else:
+				if getattr(self, '_FATTR_doSubIdAutoGeneration', True) \
+						and getattr(p_child, '_FATTR_doIdAutoGeneration', True):
+					do_gen_id = True
+
+		if do_gen_id and not ret.hasId():
+			ret.setId(p_child.idprefix + str(self.nextIDSerial()))
+			gotid = True
+
+		ret._parenttag = self.tag
+
+		if not noyinvert:
+			if self._yinvert and hasattr(ret, 'yinvert'):
+				delta = self._calcYInvertDelta()
+				ret.yinvert(delta)
+
+		for filter in DBG_FILTER_ADDCHILD:
+			if not "parenttag" in filter.keys() or filter["parenttag"] == self.tag:
+				if filter["childtag"] == ret.tag:
+					print(f"SVGContent.addChild {self.tag} > {ret.tag}, gotid here:{gotid}, this has genNextId:{hasattr(self, 'genNextId')}")
+
+		ret.onAfterParentAdding(defselement=self._defs)
 
 		return ret
 
@@ -662,9 +728,21 @@ class Marker(SVGContainer):
 
 class Symbol(SVGContainer):
 	def __init__(self, *args) -> None:
-		self._forceToDefs = True
-		self._autoGenerateSubIds = False
+		self._FATTR_forceToDefs = True
+		self._FATTR_forceIdAutoGeneration = True
+		self._FATTR_doSubIdAutoGeneration = False
+		self._yinverting = False
 		super().__init__("symbol", struct=Symb(*args))
+
+	def getUseTuple(self, use_x, use_y):
+		x, y , w, h = self.use_dims
+		if self._yinverting:
+			print("getusetuple invert ", self.__class__.__name__)
+			return (x+use_x, use_y-y, w, h)
+		else:
+			print("getusetuple NON invert ", self.__class__.__name__)
+			return (x+use_x, y+use_y, w, h)
+
 
 class Use(BaseSVGElem):
 	def __init__(self, *args) -> None:
@@ -672,18 +750,20 @@ class Use(BaseSVGElem):
 
 class Desc(SVGContainer):
 	def __init__(self) -> None:
-		self._autoGenerateId = False
+		self._FATTR_doIdAutoGeneration = False
 		super().__init__("desc")
 
 class Title(BaseSVGElem):
 	def __init__(self, p_titletext: str) -> None:
-		self._autoGenerateId = False
+		self._FATTR_doIdAutoGeneration = False
 		super().__init__("title")
 		self.dispatchXMLDependentOp(self.setText, args=(p_titletext,))
 
 class Style(BaseSVGElem):
 
 	def __init__(self) -> None:
+		self._FATTR_forceToDefs = True
+		self._FATTR_doIdAutoGeneration = False
 		super().__init__('style')
 		self.stylerules = {}
 
@@ -872,7 +952,9 @@ class AnalyticalPath(Path):
 		self.refresh()
 
 	def yinvert(self, p_height: Union[float, int]):
-		if not self._noyinvert:
+		print("AnalyticalPath yinvert:", self.tag, self.getId(), getattr(self, '_parenttag', 'NADA'))
+		#print("\nAnalyticalPath yinvert:", getattr(self, '_parenttag', 'XXX CCCC XXX'))
+		if not self._noyinvert: # and not getattr(self, '_parenttag', '') in DONTYINVERT_CHILDREN:
 			self._yinvertdelta = p_height
 
 	def __enter__(self):
@@ -905,7 +987,7 @@ class _pointsElement(MarkeableSVGElem):
 		self.updateStructAttrs()
 		return self
 	def yinvert(self, p_height: Union[float, int]):
-		if not self._noyinvert:
+		if not self._noyinvert: # and not getattr(self, '_parenttag', '') in DONTYINVERT_CHILDREN:
 			self._yinvertdelta = p_height
 			if self.hasPoints():
 				warn(UserWarning("points already defined prior to yinvert activation on this object, their y coord won't be changed."))
@@ -1005,7 +1087,7 @@ class TextParagraph(Group):
 			###########################################################################
 			self.tx.addChild(TSpan(0,None,None,self._vsep).setText(row), noyinvert=True)
 
-	def onAfterParentAdding(self):
+	def onAfterParentAdding(self, defselement=None):
 		if not self._parentadded:
 			self._parentadded = True
 		else:

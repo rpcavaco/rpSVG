@@ -314,7 +314,8 @@ def test_GroupDefsTitleDesc():
 	gr1.addChild(Use(Pt(20,12), re.getSel()))
 	re.setStyle(Sty('fill', 'white', 'stroke', 'green', 'stroke-width', '3'))
 
-	assert sc.toString(pretty_print=False) == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="1024" height="1000" viewBox="0 0 1024 1000"><defs/><title id="Tit0">El teste de title, desc, etc ...</title><desc xmlns:mydoc="http://example.org/mydoc" id="Des1"><mydoc:bibtitle>El simpático teste</mydoc:bibtitle><mydoc:descr>Eso es de un teste de puta madre!</mydoc:descr></desc><g id="G2" transform="rotate(45,250,300)"><defs id="Def3"><rect x="200" y="200" width="600" height="400" rx="10" ry="20" id="Rec4" fill="white" stroke="green" stroke-width="3"/></defs><use x="20" y="12" xlink:href="#Rec4" id="Use5"/></g></svg>"""
+	result = sc.toString(pretty_print=False)
+	assert result == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="1024" height="1000" viewBox="0 0 1024 1000"><defs/><title>El teste de title, desc, etc ...</title><desc xmlns:mydoc="http://example.org/mydoc"><mydoc:bibtitle>El simpático teste</mydoc:bibtitle><mydoc:descr>Eso es de un teste de puta madre!</mydoc:descr></desc><g id="G0" transform="rotate(45,250,300)"><defs id="Def1"><rect x="200" y="200" width="600" height="400" rx="10" ry="20" id="Rec2" fill="white" stroke="green" stroke-width="3"/></defs><use x="20" y="12" xlink:href="#Rec2" id="Use3"/></g></svg>""", result
 
 	with open('outtest/test_GroupDefsTitleDesc.svg', 'w') as fl:
 		fl.write(sc.toString(pretty_print=True))

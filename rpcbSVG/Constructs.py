@@ -1,20 +1,20 @@
 
 
-from rpcbSVG.Basics import Trans, fontSizeToVPUnits, toNumberAndUnit
+from rpcbSVG.Basics import Trans, fontSizeToVPUnits, strictToNumber, toNumberAndUnit
 from rpcbSVG.Structs import Ci, Re
-from rpcbSVG.SVGLib import BaseSVGElem, Circle, Group, Rect, RectRC, TextParagraph
-from rpcbSVG.Symbols import Diamond
+from rpcbSVG.SVGLib import BaseSVGElem, Circle, Group, Rect, RectRC, TextParagraph, Use
+from rpcbSVG.Symbols import Cylinder, Diamond, Server
 
 from typing import Optional
 
-VERTICAL_ADJUST = 0.2
+VERTICAL_ADJUST = 0.3
 
 class TextBox(Group):
 
 	def __init__(self, *args, text: Optional[str] = None, paddingh=10, paddingv=10, vsep="1.2em", anchor="lt", hjustify="left", vcenter_fontszpx=None) -> None:
 		"consumes rect args"
 		super().__init__()
-		self._forceNonYInvertChildren = True
+		self._FATTR_forceNonYInvertChildren = True
 		self._re = Re(*args)
 		self.text = text
 		self._padding = (paddingh, paddingv)
@@ -59,6 +59,7 @@ class TextBox(Group):
 			_l = len(self._getTextLines())
 
 		if _l > 0 and not self._vcenter_fontszpx is None and not self._txpara is None:			
+			print(f"\n_l: {_l}")
 			yinverting = not self._yinvertdelta is None
 			boxheight = self._re.getNumeric("height")
 			hbh = boxheight / 2
@@ -68,15 +69,15 @@ class TextBox(Group):
 			hfh = fontheight / 2
 			offsetodd = hfh + head
 
-			# print("lineheight, fontheight, boxheight:", lineheight, fontheight, boxheight)
 			# print("offsetodd, _l:", offsetodd, _l)
 
 			if _l % 2 == 1:
 				vshift = offsetodd + (_l-1) * 0.5  * lineheight
+				#print("  ODD  offsetodd:", offsetodd, "vshift:", vshift, "hbh:", hbh)
 			else:
-				vshift = (_l * 0.5) + (head / 2)
-
-			# print("vshift:", vshift, "hbh:", hbh)
+				vshift = (_l * 0.5 * lineheight) + (head / 2)
+				print("  lineheight, fontheight, boxheight:", lineheight, fontheight, boxheight)
+				print("  EVEN vshift:", vshift, "hbh:", hbh)
 
 			ty = hbh - vshift - (VERTICAL_ADJUST * fontheight)
 			transf = self._txpara.getTransformN(0)
@@ -92,7 +93,7 @@ class TextBox(Group):
 			self._adjustTextVertical()
 		return self
 
-	def onAfterParentAdding(self):	
+	def onAfterParentAdding(self, defselement=None):	
 
 		if not self._parentadded:
 			self._parentadded = True
@@ -178,8 +179,26 @@ class TextBox(Group):
 		elif isinstance(self._shape, Circle):
 			radius = max(width, height) / 2.0
 			self._shape.setStruct(Ci(*diamond_pt, radius))
+		elif isinstance(self._shape, Cylinder):
+			self._shape.setDims(width, height)
+		elif isinstance(self._shape, Server):
+			w0 = strictToNumber(width)
+			w = 0.3 * w0
+			d = 0.6 * w0
+			h = 1.0 * strictToNumber(height)
+			self._shape.setDims(w, h, depth=d)
 
-		self.addChild(self._shape)
+		# Symbols (added to DESC)
+		if isinstance(self._shape, Cylinder):
+			assert not defselement is None
+			symb = defselement.addChild(self._shape)
+			self.addChild(Use(*diamond_pt, None, None, symb.getSel()))
+		elif isinstance(self._shape, Server):
+			assert not defselement is None
+			symb = defselement.addChild(self._shape)
+			self.addChild(Use(*diamond_pt, None, None, symb.getSel()))
+		else:
+			self.addChild(self._shape)
 
 		self._txpara = self.addChild(TextParagraph(tx, ty, textrows, vsep=self._vsep, justify=self._hjustify))
 

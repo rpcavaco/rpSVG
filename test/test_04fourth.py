@@ -1,5 +1,8 @@
 
 
+import cairosvg
+
+
 from rpcbSVG.Symbols import Arrow, Asterisk, Cylinder, CircArrow, CircAsterisk, CircRegPoly, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, Donut, DonutPoly, RegPoly, Server, Square, SquaredArrow, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
 
 from rpcbSVG.Basics import GLOBAL_ENV, Pt, circleDividers
@@ -768,7 +771,8 @@ def genSymbols2(yinvert):
 	thisleft = thisleft + hstep
 	this_top = top_row2
 
-	us = sc.addChild(Use(Pt(thisleft,this_top), susppt3.getSel()).setStyle(symbstyle))
+	utup = susppt3.getUseTuple(thisleft, this_top)
+	us = sc.addChild(Use(*utup, susppt3.getSel()).setStyle(symbstyle))
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
@@ -974,6 +978,8 @@ def genSymbols2(yinvert):
 	with open(fname, 'w') as fl:
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
+	cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to=fname.replace(".svg", ".png"))
+
 
 def test_Symbols2():
 
@@ -995,8 +1001,8 @@ def genSymbols3(yinvert):
 	#
 	crsymb_centerMarker = sc.addChild(Cross(10,10), todefs=True, noyinvert=True)
 	#crosssight_centerMarker = sc.addChild(CrossSight(38,38, 10), todefs=True)
-	barrel = sc.addChild(Cylinder(84,58,pitch_ratio=0.3), todefs=True, noyinvert=True)
-	server = sc.addChild(Server(26, 60, 50, rotation=18, projangle=145), todefs=True, noyinvert=True)
+	barrel = sc.addChild(Cylinder(84,58,pitch_ratio=0.3), todefs=True)
+	server = sc.addChild(Server(26, 60, 50, rotation=18, projangle=145), todefs=True)
 	
 
 	#
@@ -1023,7 +1029,7 @@ def genSymbols3(yinvert):
 	sc.addStyleRule(CSSSty('fill', 'red', 'fill-opacity', 0.45, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round', selector='.symbfilldark'))
 	sc.addStyleRule(CSSSty('fill', 'red', 'fill-opacity', 0.3, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round', selector='.symbfillmed'))
 	sc.addStyleRule(CSSSty('fill', 'red', 'fill-opacity', 0.1, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round', selector='.symbfilllight'))
-	sc.addStyleRule(CSSSty('stroke', '#5E5E5E', 'stroke-width', 4, 'stroke-linejoin', 'round', selector='.symbinnerstroke'))
+	sc.addStyleRule(CSSSty('stroke', '#5E5E5E', 'stroke-width', 4, 'stroke-linejoin', 'round', 'stroke-linecap', 'round', selector='.symbinnerstroke'))
 
 
 	def code_height_row1(p_topval):
@@ -1057,13 +1063,14 @@ def genSymbols3(yinvert):
 		top_row4 = top_row1 + 3 * vstep
 
 
-	# -- Triangle -----------------------------------------------------------
+	# -----------------------------------------------------------------------------
 	sc.addComment("Start Cylinder")
 
 	thisleft = left
 	this_top = top_row1
 
-	us = sc.addChild(Use(Pt(thisleft,this_top), barrel.getSel()))
+	utup = barrel.getUseTuple(thisleft, this_top)
+	us = sc.addChild(Use(*utup, barrel.getSel()))
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
@@ -1079,13 +1086,14 @@ def genSymbols3(yinvert):
 	sc.addComment("End Cylinder")
 	# =========================================================================
 
-	# # -- Circled Triangle -----------------------------------------------------------
+	# # --...........-----------------------------------------------------------
 	sc.addComment("Start Server")
 
 	thisleft = thisleft + hstep
 	this_top = top_row1
 
-	us = sc.addChild(Use(Pt(thisleft,this_top), server.getSel()))
+	utup = server.getUseTuple(thisleft, this_top)
+	us = sc.addChild(Use(*utup, server.getSel()))
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
@@ -1108,10 +1116,13 @@ def genSymbols3(yinvert):
 		fname = 'outtest/test_Symbols3.svg'
 
 
+
 	with open(fname, 'w') as fl:
 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
 
-def test_Symbols2(capsys):
+	cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to=fname.replace(".svg", ".png"))
+
+def test_Symbols3(capsys):
 
 	with capsys.disabled():
 		genSymbols3(False)
