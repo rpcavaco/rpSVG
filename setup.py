@@ -21,4 +21,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
+    install_requires=[
+		'lxml>=4.4.1',
+		'cairosvg>=2.5.1'
+	]
 )
