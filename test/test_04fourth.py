@@ -1,6 +1,8 @@
 
+import inspect
+from test.testing import genFiles
 
-import cairosvg
+import cairosvg, pytest
 
 
 from rpcbSVG.Symbols import Arrow, Asterisk, Cylinder, CircArrow, CircAsterisk, CircRegPoly, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, Donut, DonutPoly, RegPoly, Server, Square, SquaredArrow, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
@@ -10,7 +12,7 @@ from rpcbSVG.SVGStyleText import CSSSty, Sty
 from rpcbSVG.SVGLib import Re, SVGContent, Text, Title, Use
 
 
-def test_Symbols1():
+def test_04Symbols1():
 
 	# Coordinates rounded to 1 dec.place
 	GLOBAL_ENV["ROUND"]["places"] = 2
@@ -968,20 +970,15 @@ def genSymbols2(yinvert):
 	sc.addComment("End Circled Octagon")
 	# =========================================================================
 
-
 	if yinvert:
-		fname = 'outtest/test_Symbols2_yinv.svg'
+		tname = 'test_04Symbols2_yinv'
 	else:
-		fname = 'outtest/test_Symbols2.svg'
+		tname = "test_04Symbols2"
 
+	genFiles(tname, sc)
 
-	with open(fname, 'w') as fl:
-		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
-
-	cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to=fname.replace(".svg", ".png"))
-
-
-def test_Symbols2():
+@pytest.mark.symbols
+def test_04Symbols2():
 
 	genSymbols2(False)
 	genSymbols2(True)
@@ -1109,20 +1106,16 @@ def genSymbols3(yinvert):
 	sc.addComment("End Server")
 	# # =========================================================================
 
-
 	if yinvert:
-		fname = 'outtest/test_Symbols3_yinv.svg'
+		tname = 'test_04Symbols3_yinv'
 	else:
-		fname = 'outtest/test_Symbols3.svg'
+		tname = 'test_04Symbols3'
+
+	genFiles(tname, sc)
 
 
-
-	with open(fname, 'w') as fl:
-		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
-
-	cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to=fname.replace(".svg", ".png"))
-
-def test_Symbols3(capsys):
+@pytest.mark.symbols
+def test_04Symbols3(capsys):
 
 	with capsys.disabled():
 		genSymbols3(False)

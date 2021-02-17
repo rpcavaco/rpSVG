@@ -1,4 +1,5 @@
-import pytest, re, json
+from test.testing import genFiles
+import pytest, re, inspect
 
 from rpcbSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY, pA, pC, pClose, pH, pM, pL, WrongValueTransformDef, pQ, pS, pT, pV
 from rpcbSVG.SVGLib import Desc, Group, Polygon, Re, SVGContent, Circle, Rect, RectRC, Title, Use, Path, AnalyticalPath, Polyline
@@ -7,7 +8,7 @@ from rpcbSVG.SVGStyleText import Sty, CSSSty
 # from lxml import etree
 
 # with capsys.disabled():
-def test_Use_RemoveChange():
+def test_02Use_RemoveChange():
 
 	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
 	#sc = SVGContent(Re(10, 10, 600, 400, "px"), viewbox=VBox1280x1024())
@@ -39,7 +40,7 @@ def test_Use_RemoveChange():
 
 	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"> <defs> <circle cx="20" cy="30" r="60" id="Cir0" class="batatas"/> </defs> <use x="250" y="140" xlink:href="#Cir0" id="Use1" fill="none" stroke="blue" stroke-width="20"/> </svg> """
 
-def test_TransformDefinitions():
+def test_02TransformDefinitions():
 
 	with pytest.raises(TypeError):
 		mt = Mat()
@@ -78,7 +79,7 @@ def test_TransformDefinitions():
 	sk = SkewY(2,36,36)
 	assert sk.get() == "skewY(2)"
 
-def test_Transform():
+def test_02Transform():
 
 	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
 	r = sc.addChild(Rect(200,200,300,400))
@@ -98,7 +99,7 @@ def test_Transform():
 		with pytest.raises(WrongValueTransformDef):		
 			tr_list[1].setvalue("tL", 150)
 
-def test_RoundRect():
+def test_02RoundRect():
 
 	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
 	r = sc.addChild(RectRC(200,200,300,400, 10, 10))
@@ -107,7 +108,7 @@ def test_RoundRect():
 
 	assert sc.toString(pretty_print=False) == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"><defs/><rect x="200" y="200" width="300" height="400" rx="10" ry="10" id="Rec0" transform="rotate(45,250,300) translate(100,0)"/></svg>"""
 
-def test_JSON():
+def test_02JSON():
 
 	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
 	c = sc.addChild(Circle(20, 30, 60), todefs=True)
@@ -119,10 +120,7 @@ def test_JSON():
 
 	assert sc.toJSON() == {"tag": "svg", "attribs": {"x": "0", "y": "0", "width": "100%", "height": "100%", "viewBox": "0 0 1000 1000"}, "content": [{"tag": "defs", "attribs": {}, "content": [{"tag": "style", "attribs": {}}, {"tag": "circle", "attribs": {"cx": "20", "cy": "30", "r": "60", "id": "Cir0", "class": "batatas"}}]}, {"tag": "use", "attribs": {"x": "250", "y": "140", "{http://www.w3.org/1999/xlink}href": "#Cir0", "id": "Use1", "fill": "none", "stroke": "blue", "stroke-width": "10"}}]}
 
-	#with open('outtest/testeZZ.svg', 'w') as fl:
-	#	fl.write(sc.toString(pretty_print=False))
-
-def test_Paths():
+def test_02Paths():
 
 	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
 	sc.addStyleRule(CSSSty('fill', 'red', 'stroke', 'green', selector='path'))
@@ -150,8 +148,7 @@ def test_Paths():
 
 	assert condens == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="100%" height="100%" viewBox="0 0 1000 1000"><defs><style type="text/css"><![CDATA[path { fill: red; stroke: green; }]]></style></defs><path d="M10 12" id="Pat0"/><path d="M120 240" id="Pat1"/></svg>"""
 
-
-def test_PathCommands():
+def test_02PathCommands():
 
 	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
 	sc.addStyleRule(CSSSty('fill', 'none', 'stroke', 'green', 'stroke-width', '10', selector='.cambase'))
@@ -233,10 +230,9 @@ def test_PathCommands():
 	ap2.addCmd(pL(*pts[12]))
 	ap2.refresh()
 
-	with open('outtest/test_PathCommands.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True))
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
-def test_PolylinePath():
+def test_02PolylinePath():
 
 	sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
 	sc.addStyleRule(CSSSty('fill', 'none', 'stroke', 'green', 'stroke-width', '10', selector='.cambase'))
@@ -263,10 +259,9 @@ def test_PolylinePath():
 	for pt in pts:
 		gr1.addChild(Circle(*pt,10))
 
-	with open('outtest/test_PolylinePath.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True))
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
-def test_PolylinePolygon():
+def test_02PolylinePolygon():
 
 	sc = SVGContent(Re(0,0,1024,1000)).setIdentityViewbox()
 	sc.addStyleRule(CSSSty('fill', 'darksalmon', 'fill-opacity', 0.6, 'stroke', 'darkmagenta', 'stroke-width', 2, selector='polygon'))
@@ -297,10 +292,9 @@ def test_PolylinePolygon():
 	plg = gr2.addChild(Polyline())
 	plg.addPList(pts[1:-1])
 
-	with open('outtest/test_PolylinePoligon.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True))
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
-def test_GroupDefsTitleDesc():
+def test_02GroupDefsTitleDesc():
 
 	sc = SVGContent(Re(0,0,1024,1000)).setIdentityViewbox()
 	sc.addChild(Title("El teste de title, desc, etc ..."))
@@ -317,17 +311,6 @@ def test_GroupDefsTitleDesc():
 	result = sc.toString(pretty_print=False)
 	assert result == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="1024" height="1000" viewBox="0 0 1024 1000"><defs/><title>El teste de title, desc, etc ...</title><desc xmlns:mydoc="http://example.org/mydoc"><mydoc:bibtitle>El simpático teste</mydoc:bibtitle><mydoc:descr>Eso es de un teste de puta madre!</mydoc:descr></desc><g id="G0" transform="rotate(45,250,300)"><defs id="Def1"><rect x="200" y="200" width="600" height="400" rx="10" ry="20" id="Rec2" fill="white" stroke="green" stroke-width="3"/></defs><use x="20" y="12" xlink:href="#Rec2" id="Use3"/></g></svg>""", result
 
-	with open('outtest/test_GroupDefsTitleDesc.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True))
-
-
-
-
-	# with capsys.disabled():
-	# 	print("\n>>>>>>>>>>")
-	# 	print("\n<<<<<<<<<<")
-
-	# with capsys.disabled():
-	# 	print(condens)
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
 

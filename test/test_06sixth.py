@@ -1,6 +1,10 @@
 
 
 
+import inspect
+
+import pytest
+from test.testing import genFiles
 import cairosvg
 
 from rpcbSVG.Symbols import Cross, Cylinder, Diamond, Server, XSight
@@ -547,47 +551,32 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 
 	return sc
 
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
-def test_TextBoxMultilineShapesSmall(capsys):
+@pytest.mark.textbox
+def test_06TextBoxMultilineShapesSmall(capsys):
 	with capsys.disabled():
 		
 		sc = genTxBoxParagraph(False, '12pt', capsys)
+		genFiles(inspect.currentframe().f_code.co_name, sc)
 
-		fname = "outtest/test_TextBoxMultilineShapesSmall"
-		with open(fname+".svg", 'w') as fl:
-			fl.write(sc.toString(pretty_print=True, inc_declaration=True))
-
-		cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to=fname+".png")
-
-def test_TextBoxMultilineShapesSmallYI(capsys):
+@pytest.mark.textbox
+def test_06TextBoxMultilineShapesSmallYI(capsys):
 	with capsys.disabled():
 		
 		sc = genTxBoxParagraph(False, '12pt', capsys)
+		genFiles(inspect.currentframe().f_code.co_name, sc)
 
-		fname = "outtest/test_TextBoxMultilineShapesSmallYI"
-		with open(fname+".svg", 'w') as fl:
-			fl.write(sc.toString(pretty_print=True, inc_declaration=True))
-
-		cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to=fname+".png")
-
-def test_TextBoxMultilineShapesNormal(capsys):
+@pytest.mark.textbox
+def test_06TextBoxMultilineShapesNormal(capsys):
 	with capsys.disabled():
 		
 		sc = genTxBoxParagraph(False, '16pt', capsys)
+		genFiles(inspect.currentframe().f_code.co_name, sc)
 
-		fname = "outtest/test_TextBoxMultilineShapesNormal"
-		with open(fname+".svg", 'w') as fl:
-			fl.write(sc.toString(pretty_print=True, inc_declaration=True))
-
-		cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to=fname+".png")
-
-def test_TextBoxMultilineShapesNormalYI(capsys):
+@pytest.mark.textbox
+def test_06TextBoxMultilineShapesNormalYI(capsys):
 	with capsys.disabled():
 		
 		sc = genTxBoxParagraph(False, '16pt', capsys)
-
-		fname = "outtest/test_TextBoxMultilineShapesNormalYI"
-		with open(fname+".svg", 'w') as fl:
-			fl.write(sc.toString(pretty_print=True, inc_declaration=True))
-
-		cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to=fname+".png")
+		genFiles(inspect.currentframe().f_code.co_name, sc)

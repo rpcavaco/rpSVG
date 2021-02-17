@@ -1,4 +1,8 @@
 
+import inspect
+
+import pytest
+from test.testing import genFiles
 import cairosvg
 
 from rpcbSVG.Symbols import XSight
@@ -254,58 +258,40 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 
 	return sc
 
-def test_TxBoxParagraph_YInvert():
+@pytest.mark.textbox
+def test_05TxBoxParagraph_YInvert():
 
 	sc = genTxBoxParagraph(True, "left", None)
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
-	with open('outtest/test_TxBoxParagraph_YInvert.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
-
-	cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to="outtest/test_TxBoxParagraph_YInvert.png")
-
-def test_TxBoxParagraph():
+@pytest.mark.textbox
+def test_05TxBoxParagraph():
 
 	sc = genTxBoxParagraph(False, "left", None)
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
-	with open('outtest/test_TxBoxParagraph.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
-
-	cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to="outtest/test_TxBoxParagraph.png")
-
-def test_TxBoxParagraph_YInvertCenterJust():
+@pytest.mark.textbox
+def test_05TxBoxParagraph_YInvertCenterJust():
 
 	sc = genTxBoxParagraph(True, "center", None)
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
-	with open('outtest/test_TxBoxParagraph_YInvertCenterJust.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
-
-	cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to="outtest/test_TxBoxParagraph_YInvertCenterJust.png")
-
-def test_TxBoxParagraph_CenterJust():
+@pytest.mark.textbox
+def test_05TxBoxParagraph_CenterJust():
 
 	sc = genTxBoxParagraph(False, "center", None)
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
-	with open('outtest/test_TxBoxParagraph_CenterJust.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
-
-	cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to="outtest/test_TxBoxParagraph_CenterJust.png")
-
-def test_TxBoxParagraph_YInvertRightJust():
+@pytest.mark.textbox
+def test_05TxBoxParagraph_YInvertRightJust():
 
 	sc = genTxBoxParagraph(True, "right", None)
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
-	with open('outtest/test_TxBoxParagraph_YInvertRightJust.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
-
-	cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to="outtest/test_TxBoxParagraph_YInvertRightJust.png")
-
-def test_TxBoxParagraph_RightJust():
+@pytest.mark.textbox
+def test_05TxBoxParagraph_RightJust():
 
 	sc = genTxBoxParagraph(False, "right", None)
-
-	with open('outtest/test_TxBoxParagraph_RightJust.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
-
-	cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to="outtest/test_TxBoxParagraph_RightJust.png")
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
 

@@ -1,6 +1,12 @@
 
+
+
 import cairosvg
-import pytest
+import pytest, inspect
+
+from os.path import exists, join as path_join
+
+from test.testing import genFiles
 
 from rpcbSVG.Structs import VBox
 from rpcbSVG.Basics import Pt, Rotate, pA, pC, pQ, pS, pT, polar2rectDegs, ptAdd, ptGetAngle
@@ -9,7 +15,7 @@ from rpcbSVG.SVGLib import AnalyticalPath, Circle, Ellipse, GradientStop, Group,
 
 #	with capsys.disabled():
 
-def test_Marker():
+def test_03Marker():
 
 	def pttrans(p_pt, p_ang):
 		return (p_pt, ptAdd(p_pt, polar2rectDegs(p_ang, 30)))
@@ -70,11 +76,9 @@ def test_Marker():
 	sc.addChild(Line( *pttrans(pts[0], ang1) ).setClass('aids'))
 	sc.addChild(Line( *pttrans(pts[5], ang2) ).setClass('aids'))
 
-	with open('outtest/test_Marker.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True))
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
-
-def test_Gradient():
+def test_03Gradient():
 
 	sc = SVGContent(Re(0,0,1600,1000)).setIdentityViewbox()
 
@@ -100,10 +104,9 @@ def test_Gradient():
 	
 	sc.addChild(RectRC(850,500,600,400,10,20)).setStyle(Sty('fill', 'url(#the_rgrad)', 'stroke', 'black'))
 
-	with open('outtest/test_Gradient.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
-def test_Text():
+def test_03Text():
 
 	plist= [
 		Pt(100,900),
@@ -160,24 +163,20 @@ def test_Text():
 	us = sc.addChild(Use().setStyle(Sty('stroke', 'grey', 'stroke-width', 2, 'stroke-linejoin', 'round')))
 	us.setHREFAttr(ap.getSel())
 
-	with open('outtest/test_Text.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
-	cairosvg.svg2png(bytestring=sc.toBytes(pretty_print=True, inc_declaration=True), write_to="outtest/test_Text.png")
-
-def test_Image():
+def test_03Image():
 
 	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
 
-	sc.addChild(Image(100,100,1400,916,"test_image.jpg"))
+	path = path_join("test", "assets", "test_image.jpg")
+	assert exists(path)
 
-	with open('outtest/test_Image.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+	sc.addChild(Image(100,100,1400,916,path))
 
-	#with capsys.disabled():
-	#	print("\nmr:", mr)s
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
-def test_YInvert():
+def test_03YInvert():
 
 	sc = SVGContent(Re(0,0,1600,1200), yinvert=True).setViewbox(VBox(0,40,1600,1200))
 	sc.addStyleRule(CSSSty('stroke', '#E1E1E8', 'stroke-width', 2, selector='.aid1'))
@@ -305,8 +304,8 @@ def test_YInvert():
 	sc.addChild(Line(650,300,740,300).setClass('aid2'))
 	sc.addChild(Line(740,210,740,300).setClass('aid2'))
 
-	# sc.addChild(Image(1080,60,840, 574,"test_image.jpg"))
-	sc.addChild(Image(1080,60, 420, 287,"test_image.jpg"))
+	path = path_join("test", "assets", "test_image.jpg")
+	sc.addChild(Image(1080,60, 420, 287,path))
 
 	sc.addChild(Text(1020, 60)).\
 		setStyle(Sty('fill', 'black', 'font-size', 20, 'font-family', 'Helvetica')).\
@@ -318,10 +317,9 @@ def test_YInvert():
 	us = sc.addChild(Use().setStyle(Sty('stroke', 'white', 'stroke-width', 2, 'stroke-linejoin', 'round')))
 	us.setHREFAttr(ap.getSel())
 
-	with open('outtest/test_YInvert.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
-def test_Comment():
+def test_03Comment():
 
 	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
 
@@ -333,7 +331,7 @@ def test_Comment():
 
 	assert sc.toString(pretty_print=False) == """<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="1600" height="1200" viewBox="0 0 1600 1200"><defs/><rect x="0" y="0" width="1600" height="1200" id="Rec0" fill="navy" stroke="black"/><!--Just a simple comment--><line x1="100" y1="100" x2="1500" y2="1100" fill="none" stroke="#494949" stroke-width="8" id="Lin1"/></svg>"""
 
-def test_Pattern():
+def test_03Pattern():
 
 	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
 	sc.setBackground(Sty('fill', '#E7E8EA'))
@@ -357,6 +355,5 @@ def test_Pattern():
 	sc.addChild(Rect(300,250,1000,800).setStyle(Sty('fill', 'white')))
 	sc.addChild(Rect(300,250,1000,800).setStyle(Sty('stroke', 'black', 'fill', patt.getSelector(funciri=True))))
 
-	with open('outtest/test_Pattern.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
