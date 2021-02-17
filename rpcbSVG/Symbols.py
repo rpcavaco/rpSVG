@@ -484,12 +484,29 @@ class Crescent(Symbol):
 		ap2.addCmd(pA(self.radius, self.radius, 0, 0, 1, *p2))
 		ap2.refresh()
 
+		offset = 2
+		minx = -self.radius-offset
+		maxx = self.radius+offset
+		wid = maxx - minx
+		miny = minx
+		hei = wid
+
+		self.setViewbox(VBox(minx, miny, wid, hei))
+		self.use_dims = (minx, miny, wid, hei)
+
+	def yinvert(self, p_height: Union[float, int]):
+		self._yinverting = True
+
 class SuspPointCirc(Symbol):
 
 	def __init__(self, p_radius) -> None:
 		
 		super().__init__()
 		self.radius = strictToNumber(p_radius)
+		self.use_dims = (0,0,0,0)
+
+	def getUseDims(self):
+		return self.use_dims
 
 	def getComment(self):		
 		return f"SuspPointCirc, radius:{self.radius}"
@@ -525,12 +542,30 @@ class SuspPointCirc(Symbol):
 		ap2.addCmd(pA(self.radius, self.radius, 0, 0, 1, *p4))
 		ap2.refresh()
 
+		offset = 2
+		minx = p3.x-offset
+		maxx = p1.x+offset
+		wid = maxx - minx
+		miny = p2.y-offset
+		maxy = p4.y+offset
+		hei = maxy-miny
+
+		self.setViewbox(VBox(minx, miny, wid, hei))
+		self.use_dims = (minx, miny, wid, hei)
+
+	def yinvert(self, p_height: Union[float, int]):
+		self._yinverting = True
+
 class SuspPointSquare(Symbol):
 
 	def __init__(self, p_radius) -> None:
 		
 		super().__init__()
 		self.radius = strictToNumber(p_radius)
+		self.use_dims = (0,0,0,0)
+
+	def getUseDims(self):
+		return self.use_dims
 
 	def getComment(self):		
 		return f"SuspPointSquare, radius:{self.radius}"
@@ -569,6 +604,20 @@ class SuspPointSquare(Symbol):
 		ap2.addCmd(pL(p1.x, 0))
 		ap2.refresh()
 
+		offset = 2
+		minx = p2.x-offset
+		maxx = p1.x+offset
+		wid = maxx - minx
+		miny = p1.y-offset
+		maxy = p2.y+offset
+		hei = maxy-miny
+
+		self.setViewbox(VBox(minx, miny, wid, hei))
+		self.use_dims = (minx, miny, wid, hei)
+
+	def yinvert(self, p_height: Union[float, int]):
+		self._yinverting = True
+
 class SuspPointTriang(Symbol):
 
 	def __init__(self, p_radius) -> None:
@@ -580,10 +629,6 @@ class SuspPointTriang(Symbol):
 
 	def getUseDims(self):
 		return self.use_dims
-
-	def getUseTuple(self, use_x, use_y):
-		x, y , w, h = self.use_dims
-		return (x+use_x, y+use_y, w, h)
 
 	def getComment(self):		
 		return f"SuspPointTriang, radius:{self.radius}"
@@ -639,6 +684,9 @@ class SuspPointTriang(Symbol):
 
 		self.setViewbox(VBox(minx, miny, wid, hei))
 		self.use_dims = (minx, miny, wid, hei)
+
+	def yinvert(self, p_height: Union[float, int]):
+		self._yinverting = True
 
 class Star(AnalyticalPath):
 
@@ -874,13 +922,10 @@ class Cylinder(Symbol):
 			self._parentadded = True
 		else:
 		 	return
-
 		self.refresh()
 
 	def yinvert(self, p_height: Union[float, int]):
-		print("  yinvert Cyl")
 		self._yinverting = True
-
 
 class Server(Symbol):
 
@@ -975,9 +1020,7 @@ class Server(Symbol):
 			self._parentadded = True
 		else:
 		 	return
-
 		self.refresh()
 
 	def yinvert(self, p_height: Union[float, int]):
-		print("  yinvert Server")
 		self._yinverting = True

@@ -3,7 +3,7 @@ from typing import Optional, Union
 from math import atan, degrees
 from re import split as re_split
 
-from rpcbSVG.Basics import MINDELTA, Pt, Env, XLINK_NAMESPACE, _attrs_struct, _withunits_struct, _kwarg_attrs_struct, hashed_href, isNumeric, removeDecsep, strictToNumber, toNumberAndUnit
+from rpcbSVG.Basics import MINDELTA, Pt, Env, XLINK_NAMESPACE, _attrs_struct, _withunits_struct, _kwarg_attrs_struct, glRd, hashed_href, isNumeric, removeDecsep, strictToNumber, toNumberAndUnit
 
 
 class Re(_withunits_struct):
@@ -22,7 +22,7 @@ class Re(_withunits_struct):
 		self.setUnits('%')
 		return self
 	def getValues(self):
-		return [x[0] for x in [toNumberAndUnit(v) for v in self.getall()]]
+		return [glRd(x[0]) for x in [toNumberAndUnit(v) for v in self.getall()]]
 	def isEmpty(self):
 		return [x[0] for x in [toNumberAndUnit(v) for v in self.getall()]] == [0,0,0,0]
 	def yinvert(self, p_contentheight: Union[float, int]):
@@ -127,13 +127,19 @@ class Us(_withunits_struct):
 		if l != 5:
 			if l == 2:
 				if isinstance(args[0], Pt) and isinstance(args[1], str):
-					argslist = (args[0].x, args[0].y, None, None, args[1])
+					argslist = (glRd(args[0].x), glRd(args[0].y), None, None, args[1])
 				elif isinstance(args[0], Re) and isinstance(args[1], str):
-					argslist = (args[0].x, args[0].y, args[0].width, args[0].height, args[1])
+					argslist = (glRd(args[0].x), glRd(args[0].y), glRd(args[0].width), glRd(args[0].height), args[1])
 				else:
 					raise TypeError(f"'Us' element was given 2 arguments with types ({str(type(args[0]))},{str(type(args[1]))}), expected Pt+str or Re+str")
 		if argslist is None:
-			argslist = args
+			if l >= 4:
+				argslist = [glRd(x) for x in args[:4]]
+				if l > 4:
+					argslist.extend(args[4:])
+			else:
+				argslist = args
+			# argslist = [glRd(x) for x in args if isNumeric(x)]
 		super().__init__(*argslist, defaults=None)
 	def yinvert(self, p_contentheight: Union[float, int]):
 		if hasattr(self, 'y'):

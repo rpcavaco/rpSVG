@@ -54,7 +54,7 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	sc.addStyleRule(CSSSty('fill', 'red', 'fill-opacity', 0.45, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round', selector='.symbfilldark'))
 	sc.addStyleRule(CSSSty('fill', 'red', 'fill-opacity', 0.3, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round', selector='.symbfillmed'))
 	sc.addStyleRule(CSSSty('fill', 'red', 'fill-opacity', 0.1, 'stroke', 'red', 'stroke-width', 3, 'stroke-linejoin', 'round', selector='.symbfilllight'))
-	sc.addStyleRule(CSSSty('stroke', '#5E5E5E', 'stroke-width', 4, 'stroke-linejoin', 'round', selector='.symbinnerstroke'))
+	sc.addStyleRule(CSSSty('stroke', '#8B8B8B', 'stroke-width', 4, 'stroke-linejoin', 'round', selector='.symbinnerstroke'))
 
 	# SYMBOL DEFINITIONS ------------------------------------------------------
 	#
@@ -90,25 +90,19 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	hstep = 280
 	vstep = 230
 
-	top_row1 = 260
-	title_height = 1060
-
-	top_row2 = top_row1 + vstep
-	top_row3 = top_row1 + 2 * vstep
-	top_row4 = top_row1 + 3 * vstep
-
 	if sc.getYInvertFlag():
 		tb1Y = 1000
 	else:
 		tb1Y = 200
+		
+	vstep = 190
 
 	left = 140
-	vstep = 190
 	hstep = 270
 	boxwidth = 170
 	boxheight = 90
 	boxdims = (boxwidth, boxheight)
-	label_offset = -10
+	label_offset = 5
 	left_offset = 10
 	vert_offset = 90
 
@@ -116,7 +110,7 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 		if p_sc.getYInvertFlag():
 			lbly = p_top + p_lbloffset
 		else:
-			lbly = p_top - p_lbloffset
+		 	lbly = p_top - p_lbloffset
 		return lbly
 
 	def boxinsertion(p_nome_interno, p_label, p_lblanchor, p_anchor, p_tbanchoring, p_boxdims, p_text_just, p_paddingv, p_shape, txt=None):
@@ -142,7 +136,7 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 		elif p_shape == "cyl":
 			tb.setBaseShape(Cylinder(0,0,pitch_ratio=0.3))
 		elif p_shape == "srv":
-		 	tb.setBaseShape(Server(0,0,0, rotation=18, projangle=145))
+			tb.setBaseShape(Server(0,0,0, rotation=18, projangle=145))
 
 		if not txt is None:
 			sc.addChild(tb)
@@ -154,25 +148,26 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = left + left_offset + boxwidth/2
-	top = tb1Y
-	boxy = top
 	rc_boxdims = (boxdims[0], 1.5*boxdims[1])
 
+	top = 0
+	init_offset_vert = 0
+
 	if sc.getYInvertFlag():
+		top = tb1Y -init_offset_vert
 		boxy = top - vert_offset
 	else:
+		top = tb1Y + init_offset_vert
 		boxy = top + vert_offset
 
 	anchor = Pt(thisleft, boxy)
 	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
 
-	boxinsertion("TextBox RC", "Rounded corners", lbl_anchor, anchor, 'cc', boxdims, "center", 88, "rc",  txt=SMALLTXT1)
+	boxinsertion("TextBox RC", "Rounded corner", lbl_anchor, anchor, 'cc', boxdims, "center", 88, "rc",  txt=SMALLTXT1)
 
-	# # =========================================================================
+	# # # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -183,11 +178,9 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 
 	boxinsertion("TextBox CircC", "Circular", lbl_anchor, anchor, 'cc', (boxdims[1], boxdims[1]), "center", 30, "circ",  txt=SMALLTXT1)
 
-	# # =========================================================================
+	# # # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -198,11 +191,9 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 
 	boxinsertion("TextBox Diamond", "Diamond", lbl_anchor, anchor, 'cc',  (boxdims[0], boxdims[1]), "center", 140, "dia",  txt=SMALLTXT1)
 
-	# # =========================================================================
+	# # # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -213,11 +204,9 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 
 	boxinsertion("TextBox DB", "Database", lbl_anchor, anchor, 'cc', (boxdims[0], 0.8*boxdims[1]), "center", 140, "cyl",  txt=SMALLTXT1)
 
-	# # =========================================================================
+	# # # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -233,14 +222,12 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 	# # =========================================================================
 
-
 	thisleft = left + left_offset + boxwidth/2
-	top = top + vstep - 40
-	boxy = top
-
 	if sc.getYInvertFlag():
+		top = top - vstep 
 		boxy = top - vert_offset
 	else:
+		top = top + vstep
 		boxy = top + vert_offset
 
 	anchor = Pt(thisleft, boxy)
@@ -251,8 +238,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -266,8 +251,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -281,8 +264,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -296,8 +277,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -314,14 +293,12 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 	# # =========================================================================
 
-
 	thisleft = left + left_offset + boxwidth/2
-	top = top + vstep
-	boxy = top
-
 	if sc.getYInvertFlag():
+		top = top - vstep 
 		boxy = top - vert_offset
 	else:
+		top = top + vstep
 		boxy = top + vert_offset
 
 	anchor = Pt(thisleft, boxy)
@@ -332,8 +309,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -347,8 +322,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -362,8 +335,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -377,8 +348,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -394,14 +363,12 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 	# # =========================================================================
 
-
 	thisleft = left + left_offset + boxwidth/2
-	top = top + vstep
-	boxy = top
-
 	if sc.getYInvertFlag():
+		top = top - vstep 
 		boxy = top - vert_offset
 	else:
+		top = top + vstep
 		boxy = top + vert_offset
 
 	anchor = Pt(thisleft, boxy)
@@ -412,8 +379,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -427,8 +392,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -442,8 +405,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -457,8 +418,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -474,14 +433,12 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 	# # =========================================================================
 
-
 	thisleft = left + left_offset + boxwidth/2
-	top = top + vstep
-	boxy = top
-
 	if sc.getYInvertFlag():
+		top = top - vstep 
 		boxy = top - vert_offset
 	else:
+		top = top + vstep
 		boxy = top + vert_offset
 
 	anchor = Pt(thisleft, boxy)
@@ -492,8 +449,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -507,8 +462,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -517,13 +470,11 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	anchor = Pt(thisleft, boxy)
 	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
 
-	boxinsertion("TextBox Diamond", "", lbl_anchor, anchor, 'cc', (220,140), "center", 140, "dia",  txt=SMALLTXT5)
+	boxinsertion("TextBox Diamond", "", lbl_anchor, anchor, 'cc', (1.4*boxdims[0], 2.2*boxdims[1]), "center", 140, "dia",  txt=SMALLTXT5)
 
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -537,8 +488,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# # =========================================================================
 
 	thisleft = thisleft + hstep	
-	boxy = top
-
 	if sc.getYInvertFlag():
 		boxy = top - vert_offset
 	else:
@@ -547,36 +496,40 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	anchor = Pt(thisleft, boxy)
 	lbl_anchor = (thisleft,lbly(sc, top, label_offset))
 
-	boxinsertion("TextBox SRV", "", lbl_anchor, anchor, 'cc', boxdims, "center", 140, "srv",  txt=SMALLTXT5)
+	boxinsertion("TextBox SRV", "", lbl_anchor, anchor, 'cc', (1.2*boxdims[0], 1.6*boxdims[1]), "center", 140, "srv",  txt=SMALLTXT5)
 
 	return sc
 
 	genFiles(inspect.currentframe().f_code.co_name, sc)
 
 @pytest.mark.textbox
-def test_06TextBoxMultilineShapesSmall(capsys):
+@pytest.mark.symbols
+def test_06TextBoxMultilineShapesSmall_(capsys):
 	with capsys.disabled():
 		
-		sc = genTxBoxParagraph(False, '12pt', capsys)
+		sc = genTxBoxParagraph(False, '12pt', None)
 		genFiles(inspect.currentframe().f_code.co_name, sc)
 
 @pytest.mark.textbox
+@pytest.mark.symbols
 def test_06TextBoxMultilineShapesSmallYI(capsys):
 	with capsys.disabled():
 		
-		sc = genTxBoxParagraph(False, '12pt', capsys)
+		sc = genTxBoxParagraph(True, '12pt', None)
 		genFiles(inspect.currentframe().f_code.co_name, sc)
 
 @pytest.mark.textbox
-def test_06TextBoxMultilineShapesNormal(capsys):
+@pytest.mark.symbols
+def test_06TextBoxMultilineShapesNormal_(capsys):
 	with capsys.disabled():
 		
-		sc = genTxBoxParagraph(False, '16pt', capsys)
+		sc = genTxBoxParagraph(False, '16pt', None)
 		genFiles(inspect.currentframe().f_code.co_name, sc)
 
 @pytest.mark.textbox
+@pytest.mark.symbols
 def test_06TextBoxMultilineShapesNormalYI(capsys):
 	with capsys.disabled():
 		
-		sc = genTxBoxParagraph(False, '16pt', capsys)
+		sc = genTxBoxParagraph(True, '16pt', None)
 		genFiles(inspect.currentframe().f_code.co_name, sc)

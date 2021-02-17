@@ -10,7 +10,7 @@ from warnings import warn
 from lxml import etree
 
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.Basics import DONTYINVERT_CHILDREN, MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, \
+from rpcbSVG.Basics import MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, glRd, \
 	pClose, pH, pL, pM, pV, strictToNumber, transform_def, path_command, \
 	ptCoincidence, removeDecsep, ptEnsureStrings
 from rpcbSVG.Structs import Ci, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Patt, Pl, Pth, RaGra, Re, ReRC, Symb, Tx, TxPth, TxRf, Us, VBox
@@ -382,20 +382,19 @@ class BaseSVGElem(object):
 		return tr
 
 	def yinvert(self, p_height: Union[float, int]):
-		if not getattr(self, '_parenttag', '') in DONTYINVERT_CHILDREN:
-			self._yinvertdelta = p_height
-			if self.hasStruct():
-				strct = self.getStruct()
-				if hasattr(strct, 'yinvert'):
-					strct.yinvert(p_height)
-					ret = self.updateStructAttrs()
-				else:
-					ret = self
+		self._yinvertdelta = p_height
+		if self.hasStruct():
+			strct = self.getStruct()
+			if hasattr(strct, 'yinvert'):
+				strct.yinvert(p_height)
+				ret = self.updateStructAttrs()
 			else:
 				ret = self
-			return ret
 		else:
-		 	return self
+			ret = self
+		return ret
+		# else:
+		#  	return self
 
 	def onAfterParentAdding(self, defselement=None):
 		"""To be extended, actions to run after being added to parent. 
@@ -415,7 +414,7 @@ class GenericSVGElem(BaseSVGElem):
 
 	def addChild(self, p_child: BaseSVGElem, parent: Optional[Union[etree.Element, BaseSVGElem]]=None, nsmap=None, noyinvert=False):
 		
-		self._noyinvert = noyinvert
+		assert not p_child.hasEl(), f"parent: {self}, child {p_child} already has XML Element"
 
 		if parent is None:
 			_parent = self
@@ -492,8 +491,7 @@ class GenericSVGElem(BaseSVGElem):
 		return out
 
 	def yinvert(self, p_height: Union[float, int]):
-		#print("GenericSVGElem yinvert:", self.tag, self.getId(), getattr(self, '_parenttag', 'NADA'))
-		if not self._noyinvert: # and not getattr(self, '_parenttag', '') in DONTYINVERT_CHILDREN:
+		if not self._noyinvert: 
 			return super().yinvert(p_height)
 
 class SVGContainer(GenericSVGElem):
@@ -517,6 +515,7 @@ class SVGContainer(GenericSVGElem):
 			_noyinvert = True
 		else:
 			_noyinvert = noyinvert
+
 		if todefs:
 			if self._defs is None:
 				self._defs = super().addChild(Defs())
@@ -638,13 +637,16 @@ class SVGContent(SVGRoot):
 
 	def addChild(self, p_child: BaseSVGElem, todefs: Optional[bool] = False, nsmap=None, noyinvert=False) -> BaseSVGElem:
 		gotid = False
+
 		if p_child.tag in self.forbidden_user_tags:
 			raise TagOutOfDirectUserManipulation(p_child.tag)
+
 		if todefs or getattr(p_child, "_FATTR_forceToDefs", False):
 			assert not self._defs is None
 			ret = self._defs.addChild(p_child, nsmap=nsmap, noyinvert=noyinvert)
 		else:
 			ret = super().addChild(p_child, nsmap=nsmap, noyinvert=noyinvert)
+
 		if isinstance(ret, SVGContainer):
 			ret.setGenIdMethod(self.nextIDSerial)
 
@@ -737,12 +739,10 @@ class Symbol(SVGContainer):
 	def getUseTuple(self, use_x, use_y):
 		x, y , w, h = self.use_dims
 		if self._yinverting:
-			print("getusetuple invert ", self.__class__.__name__)
-			return (x+use_x, use_y-y, w, h)
+			ret = (glRd(x+use_x), glRd(use_y-y), glRd(w), glRd(h))
 		else:
-			print("getusetuple NON invert ", self.__class__.__name__)
-			return (x+use_x, y+use_y, w, h)
-
+			ret = (glRd(x+use_x), glRd(y+use_y), glRd(w), glRd(h))
+		return ret
 
 class Use(BaseSVGElem):
 	def __init__(self, *args) -> None:
@@ -952,9 +952,7 @@ class AnalyticalPath(Path):
 		self.refresh()
 
 	def yinvert(self, p_height: Union[float, int]):
-		print("AnalyticalPath yinvert:", self.tag, self.getId(), getattr(self, '_parenttag', 'NADA'))
-		#print("\nAnalyticalPath yinvert:", getattr(self, '_parenttag', 'XXX CCCC XXX'))
-		if not self._noyinvert: # and not getattr(self, '_parenttag', '') in DONTYINVERT_CHILDREN:
+		if not self._noyinvert:
 			self._yinvertdelta = p_height
 
 	def __enter__(self):
@@ -987,7 +985,7 @@ class _pointsElement(MarkeableSVGElem):
 		self.updateStructAttrs()
 		return self
 	def yinvert(self, p_height: Union[float, int]):
-		if not self._noyinvert: # and not getattr(self, '_parenttag', '') in DONTYINVERT_CHILDREN:
+		if not self._noyinvert:
 			self._yinvertdelta = p_height
 			if self.hasPoints():
 				warn(UserWarning("points already defined prior to yinvert activation on this object, their y coord won't be changed."))
@@ -1052,19 +1050,19 @@ class TextParagraph(Group):
 			self._textrows = []
 		self._vsep = vsep
 		self._justify = justify
-		self._txtanchorpt = (x, y)
+		self._txtanchorpt = (glRd(x), glRd(y))
 		self.tx = None
 
 	def setAnchoring(self, x=None, y=None):
 		assert not x is None or not y is None
 		if x is None:
 			if not y is None:
-				self._txtanchorpt[1] = y
+				self._txtanchorpt[1] = glRd(y)
 		else:
 			if y is None:
-				self._txtanchorpt[0] = x
+				self._txtanchorpt[0] = glRd(x)
 			else:
-				self._txtanchorpt = (x, y)
+				self._txtanchorpt = (glRd(x), glRd(y))
 
 	def getComment(self):	
 		return f"TextParagraph justify:{self._justify} pt:{self._txtanchorpt}"

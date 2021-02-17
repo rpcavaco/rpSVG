@@ -381,7 +381,7 @@ def test_04Symbols1():
 	# =========================================================================
 
 
-	# -- Circled Fan -----------------------------------------------------------
+	# ------------- -----------------------------------------------------------
 	sc.addComment("Start Donut")
 
 	thisleft = thisleft + hstep
@@ -524,15 +524,12 @@ def test_04Symbols1():
 	sc.addComment("End Donut Poly")
 	# =========================================================================
 
-
-	with open('outtest/test_Symbols1.svg', 'w') as fl:
-		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
-
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
 def genSymbols2(yinvert):
 
 	# Coordinates rounded to 1 dec.place
-	# GLOBAL_ENV["ROUND"]["places"] = 2
+	GLOBAL_ENV["ROUND"]["places"] = 1
 
 	sc = SVGContent(Re(0,0,1600,1200), yinvert=yinvert).setIdentityViewbox()
 	sc.setBackground(Sty('fill', '#E7E8EA'))
@@ -548,10 +545,10 @@ def genSymbols2(yinvert):
 	circtri = sc.addChild(CircWedge(32,32,coffset=5), todefs=True, noyinvert=True)
 	wedge = sc.addChild(Wedge(40,46,indent=10), todefs=True, noyinvert=True)
 	circwedge = sc.addChild(CircWedge(40,46,indent=10,coffset=5), todefs=True, noyinvert=True)
-	cresc = sc.addChild(Crescent(32), noyinvert=True)
-	susppt1 = sc.addChild(SuspPointCirc(32), noyinvert=True)
-	susppt2 = sc.addChild(SuspPointSquare(40), noyinvert=True)
-	susppt3 = sc.addChild(SuspPointTriang(40), noyinvert=True)
+	cresc = sc.addChild(Crescent(32))
+	susppt1 = sc.addChild(SuspPointCirc(32))
+	susppt2 = sc.addChild(SuspPointSquare(40))
+	susppt3 = sc.addChild(SuspPointTriang(40))
 	star1 = sc.addChild(Star(32, 24, 5), todefs=True, noyinvert=True)
 	star2 = sc.addChild(Star(32, 24, 8, rot=22.5), todefs=True, noyinvert=True)
 	cstar = sc.addChild(CircStar(30, 14, 10, coffset=7), todefs=True, noyinvert=True)
@@ -707,7 +704,8 @@ def genSymbols2(yinvert):
 	thisleft = thisleft + hstep
 	this_top = top_row1
 
-	us = sc.addChild(Use(Pt(thisleft,this_top), cresc.getSel()).setStyle(symbstyle))
+	utup = cresc.getUseTuple(thisleft, this_top)
+	us = sc.addChild(Use(*utup, cresc.getSel()).setStyle(symbstyle))
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
@@ -729,7 +727,8 @@ def genSymbols2(yinvert):
 	thisleft = left
 	this_top = top_row2
 
-	us = sc.addChild(Use(Pt(thisleft,this_top), susppt1.getSel()).setStyle(symbstyle))
+	utup = susppt1.getUseTuple(thisleft, this_top)
+	us = sc.addChild(Use(*utup, susppt1.getSel()).setStyle(symbstyle))
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
@@ -751,7 +750,8 @@ def genSymbols2(yinvert):
 	thisleft = thisleft + hstep
 	this_top = top_row2
 
-	us = sc.addChild(Use(Pt(thisleft,this_top), susppt2.getSel()).setStyle(symbstyle))
+	utup = susppt2.getUseTuple(thisleft, this_top)
+	us = sc.addChild(Use(*utup, susppt2.getSel()).setStyle(symbstyle))
 
 	sc.addChild(Text(thisleft,code_height_row1(this_top))).\
 		setStyle(txstyle_small).\
@@ -980,6 +980,8 @@ def genSymbols2(yinvert):
 @pytest.mark.symbols
 def test_04Symbols2():
 
+	# with capsys.disabled():
+
 	genSymbols2(False)
 	genSymbols2(True)
 
@@ -1115,25 +1117,9 @@ def genSymbols3(yinvert):
 
 
 @pytest.mark.symbols
-def test_04Symbols3(capsys):
+def test_04Symbols3():
 
-	with capsys.disabled():
-		genSymbols3(False)
-		genSymbols3(True)
+	#with capsys.disabled():
+	genSymbols3(False)
+	genSymbols3(True)
 
-# 	with capsys.disabled():
-
-# 		#sc = SVGContent(Re(0,0,1600,1200))
-# 		sc = SVGContent(Re().full()).setIdentityViewbox(scale=10.0)
-# 		sc.setBackground(Sty('fill', '#E9E9E9'))
-
-# 	with open('outtest/test_x.svg', 'w') as fl:
-# 		fl.write(sc.toString(pretty_print=True, inc_declaration=True))
-
-
-# def test_X(capsys):
-
-# 	with capsys.disabled():
-# 		print("\n")
-# 		for i, pt in enumerate(circleDividers(Pt(10,8), 100, 4, 0)):
-# 			print(i,pt)

@@ -1,11 +1,11 @@
 
 
-from rpcbSVG.Basics import Trans, fontSizeToVPUnits, strictToNumber, toNumberAndUnit
+from rpcbSVG.Basics import Trans, fontSizeToVPUnits, glRd, strictToNumber, toNumberAndUnit
 from rpcbSVG.Structs import Ci, Re
 from rpcbSVG.SVGLib import BaseSVGElem, Circle, Group, Rect, RectRC, TextParagraph, Use
 from rpcbSVG.Symbols import Cylinder, Diamond, Server
 
-from typing import Optional
+from typing import Optional, Union
 
 VERTICAL_ADJUST = 0.3
 
@@ -24,6 +24,7 @@ class TextBox(Group):
 		self._txpara = None
 		self._shape = None
 		self._vcenter_fontszpx = vcenter_fontszpx
+		self._defselement = None
 
 	def setBaseShape(self, p_shp: BaseSVGElem):
 		"""Setting a template shape which is goint to be adjusted 'onAfterParentAdding'.
@@ -59,8 +60,6 @@ class TextBox(Group):
 			_l = len(self._getTextLines())
 
 		if _l > 0 and not self._vcenter_fontszpx is None and not self._txpara is None:			
-			print(f"\n_l: {_l}")
-			yinverting = not self._yinvertdelta is None
 			boxheight = self._re.getNumeric("height")
 			hbh = boxheight / 2
 			lineheight = fontSizeToVPUnits(fontsize=self._vcenter_fontszpx, possibleEmModifier=self._vsep)
@@ -69,21 +68,15 @@ class TextBox(Group):
 			hfh = fontheight / 2
 			offsetodd = hfh + head
 
-			# print("offsetodd, _l:", offsetodd, _l)
-
 			if _l % 2 == 1:
 				vshift = offsetodd + (_l-1) * 0.5  * lineheight
-				#print("  ODD  offsetodd:", offsetodd, "vshift:", vshift, "hbh:", hbh)
 			else:
 				vshift = (_l * 0.5 * lineheight) + (head / 2)
-				print("  lineheight, fontheight, boxheight:", lineheight, fontheight, boxheight)
-				print("  EVEN vshift:", vshift, "hbh:", hbh)
-
-			ty = hbh - vshift - (VERTICAL_ADJUST * fontheight)
+			ty = glRd(hbh - vshift - (VERTICAL_ADJUST * fontheight))
 			transf = self._txpara.getTransformN(0)
 			transf.set("ty", ty)
 			self._txpara.updateTransformAttr()
-			
+
 			# print("Param V", ty, _l , lineheight * 0.5 , height/2, self._shape)
 
 	def setText(self, p_text: str):
@@ -93,12 +86,9 @@ class TextBox(Group):
 			self._adjustTextVertical()
 		return self
 
-	def onAfterParentAdding(self, defselement=None):	
+	def refresh(self):
 
-		if not self._parentadded:
-			self._parentadded = True
-		else:
-		 	return
+		assert not self._defselement is None
 
 		textrows = self._getTextLines()
 
@@ -106,20 +96,19 @@ class TextBox(Group):
 		mwdelta_plus = lambda z,w: z + w / 2 
 
 		yinverting = not self._yinvertdelta is None
-			
-		x, y, width, height = list(self._re.iterUnitsRemovedNum())
-		ax = x
-		ay = y
-		diamond_pt = (width/2, height/2)
 
-		tx, ty = self._padding
+		x, y, width, height = list(self._re.iterUnitsRemovedNum())
+		ax = glRd(x)
+		ay = glRd(y)
+		diamond_pt = (glRd(width/2), glRd(height/2))
+
+		tx = glRd(self._padding[0])
+		ty = glRd(self._padding[1])
 
 		if self._hjustify == "center":
-			tx = width / 2
+			tx = glRd(width / 2)
 		elif self._hjustify == "right":
-			tx = width - self._padding[0]
-
-		self._adjustTextVertical(l=len(textrows))
+			tx = glRd(width - self._padding[0])
 
 		if self._anchor.startswith('l'):
 			if self._anchor.endswith('c'):
@@ -167,6 +156,10 @@ class TextBox(Group):
 				else:
 					ay = y - height
 
+		ax = glRd(ax)
+		ay = glRd(ay)
+
+		self.clearTransforms()
 		self.addTransform(Trans(ax, ay))
 
 		if self._shape is None:
@@ -190,16 +183,36 @@ class TextBox(Group):
 
 		# Symbols (added to DESC)
 		if isinstance(self._shape, Cylinder):
-			assert not defselement is None
-			symb = defselement.addChild(self._shape)
-			self.addChild(Use(*diamond_pt, None, None, symb.getSel()))
+			if not self._shape.hasEl():
+				assert not self._defselement is None
+				self._defselement.addChild(self._shape)
+			utup = self._shape.getUseTuple(*diamond_pt)
+			self.addChild(Use(*utup, self._shape.getSel()))
 		elif isinstance(self._shape, Server):
-			assert not defselement is None
-			symb = defselement.addChild(self._shape)
-			self.addChild(Use(*diamond_pt, None, None, symb.getSel()))
+			if not self._shape.hasEl():
+				assert not self._defselement is None
+				self._defselement.addChild(self._shape)
+			utup = self._shape.getUseTuple(*diamond_pt)
+			self.addChild(Use(*utup, self._shape.getSel()))
 		else:
-			self.addChild(self._shape)
+			if not self._shape.hasEl():
+				self.addChild(self._shape)
 
-		self._txpara = self.addChild(TextParagraph(tx, ty, textrows, vsep=self._vsep, justify=self._hjustify))
+		self._adjustTextVertical(l=len(textrows))
 
+		if self._txpara is None:
+			self._txpara = self.addChild(TextParagraph(tx, ty, textrows, vsep=self._vsep, justify=self._hjustify), noyinvert=True)
+
+	def onAfterParentAdding(self, defselement=None):	
+		self._defselement = defselement
+		if not self._parentadded:
+			self._parentadded = True
+		else:
+		 	return
+		self.refresh()
+
+	def yinvert(self, p_height: Union[float, int]):
+		if not self._noyinvert: 
+			self._yinvertdelta = p_height
+			self.refresh()
 
