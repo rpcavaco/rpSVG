@@ -29,16 +29,21 @@ def vec2_line_intersect(a1,a2, b1,b2):
 	vec_a = a2-a1
 	vec_b = b2-b1
 	vec_origins_separation = a1-b1
-	perpend = vec2_perpendicular(vec_a)
-	denomin = dot(perpend, vec_b)
+	perpend_a = vec2_perpendicular(vec_a)
+	perpend_b = vec2_perpendicular(vec_b)
+	denomin = dot(perpend_a, vec_b)
+	new_vec = None
 	if abs(denomin) > MINNUM:
-		numer = dot(perpend, vec_origins_separation)
+		a_scalar_multiplier = dot(perpend_b, vec_origins_separation) / denomin
+		numer = dot(perpend_a, vec_origins_separation)
 		b_scalar_multiplier = numer / denomin
-		intpt = b_scalar_multiplier * vec_b + b1
+		new_vec = b_scalar_multiplier * vec_b
+		intpt = new_vec + b1
 	else:
+		a_scalar_multiplier = 0
 		b_scalar_multiplier = 0
 		intpt = None
-	return b_scalar_multiplier, intpt
+	return a_scalar_multiplier, b_scalar_multiplier, intpt
 
 def vec2_segment_intersect(a1,a2, b1,b2):
 	"""Intersection of two line segments, each described by their extreme points:
@@ -49,11 +54,11 @@ def vec2_segment_intersect(a1,a2, b1,b2):
 			- the intersection point
 	"""
 	ret = None
-	scal_mult, intersection = vec2_line_intersect(a1,a2, b1,b2)
+	a_scal_mult, b_scal_mult, intersection = vec2_line_intersect(a1,a2, b1,b2)
+	print("scalar:", a_scal_mult, b_scal_mult, intersection)
 	if not intersection is None:
-		# print("scalar:", scal_mult)
-		if scal_mult >= 0:
-			if scal_mult <= 1.0:
+		if a_scal_mult >= 0 and a_scal_mult <= 1.0:
+			if b_scal_mult >= 0 and b_scal_mult <= 1.0:
 				ret = intersection
 	return ret
 		
