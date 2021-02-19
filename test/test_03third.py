@@ -78,35 +78,33 @@ def test_03Marker():
 
 	genFiles(inspect.currentframe().f_code.co_name, sc)
 
-def test_03Gradient(capsys):
+def test_03Gradient():
 
-	with capsys.disabled():
+	sc = SVGContent(Re(0,0,1600,1000)).setIdentityViewbox()
 
-		sc = SVGContent(Re(0,0,1600,1000)).setIdentityViewbox()
+	gr1 = sc.addChild(LinearGradient().setId("the_grad"), todefs=True)   
+	st1 = gr1.addChild(GradientStop("20%", "navy"))
+	gr1.addChild(GradientStop("80%", "aqua"))
+	gr1.addChild(GradientStop("95%", "blanchedalmond"))
+	gr1.addChild(GradientStop("100%", "white"))
 
-		gr1 = sc.addChild(LinearGradient().setId("the_grad"), todefs=True)   
-		st1 = gr1.addChild(GradientStop("20%", "navy"))
-		gr1.addChild(GradientStop("80%", "aqua"))
-		gr1.addChild(GradientStop("95%", "blanchedalmond"))
-		gr1.addChild(GradientStop("100%", "white"))
+	assert st1.getStruct().getfields() == "offset,stop-color,stop-opacity"
 
-		assert st1.getStruct().getfields() == "offset,stop-color,stop-opacity"
+	gr2 = sc.addChild(RadialGradient(1150,700,200,1150,700, None, 'userSpaceOnUse').setId("the_rgrad"), todefs=True)   
+	gr2.addChild(GradientStop("0%", "mediumblue"))
+	gr2.addChild(GradientStop("60%", "white"))
+	gr2.addChild(GradientStop("80%", "white"))
+	gr2.addChild(GradientStop("100%", "navy"))
 
-		gr2 = sc.addChild(RadialGradient(1150,700,200,1150,700, None, 'userSpaceOnUse').setId("the_rgrad"), todefs=True)   
-		gr2.addChild(GradientStop("0%", "mediumblue"))
-		gr2.addChild(GradientStop("60%", "white"))
-		gr2.addChild(GradientStop("80%", "white"))
-		gr2.addChild(GradientStop("100%", "navy"))
+	assert gr2.getStruct().getfields() == "cx,cy,r,fx,fy,{http://www.w3.org/1999/xlink}href,gradientUnits,spreadMethod,gradientTransform"
 
-		assert gr2.getStruct().getfields() == "cx,cy,r,fx,fy,{http://www.w3.org/1999/xlink}href,gradientUnits,spreadMethod,gradientTransform"
+	sc.setBackground(Sty('fill', '#000029'))
 
-		sc.setBackground(Sty('fill', '#000029'))
+	sc.addChild(RectRC(200,50,500,400,10,20)).setStyle(Sty('fill', 'url(#the_grad)', 'stroke', 'black'))
+	
+	sc.addChild(RectRC(850,500,600,400,10,20)).setStyle(Sty('fill', 'url(#the_rgrad)', 'stroke', 'black'))
 
-		sc.addChild(RectRC(200,50,500,400,10,20)).setStyle(Sty('fill', 'url(#the_grad)', 'stroke', 'black'))
-		
-		sc.addChild(RectRC(850,500,600,400,10,20)).setStyle(Sty('fill', 'url(#the_rgrad)', 'stroke', 'black'))
-
-		genFiles(inspect.currentframe().f_code.co_name, sc)
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
 def test_03Text():
 

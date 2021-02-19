@@ -1,6 +1,6 @@
 
 
-from rpcbSVG.Basics import Trans, fontSizeToVPUnits, glRd, strictToNumber, toNumberAndUnit
+from rpcbSVG.Basics import Pt, Trans, fontSizeToVPUnits, glRd, strictToNumber, toNumberAndUnit
 from rpcbSVG.Structs import Ci, Re
 from rpcbSVG.SVGLib import BaseSVGElem, Circle, Group, Rect, RectRC, TextParagraph, Use
 from rpcbSVG.Symbols import Cylinder, Diamond, Server
@@ -33,6 +33,7 @@ class TextBox(Group):
 		"""
 		assert not self._parentadded, "setBaseShape can't be used after onAfterParentAdding"
 		self._shape = p_shp
+		return self._shape
 
 	def getShape(self):
 		return self._shape
@@ -52,6 +53,68 @@ class TextBox(Group):
 
 	def getParagraph(self):
 		return self._txpara
+
+	def getAnchor(self) -> Union[None, Pt]:
+		x, _u = toNumberAndUnit(self._re.get("x"))
+		y, _u = toNumberAndUnit(self._re.get("y"))
+		return Pt(x, y)
+
+	def getCorners(self, forceanchor=None):
+		"ccw from lower right"
+		x, _u = toNumberAndUnit(self._re.get("x"))
+		y, _u = toNumberAndUnit(self._re.get("y"))
+		w, _u = toNumberAndUnit(self._re.get("width"))
+		h, _u = toNumberAndUnit(self._re.get("height"))
+		hw = w/2
+		hh = h/2
+
+		if not forceanchor is None:
+			anch = forceanchor
+		else:
+			anch = self._anchor
+
+		if anch.startswith('l'):
+			if anch.endswith('c'):
+				ret = [
+					Pt(x+w, y+hh), Pt(x+w, y-hh), Pt(x, y-hh), Pt(x, y+hh)
+				]
+			elif anch.endswith('b'):
+				ret = [
+					Pt(x+w, y), Pt(x+w, y-h), Pt(x, y-h), Pt(x, y)
+				]
+			elif anch.endswith('t'):
+				ret = [
+					Pt(x+w, y+h), Pt(x+w, y), Pt(x, y), Pt(x, y+h)
+				]
+		elif anch.startswith('c'):
+			if anch.endswith('t'):
+				ret = [
+					Pt(x+hw, y+h), Pt(x+hw, y), Pt(x-hw, y), Pt(x-hw, y+h)
+				]
+			elif anch.endswith('c'):
+				ret = [
+					Pt(x+hw, y+hh), Pt(x+hw, y-hh), Pt(x-hw, y-hh), Pt(x-hw, y+hh)
+				]
+			elif anch.endswith('b'):
+				ret = [
+					Pt(x+hw, y), Pt(x+hw, y-h), Pt(x-hw, y-h), Pt(x-hw, y)
+				]
+		elif anch.startswith('r'):
+			if anch.endswith('t'):
+				ret = [
+					Pt(x, y+h), Pt(x, y), Pt(x-w, y), Pt(x-w, y+h)
+				]
+			elif anch.endswith('c'):
+				ret = [
+					Pt(x, y+hw), Pt(x, y-hw), Pt(x-w, y-hw), Pt(x-w, y+hw)
+				]
+			elif anch.endswith('b'):
+				ret = [
+					Pt(x, y), Pt(x, y-h), Pt(x-w, y-h), Pt(x-w, y)
+				]
+
+		return ret
+
 
 	def _adjustTextVertical(self, l=None):
 		if not l is None:

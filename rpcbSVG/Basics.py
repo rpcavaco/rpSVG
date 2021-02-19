@@ -14,6 +14,7 @@ MINCOORD = -MAXCOORD
 MINDELTA = 0.001
 NANODELTA = 0.000001
 
+
 class ValueWithUnitsError(RuntimeError):
 	def __init__(self, p_val) -> None:
 		super().__init__()
@@ -55,6 +56,15 @@ def ptCoincidence(pa: Pt, pb: Pt, mindelta=MINDELTA):
 
 def ptAdd(pa: Pt, pb: Pt):
 	return Pt(pa.x + pb.x, pa.y + pb.y)
+
+def ptSub(pa: Pt, pb: Pt):
+	return Pt(pa.x - pb.x, pa.y - pb.y)
+
+def ptDxInt(pa: Pt, pb: Pt):
+	return (pa.x, pb.x)
+
+def ptDyInt(pa: Pt, pb: Pt):
+	return (pa.y, pb.y)
 
 def ptRemoveDecsep(p_x, p_y):
 	return Pt(removeDecsep(p_x), removeDecsep(p_y))

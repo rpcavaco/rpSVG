@@ -59,7 +59,7 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	# SYMBOL DEFINITIONS ------------------------------------------------------
 	#
 	xsight = sc.addChild(XSight(46,46,8), todefs=True, noyinvert=True)
-	crsymb_centerMarker = sc.addChild(Cross(20,20), todefs=True)
+	# crsymb_centerMarker = sc.addChild(Cross(20,20), todefs=True)
 	#
 	# =========================================================================
 
@@ -79,12 +79,6 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 	sc.addChild(Text(140,title_height)).\
 		setStyle(Sty('fill', '#7C7C7C', 'font-size', 40, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
 		setText(mainlabel)
-
-	def code_height_row1(p_topval):
-		return p_topval + 75
-
-	def label_height_row1(p_topval):
-		return p_topval + 120
 
 	left = 240
 	hstep = 280
@@ -504,32 +498,24 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 
 @pytest.mark.textbox
 @pytest.mark.symbols
-def test_06TextBoxMultilineShapesSmall_(capsys):
-	with capsys.disabled():
-		
-		sc = genTxBoxParagraph(False, '12pt', None)
-		genFiles(inspect.currentframe().f_code.co_name, sc)
+def test_06TextBoxMultilineShapesSmall_():
+	sc = genTxBoxParagraph(False, '12pt', None)
+	genFiles(inspect.currentframe().f_code.co_name, sc)
 
 @pytest.mark.textbox
 @pytest.mark.symbols
-def test_06TextBoxMultilineShapesSmallYI(capsys):
-	with capsys.disabled():
-		
+def test_06TextBoxMultilineShapesSmallYI():
 		sc = genTxBoxParagraph(True, '12pt', None)
 		genFiles(inspect.currentframe().f_code.co_name, sc)
 
 @pytest.mark.textbox
 @pytest.mark.symbols
-def test_06TextBoxMultilineShapesNormal_(capsys):
-	with capsys.disabled():
-		
+def test_06TextBoxMultilineShapesNormal_():
 		sc = genTxBoxParagraph(False, '16pt', None)
 		genFiles(inspect.currentframe().f_code.co_name, sc)
 
 @pytest.mark.textbox
 @pytest.mark.symbols
-def test_06TextBoxMultilineShapesNormalYI(capsys):
-	with capsys.disabled():
-		
+def test_06TextBoxMultilineShapesNormalYI():
 		sc = genTxBoxParagraph(True, '16pt', None)
 		genFiles(inspect.currentframe().f_code.co_name, sc)
