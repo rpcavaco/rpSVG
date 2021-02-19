@@ -77,7 +77,7 @@ class ReRC(Re):
 		else:
 			self.ry = ry
 
-class Ci(_withunits_struct):
+class Cir(_withunits_struct):
 	_fields = ("cx",  "cy", "r") 
 	def __init__(self, *args) -> None:
 		super().__init__(*args, defaults=["0"])

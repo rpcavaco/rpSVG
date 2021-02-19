@@ -6,6 +6,21 @@ from typing import List, Optional, Union
 from math import atan, cos, sin, radians, degrees
 
 Pt = namedtuple("Pt", "x y")
+ln = namedtuple("Ln", "pt1 pt2")
+elp = namedtuple("Elp", "pt rx ry ang")
+
+def Ln(pt1, pt2):
+	assert isinstance(pt1, Pt), pt1
+	assert isinstance(pt2, Pt), pt2
+	return ln(pt1, pt2)
+
+def Elp(pt, rx, ry=None, ang=0):
+	if ry is None:
+		_ry = rx
+	else:
+		_ry = ry
+	assert isinstance(pt, Pt), pt
+	return elp(pt, rx, _ry, ang)
 
 XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
 

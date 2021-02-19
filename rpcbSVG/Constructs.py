@@ -1,7 +1,7 @@
 
 
-from rpcbSVG.Basics import Pt, Trans, fontSizeToVPUnits, glRd, strictToNumber, toNumberAndUnit
-from rpcbSVG.Structs import Ci, Re
+from rpcbSVG.Basics import Ln, Pt, Trans, fontSizeToVPUnits, glRd, strictToNumber, toNumberAndUnit
+from rpcbSVG.Structs import Cir, Re
 from rpcbSVG.SVGLib import BaseSVGElem, Circle, Group, Rect, RectRC, TextParagraph, Use
 from rpcbSVG.Symbols import Cylinder, Diamond, Server
 
@@ -59,7 +59,7 @@ class TextBox(Group):
 		y, _u = toNumberAndUnit(self._re.get("y"))
 		return Pt(x, y)
 
-	def getCorners(self, forceanchor=None):
+	def getContour(self, forceanchor=None):
 		"ccw from lower right"
 		x, _u = toNumberAndUnit(self._re.get("x"))
 		y, _u = toNumberAndUnit(self._re.get("y"))
@@ -73,45 +73,54 @@ class TextBox(Group):
 		else:
 			anch = self._anchor
 
+		ret = []
+		ptlist = []
+
 		if anch.startswith('l'):
 			if anch.endswith('c'):
-				ret = [
+				ptlist = [
 					Pt(x+w, y+hh), Pt(x+w, y-hh), Pt(x, y-hh), Pt(x, y+hh)
 				]
 			elif anch.endswith('b'):
-				ret = [
+				ptlist = [
 					Pt(x+w, y), Pt(x+w, y-h), Pt(x, y-h), Pt(x, y)
 				]
 			elif anch.endswith('t'):
-				ret = [
+				ptlist = [
 					Pt(x+w, y+h), Pt(x+w, y), Pt(x, y), Pt(x, y+h)
 				]
 		elif anch.startswith('c'):
 			if anch.endswith('t'):
-				ret = [
+				ptlist = [
 					Pt(x+hw, y+h), Pt(x+hw, y), Pt(x-hw, y), Pt(x-hw, y+h)
 				]
 			elif anch.endswith('c'):
-				ret = [
+				ptlist = [
 					Pt(x+hw, y+hh), Pt(x+hw, y-hh), Pt(x-hw, y-hh), Pt(x-hw, y+hh)
 				]
 			elif anch.endswith('b'):
-				ret = [
+				ptlist = [
 					Pt(x+hw, y), Pt(x+hw, y-h), Pt(x-hw, y-h), Pt(x-hw, y)
 				]
 		elif anch.startswith('r'):
 			if anch.endswith('t'):
-				ret = [
+				ptlist = [
 					Pt(x, y+h), Pt(x, y), Pt(x-w, y), Pt(x-w, y+h)
 				]
 			elif anch.endswith('c'):
-				ret = [
+				ptlist = [
 					Pt(x, y+hw), Pt(x, y-hw), Pt(x-w, y-hw), Pt(x-w, y+hw)
 				]
 			elif anch.endswith('b'):
-				ret = [
+				ptlist = [
 					Pt(x, y), Pt(x, y-h), Pt(x-w, y-h), Pt(x-w, y)
 				]
+
+		# close
+		if len(ptlist) == 4:
+				for k in zip(ptlist, ptlist[1:]):
+					ret.append(Ln(k[0], k[1]))
+				ret.append(Ln(ptlist[-1], ptlist[0]))
 
 		return ret
 
@@ -234,7 +243,7 @@ class TextBox(Group):
 			self._shape.setDims(Re(width, height, *diamond_pt))
 		elif isinstance(self._shape, Circle):
 			radius = max(width, height) / 2.0
-			self._shape.setStruct(Ci(*diamond_pt, radius))
+			self._shape.setStruct(Cir(*diamond_pt, radius))
 		elif isinstance(self._shape, Cylinder):
 			self._shape.setDims(width, height)
 		elif isinstance(self._shape, Server):

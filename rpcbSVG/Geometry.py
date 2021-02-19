@@ -4,7 +4,18 @@ from numpy import empty_like, dot, array, ndarray
 MINNUM = 0.0000001
 
 def Pta(x, y):
-	return array((x, y))
+	return array((float(x), float(y)))
+
+def Lna(pt1, pt2):
+	return (Pta(*pt1), Pta(*pt2))
+
+def Elpa(pt, rx, ry=None, vertang=0):
+	if ry is None:
+		ret = (Pta(*pt), float(rx), None, float(vertang))
+	else:
+		ret = (Pta(*pt), float(rx), float(ry), float(vertang))
+	return ret
+
 
 def vec2_perpendicular(p_a):
 	assert isinstance(p_a, ndarray)

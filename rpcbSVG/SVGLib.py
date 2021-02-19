@@ -13,7 +13,7 @@ from rpcbSVG.SVGStyleText import CSSSty, Sty
 from rpcbSVG.Basics import MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, glRd, \
 	pClose, pH, pL, pM, pV, strictToNumber, transform_def, path_command, \
 	ptCoincidence, removeDecsep, ptEnsureStrings
-from rpcbSVG.Structs import Ci, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Patt, Pl, Pth, RaGra, Re, ReRC, Symb, Tx, TxPth, TxRf, Us, VBox
+from rpcbSVG.Structs import Cir, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Patt, Pl, Pth, RaGra, Re, ReRC, Symb, Tx, TxPth, TxRf, Us, VBox
 
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
 
@@ -817,7 +817,7 @@ class RectRC(GenericSVGElem):
 
 class Circle(GenericSVGElem):
 	def __init__(self, *args) -> None:
-		super().__init__("circle", struct=Ci(*args))
+		super().__init__("circle", struct=Cir(*args))
 
 class Ellipse(GenericSVGElem):
 	def __init__(self, *args) -> None:
