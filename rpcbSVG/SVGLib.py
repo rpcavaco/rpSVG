@@ -2,7 +2,6 @@
 #import cairo
 #import rsvg
 
-
 from io import StringIO
 from typing import Optional, List, Union
 from warnings import warn
@@ -10,8 +9,8 @@ from warnings import warn
 from lxml import etree
 
 from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.Basics import MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, glRd, \
-	pClose, pH, pL, pM, pV, strictToNumber, transform_def, path_command, \
+from rpcbSVG.Basics import Ln, MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, glRd, \
+	pClose, pH, pL, pM, pV, strictToNumber, toNumberAndUnit, transform_def, path_command, \
 	ptCoincidence, removeDecsep, ptEnsureStrings
 from rpcbSVG.Structs import Cir, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Patt, Pl, Pth, RaGra, Re, ReRC, Symb, Tx, TxPth, TxRf, Us, VBox
 
@@ -807,6 +806,71 @@ class Rect(GenericSVGElem):
 		else:
 			super().__init__("rect", struct=Re(*args))
 
+	def getContour(self, forceanchor=None):
+		"ccw from lower right"
+		x, _u = toNumberAndUnit(self._re.get("x"))
+		y, _u = toNumberAndUnit(self._re.get("y"))
+		w, _u = toNumberAndUnit(self._re.get("width"))
+		h, _u = toNumberAndUnit(self._re.get("height"))
+		hw = w/2
+		hh = h/2
+
+		if not forceanchor is None:
+			anch = forceanchor
+		else:
+			anch = self._anchor
+
+		ret = []
+		ptlist = []
+
+		if anch.startswith('l'):
+			if anch.endswith('c'):
+				ptlist = [
+					Pt(x+w, y+hh), Pt(x+w, y-hh), Pt(x, y-hh), Pt(x, y+hh)
+				]
+			elif anch.endswith('b'):
+				ptlist = [
+					Pt(x+w, y), Pt(x+w, y-h), Pt(x, y-h), Pt(x, y)
+				]
+			elif anch.endswith('t'):
+				ptlist = [
+					Pt(x+w, y+h), Pt(x+w, y), Pt(x, y), Pt(x, y+h)
+				]
+		elif anch.startswith('c'):
+			if anch.endswith('t'):
+				ptlist = [
+					Pt(x+hw, y+h), Pt(x+hw, y), Pt(x-hw, y), Pt(x-hw, y+h)
+				]
+			elif anch.endswith('c'):
+				ptlist = [
+					Pt(x+hw, y+hh), Pt(x+hw, y-hh), Pt(x-hw, y-hh), Pt(x-hw, y+hh)
+				]
+			elif anch.endswith('b'):
+				ptlist = [
+					Pt(x+hw, y), Pt(x+hw, y-h), Pt(x-hw, y-h), Pt(x-hw, y)
+				]
+		elif anch.startswith('r'):
+			if anch.endswith('t'):
+				ptlist = [
+					Pt(x, y+h), Pt(x, y), Pt(x-w, y), Pt(x-w, y+h)
+				]
+			elif anch.endswith('c'):
+				ptlist = [
+					Pt(x, y+hw), Pt(x, y-hw), Pt(x-w, y-hw), Pt(x-w, y+hw)
+				]
+			elif anch.endswith('b'):
+				ptlist = [
+					Pt(x, y), Pt(x, y-h), Pt(x-w, y-h), Pt(x-w, y)
+				]
+
+		# close
+		if len(ptlist) == 4:
+				for k in zip(ptlist, ptlist[1:]):
+					ret.append(Ln(k[0], k[1]))
+				ret.append(Ln(ptlist[-1], ptlist[0]))
+
+		return ret
+
 class RectRC(GenericSVGElem):
 	"Round cornered rectangle"
 	def __init__(self, *args) -> None:
@@ -814,6 +878,70 @@ class RectRC(GenericSVGElem):
 	def setRCRadiuses(self, rx, ry=None):
 		self.getStruct().setRCRadiuses(rx,ry=ry)
 		return self
+
+	def getContour(self, p_anchorpt, p_anchoring):
+		"ccw from lower right"
+		strct = self.getStruct()
+		print("strct:", strct)
+		x = p_anchorpt.x
+		y = p_anchorpt.y
+		w, _u = toNumberAndUnit(strct.get("width"))
+		h, _u = toNumberAndUnit(strct.get("height"))
+		hw = w/2
+		hh = h/2
+
+		anch = p_anchoring
+
+		ret = []
+		ptlist = []
+
+		if anch.startswith('l'):
+			if anch.endswith('c'):
+				ptlist = [
+					Pt(x+w, y+hh), Pt(x+w, y-hh), Pt(x, y-hh), Pt(x, y+hh)
+				]
+			elif anch.endswith('b'):
+				ptlist = [
+					Pt(x+w, y), Pt(x+w, y-h), Pt(x, y-h), Pt(x, y)
+				]
+			elif anch.endswith('t'):
+				ptlist = [
+					Pt(x+w, y+h), Pt(x+w, y), Pt(x, y), Pt(x, y+h)
+				]
+		elif anch.startswith('c'):
+			if anch.endswith('t'):
+				ptlist = [
+					Pt(x+hw, y+h), Pt(x+hw, y), Pt(x-hw, y), Pt(x-hw, y+h)
+				]
+			elif anch.endswith('c'):
+				ptlist = [
+					Pt(x+hw, y+hh), Pt(x+hw, y-hh), Pt(x-hw, y-hh), Pt(x-hw, y+hh)
+				]
+			elif anch.endswith('b'):
+				ptlist = [
+					Pt(x+hw, y), Pt(x+hw, y-h), Pt(x-hw, y-h), Pt(x-hw, y)
+				]
+		elif anch.startswith('r'):
+			if anch.endswith('t'):
+				ptlist = [
+					Pt(x, y+h), Pt(x, y), Pt(x-w, y), Pt(x-w, y+h)
+				]
+			elif anch.endswith('c'):
+				ptlist = [
+					Pt(x, y+hw), Pt(x, y-hw), Pt(x-w, y-hw), Pt(x-w, y+hw)
+				]
+			elif anch.endswith('b'):
+				ptlist = [
+					Pt(x, y), Pt(x, y-h), Pt(x-w, y-h), Pt(x-w, y)
+				]
+
+		# close
+		if len(ptlist) == 4:
+				for k in zip(ptlist, ptlist[1:]):
+					ret.append(Ln(k[0], k[1]))
+				ret.append(Ln(ptlist[-1], ptlist[0]))
+
+		return ret
 
 class Circle(GenericSVGElem):
 	def __init__(self, *args) -> None:

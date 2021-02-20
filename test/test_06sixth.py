@@ -120,7 +120,7 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 
 		sc.addChild(Use(p_anchor, xsight.getSel()).setClass('aid1'))
 
-		tb = TextBox(*p_anchor, *p_boxdims, anchor=p_tbanchoring, hjustify=p_text_just, paddingv=p_paddingv, vcenter_fontszpx=vcenter_fontszpx)
+		tb = TextBox(*p_anchor, *p_boxdims, anchoring=p_tbanchoring, hjustify=p_text_just, paddingv=p_paddingv, vcenter_fontszpx=vcenter_fontszpx)
 		if p_shape == "rc":
 			tb.setBaseShape(RectRC().setRCRadiuses(14).setClass("caixas"))
 		elif p_shape == "circ":

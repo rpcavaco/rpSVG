@@ -119,7 +119,7 @@ def genTxBoxParagraph(p_ynvert, p_textjustify, p_capsys):
 		sc.addChild(Use(p_anchor, xsight.getSel()).setClass('aid1'))
 
 		
-		tb = sc.addChild(TextBox(*p_anchor, *p_boxdims, anchor=p_tbanchoring, hjustify=p_text_just))
+		tb = sc.addChild(TextBox(*p_anchor, *p_boxdims, anchoring=p_tbanchoring, hjustify=p_text_just))
 		tb.getParagraph().setClass("tb1")
 		tb.getShape().setClass("caixas")
 		tb.setText(LARGE_TEXT)

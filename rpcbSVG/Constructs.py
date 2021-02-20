@@ -11,7 +11,7 @@ VERTICAL_ADJUST = 0.3
 
 class TextBox(Group):
 
-	def __init__(self, *args, text: Optional[str] = None, paddingh=10, paddingv=10, vsep="1.2em", anchor="lt", hjustify="left", vcenter_fontszpx=None) -> None:
+	def __init__(self, *args, text: Optional[str] = None, paddingh=10, paddingv=10, vsep="1.2em", anchoring="lt", hjustify="left", vcenter_fontszpx=None) -> None:
 		"consumes rect args"
 		super().__init__()
 		self._FATTR_forceNonYInvertChildren = True
@@ -19,7 +19,7 @@ class TextBox(Group):
 		self.text = text
 		self._padding = (paddingh, paddingv)
 		self._vsep = vsep
-		self._anchor = anchor.lower()
+		self._anchoring = anchoring.lower()
 		self._hjustify = hjustify.lower()
 		self._txpara = None
 		self._shape = None
@@ -34,6 +34,9 @@ class TextBox(Group):
 		assert not self._parentadded, "setBaseShape can't be used after onAfterParentAdding"
 		self._shape = p_shp
 		return self._shape
+
+	def hasShape(self):
+		return not self._shape is None
 
 	def getShape(self):
 		return self._shape
@@ -58,72 +61,6 @@ class TextBox(Group):
 		x, _u = toNumberAndUnit(self._re.get("x"))
 		y, _u = toNumberAndUnit(self._re.get("y"))
 		return Pt(x, y)
-
-	def getContour(self, forceanchor=None):
-		"ccw from lower right"
-		x, _u = toNumberAndUnit(self._re.get("x"))
-		y, _u = toNumberAndUnit(self._re.get("y"))
-		w, _u = toNumberAndUnit(self._re.get("width"))
-		h, _u = toNumberAndUnit(self._re.get("height"))
-		hw = w/2
-		hh = h/2
-
-		if not forceanchor is None:
-			anch = forceanchor
-		else:
-			anch = self._anchor
-
-		ret = []
-		ptlist = []
-
-		if anch.startswith('l'):
-			if anch.endswith('c'):
-				ptlist = [
-					Pt(x+w, y+hh), Pt(x+w, y-hh), Pt(x, y-hh), Pt(x, y+hh)
-				]
-			elif anch.endswith('b'):
-				ptlist = [
-					Pt(x+w, y), Pt(x+w, y-h), Pt(x, y-h), Pt(x, y)
-				]
-			elif anch.endswith('t'):
-				ptlist = [
-					Pt(x+w, y+h), Pt(x+w, y), Pt(x, y), Pt(x, y+h)
-				]
-		elif anch.startswith('c'):
-			if anch.endswith('t'):
-				ptlist = [
-					Pt(x+hw, y+h), Pt(x+hw, y), Pt(x-hw, y), Pt(x-hw, y+h)
-				]
-			elif anch.endswith('c'):
-				ptlist = [
-					Pt(x+hw, y+hh), Pt(x+hw, y-hh), Pt(x-hw, y-hh), Pt(x-hw, y+hh)
-				]
-			elif anch.endswith('b'):
-				ptlist = [
-					Pt(x+hw, y), Pt(x+hw, y-h), Pt(x-hw, y-h), Pt(x-hw, y)
-				]
-		elif anch.startswith('r'):
-			if anch.endswith('t'):
-				ptlist = [
-					Pt(x, y+h), Pt(x, y), Pt(x-w, y), Pt(x-w, y+h)
-				]
-			elif anch.endswith('c'):
-				ptlist = [
-					Pt(x, y+hw), Pt(x, y-hw), Pt(x-w, y-hw), Pt(x-w, y+hw)
-				]
-			elif anch.endswith('b'):
-				ptlist = [
-					Pt(x, y), Pt(x, y-h), Pt(x-w, y-h), Pt(x-w, y)
-				]
-
-		# close
-		if len(ptlist) == 4:
-				for k in zip(ptlist, ptlist[1:]):
-					ret.append(Ln(k[0], k[1]))
-				ret.append(Ln(ptlist[-1], ptlist[0]))
-
-		return ret
-
 
 	def _adjustTextVertical(self, l=None):
 		if not l is None:
@@ -182,46 +119,46 @@ class TextBox(Group):
 		elif self._hjustify == "right":
 			tx = glRd(width - self._padding[0])
 
-		if self._anchor.startswith('l'):
-			if self._anchor.endswith('c'):
+		if self._anchoring.startswith('l'):
+			if self._anchoring.endswith('c'):
 				ax = x
 				if yinverting:
 					ay = mwdelta_plus(y, height)
 				else:
 					ay = mwdelta(y, height)
-			elif self._anchor.endswith('b'):
+			elif self._anchoring.endswith('b'):
 				ax = x
 				if yinverting:
 					ay = y + height
 				else:
 					ay = y - height
-		elif self._anchor.startswith('c'):
-			if self._anchor.endswith('t'):
+		elif self._anchoring.startswith('c'):
+			if self._anchoring.endswith('t'):
 				ax = mwdelta(x, width)
 				ay = y
-			elif self._anchor.endswith('c'):
+			elif self._anchoring.endswith('c'):
 				ax = mwdelta(x, width)
 				if yinverting:
 					ay = mwdelta_plus(y, height)
 				else:
 					ay = mwdelta(y, height)
-			elif self._anchor.endswith('b'):
+			elif self._anchoring.endswith('b'):
 				ax = mwdelta(x, width)
 				if yinverting:
 					ay = y + height
 				else:
 					ay = y - height
-		elif self._anchor.startswith('r'):
-			if self._anchor.endswith('t'):
+		elif self._anchoring.startswith('r'):
+			if self._anchoring.endswith('t'):
 				ax = x - width
 				ay = y
-			elif self._anchor.endswith('c'):
+			elif self._anchoring.endswith('c'):
 				ax = x - width
 				if yinverting:
 					ay = mwdelta_plus(y, height)
 				else:
 					ay = mwdelta(y, height)
-			elif self._anchor.endswith('b'):
+			elif self._anchoring.endswith('b'):
 				ax = x - width
 				if yinverting:
 					ay = y + height
@@ -237,6 +174,8 @@ class TextBox(Group):
 		if self._shape is None:
 			self._shape = Rect(0,0, width, height)
 		elif isinstance(self._shape, Rect) or isinstance(self._shape, RectRC):
+			self._shape.setStructAttr("x", 0)
+			self._shape.setStructAttr("y", 0)
 			self._shape.setStructAttr("width", width)
 			self._shape.setStructAttr("height", height)
 		elif isinstance(self._shape, Diamond):
@@ -282,6 +221,18 @@ class TextBox(Group):
 		else:
 		 	return
 		self.refresh()
+
+	def getContour(self, forceanchoring=None):
+		ret = None
+		if self.hasShape():
+			x = self.getShape()
+			if hasattr(x, 'getContour'):
+				if not forceanchoring is None:
+					anchoring = forceanchoring
+				else:
+					anchoring = self._anchoring
+				ret = x.getContour(self.getAnchor(), anchoring)
+		return ret
 
 	def yinvert(self, p_height: Union[float, int]):
 		if not self._noyinvert: 

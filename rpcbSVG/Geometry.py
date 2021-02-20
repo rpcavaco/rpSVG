@@ -16,7 +16,6 @@ def Elpa(pt, rx, ry=None, vertang=0):
 		ret = (Pta(*pt), float(rx), float(ry), float(vertang))
 	return ret
 
-
 def vec2_perpendicular(p_a):
 	assert isinstance(p_a, ndarray)
 	b = empty_like(p_a)
@@ -66,7 +65,7 @@ def vec2_segment_intersect(a1,a2, b1,b2):
 	"""
 	ret = None
 	a_scal_mult, b_scal_mult, intersection = vec2_line_intersect(a1,a2, b1,b2)
-	print("scalar:", a_scal_mult, b_scal_mult, intersection)
+	#print("scalar:", a_scal_mult, b_scal_mult, intersection)
 	if not intersection is None:
 		if a_scal_mult >= 0 and a_scal_mult <= 1.0:
 			if b_scal_mult >= 0 and b_scal_mult <= 1.0:
