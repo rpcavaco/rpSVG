@@ -184,8 +184,27 @@ def ptGetAngle(p_pt1: Pt, p_pt2: Pt):
 		if dy < 0:
 			ret = - ret
 
-
 	return ret
+
+def lineEquationParams(p_pt1: Pt, p_pt2: Pt, mindelta=MINDELTA):
+	assert not ptCoincidence(p_pt1, p_pt2, mindelta=mindelta)
+	tipo = 'oblique'
+	c = None
+	m = None
+	ptf1 = Pt(float(p_pt1.x), float(p_pt1.y))
+	ptf2 = Pt(float(p_pt2.x), float(p_pt2.y))
+	dx = ptf2.x - ptf1.x
+	dy = ptf2.y - ptf1.y
+	if abs(dx) <= mindelta:
+		tipo = 'vertical'
+		c = ptf1.x
+	elif abs(dy) <= mindelta:
+		tipo = 'horizontal'
+		c = ptf1.y
+	else:
+		m = dy / dx
+		c = ptf1.y - m * ptf1.x
+	return tipo, m, c
 
 def polar2rectDegs(ang, rad):
 	ret = Pt(glRd(cos(radians(ang)) * rad), glRd(sin(radians(ang)) * rad))
@@ -194,9 +213,9 @@ def polar2rectDegs(ang, rad):
 def polar2rect(ang, rad):
 	return Pt(cos(ang) * rad, sin(ang) * rad)
 
-def calc3rdPointInSegment(p_pt1: Pt, p_pt2: Pt, radiusFromP1: Union[float, int]):
+def calc3rdPointInLine(p_pt1: Pt, p_pt2: Pt, radiusFromP1: Union[float, int]):
 	ang = ptGetAngle(p_pt1, p_pt2)
-	return polar2rectDegs(ang, radiusFromP1)
+	return ptAdd(p_pt1,polar2rectDegs(ang, radiusFromP1))
 
 def isNumeric(p_val):
 	try:

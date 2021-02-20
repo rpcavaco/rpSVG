@@ -4,7 +4,7 @@ from rpcbSVG.SVGStyleText import Sty
 from typing import Optional, Union
 from math import cos, radians, sin, sqrt, pow
 
-from rpcbSVG.Basics import Pt, Trans, calc3rdPointInSegment, circleDividers, glRd, pA, pClose, pL, pM, polar2rectDegs, ptAdd, ptRemoveDecsep, removeDecsep, strictToNumber, toNumberAndUnit
+from rpcbSVG.Basics import Pt, Trans, calc3rdPointInLine, circleDividers, glRd, pA, pClose, pL, pM, polar2rectDegs, ptAdd, ptRemoveDecsep, removeDecsep, strictToNumber, toNumberAndUnit
 from rpcbSVG.SVGLib import AnalyticalPath, Desc, Rect, Symbol
 
 class Diamond(AnalyticalPath):
@@ -151,10 +151,10 @@ class XSight(AnalyticalPath):
 
 		orig = Pt(0,0)
 		
-		uls = calc3rdPointInSegment(orig, ul, sep)
-		lls = calc3rdPointInSegment(orig, ll, sep)
-		urs = calc3rdPointInSegment(orig, ur, sep)
-		lrs = calc3rdPointInSegment(orig, lr, sep)
+		uls = calc3rdPointInLine(orig, ul, sep)
+		lls = calc3rdPointInLine(orig, ll, sep)
+		urs = calc3rdPointInLine(orig, ur, sep)
+		lrs = calc3rdPointInLine(orig, lr, sep)
 
 		self.addCmd(pM(*ul)).addCmd(pL(*uls))
 		self.addCmd(pM(*ll)).addCmd(pL(*lls))
@@ -189,10 +189,10 @@ class CrossSight(AnalyticalPath):
 
 		orig = Pt(0,0)
 		
-		ts = calc3rdPointInSegment(orig, t, sep)
-		ls = calc3rdPointInSegment(orig, l, sep)
-		bs = calc3rdPointInSegment(orig, b, sep)
-		rs = calc3rdPointInSegment(orig, r, sep)
+		ts = calc3rdPointInLine(orig, t, sep)
+		ls = calc3rdPointInLine(orig, l, sep)
+		bs = calc3rdPointInLine(orig, b, sep)
+		rs = calc3rdPointInLine(orig, r, sep)
 
 		self.addCmd(pM(*t)).addCmd(pL(*ts))
 		self.addCmd(pM(*l)).addCmd(pL(*ls))
