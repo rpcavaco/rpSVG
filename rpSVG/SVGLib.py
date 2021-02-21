@@ -8,11 +8,11 @@ from warnings import warn
 
 from lxml import etree
 
-from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.Basics import Ln, MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, glRd, \
+from rpSVG.SVGStyleText import CSSSty, Sty
+from rpSVG.Basics import Ln, MINDELTA, Pt, Trans, XLINK_NAMESPACE, _withunits_struct, glRd, \
 	pClose, pH, pL, pM, pV, strictToNumber, toNumberAndUnit, transform_def, path_command, \
 	ptCoincidence, removeDecsep, ptEnsureStrings
-from rpcbSVG.Structs import Cir, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Patt, Pl, Pth, RaGra, Re, ReRC, Symb, Tx, TxPth, TxRf, Us, VBox
+from rpSVG.Structs import Cir, Elli, GraSt, Img, Li, LiGra, Mrk, MrkProps, Patt, Pl, Pth, RaGra, Re, ReRC, Symb, Tx, TxPth, TxRf, Us, VBox
 
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
 

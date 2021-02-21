@@ -5,12 +5,12 @@ import pytest
 from test.testing import genFiles
 import cairosvg
 
-from rpcbSVG.Symbols import XSight
+from rpSVG.Symbols import XSight
 
-from rpcbSVG.Basics import GLOBAL_ENV, Pt
-from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.SVGLib import Re, SVGContent, Text, Title, Use
-from rpcbSVG.Constructs import TextBox
+from rpSVG.Basics import GLOBAL_ENV, Pt
+from rpSVG.SVGStyleText import CSSSty, Sty
+from rpSVG.SVGLib import Re, SVGContent, Text, Title, Use
+from rpSVG.Constructs import TextBox
 
 LARGE_TEXT = """O condutor individual não tem essa 
 percepção imaginando que, de forma 

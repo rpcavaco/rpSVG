@@ -7,12 +7,12 @@ import pytest
 from test.testing import genFiles
 import cairosvg
 
-from rpcbSVG.Symbols import Cross, Cylinder, Diamond, Server, XSight
+from rpSVG.Symbols import Cross, Cylinder, Diamond, Server, XSight
 
-from rpcbSVG.Basics import GLOBAL_ENV, Pt
-from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.SVGLib import Circle, Re, RectRC, SVGContent, Text, Title, Use
-from rpcbSVG.Constructs import TextBox
+from rpSVG.Basics import GLOBAL_ENV, Pt
+from rpSVG.SVGStyleText import CSSSty, Sty
+from rpSVG.SVGLib import Circle, Re, RectRC, SVGContent, Text, Title, Use
+from rpSVG.Constructs import TextBox
 
 SMALLTXT2 = """Ürümqi
 Yiwu"""

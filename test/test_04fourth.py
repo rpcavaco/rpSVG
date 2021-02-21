@@ -5,11 +5,11 @@ from test.testing import genFiles
 import cairosvg, pytest
 
 
-from rpcbSVG.Symbols import Arrow, Asterisk, Cylinder, CircArrow, CircAsterisk, CircRegPoly, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, Donut, DonutPoly, RegPoly, Server, Square, SquaredArrow, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
+from rpSVG.Symbols import Arrow, Asterisk, Cylinder, CircArrow, CircAsterisk, CircRegPoly, CircStar, CircWedge, Crescent, Cross, CrossSight, Diamond, Donut, DonutPoly, RegPoly, Server, Square, SquaredArrow, Star, SuspPointCirc, SuspPointSquare, SuspPointTriang, Wedge, XSight, XSymb
 
-from rpcbSVG.Basics import GLOBAL_ENV, Pt, circleDividers
-from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.SVGLib import Re, SVGContent, Text, Title, Use
+from rpSVG.Basics import GLOBAL_ENV, Pt, circleDividers
+from rpSVG.SVGStyleText import CSSSty, Sty
+from rpSVG.SVGLib import Re, SVGContent, Text, Title, Use
 
 
 def test_04Symbols1():

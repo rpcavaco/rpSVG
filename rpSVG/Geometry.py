@@ -1,6 +1,6 @@
 
 from math import sqrt
-from rpcbSVG.Basics import Elp, Ln, Pt, lineEquationParams, ptGetAngle
+from rpSVG.Basics import Elp, Ln, Pt, lineEquationParams, ptGetAngle
 from numpy import empty_like, dot, array, ndarray
 
 MINNUM = 0.0000001

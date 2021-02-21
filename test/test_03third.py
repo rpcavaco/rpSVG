@@ -8,10 +8,10 @@ from os.path import exists, join as path_join
 
 from test.testing import genFiles
 
-from rpcbSVG.Structs import VBox
-from rpcbSVG.Basics import Pt, Rotate, pA, pC, pQ, pS, pT, polar2rectDegs, ptAdd, ptGetAngle
-from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.SVGLib import AnalyticalPath, Circle, Ellipse, GradientStop, Group, Image, Line, LinearGradient, Marker, MrkProps, Pattern, Polygon, Polyline, RadialGradient, Re, Rect, RectRC, SVGContent, TRef, TSpan, Text, TextParagraph, TextPath, Title, Use
+from rpSVG.Structs import VBox
+from rpSVG.Basics import Pt, Rotate, pA, pC, pQ, pS, pT, polar2rectDegs, ptAdd, ptGetAngle
+from rpSVG.SVGStyleText import CSSSty, Sty
+from rpSVG.SVGLib import AnalyticalPath, Circle, Ellipse, GradientStop, Group, Image, Line, LinearGradient, Marker, MrkProps, Pattern, Polygon, Polyline, RadialGradient, Re, Rect, RectRC, SVGContent, TRef, TSpan, Text, TextParagraph, TextPath, Title, Use
 
 #	with capsys.disabled():
 

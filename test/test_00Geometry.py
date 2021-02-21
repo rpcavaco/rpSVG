@@ -1,14 +1,14 @@
 
 
 import inspect
-from rpcbSVG.SVGLib import Circle, Ellipse, Line, SVGContent, Text, Title, Use
+from rpSVG.SVGLib import Circle, Ellipse, Line, SVGContent, Text, Title, Use
 from test.testing import genFiles
-from rpcbSVG.Symbols import Cross, XSight
-from rpcbSVG.SVGStyleText import CSSSty, Sty
-from rpcbSVG.Structs import Re
-from rpcbSVG.Basics import GLOBAL_ENV, Pt
+from rpSVG.Symbols import Cross, XSight
+from rpSVG.SVGStyleText import CSSSty, Sty
+from rpSVG.Structs import Re
+from rpSVG.Basics import GLOBAL_ENV, Pt
 import pytest
-from rpcbSVG.Geometry import Elpg, Lna, Lng, Pta, ellipseIntersections, vec2_segment_intersect
+from rpSVG.Geometry import Elpg, Lna, Lng, Pta, ellipseIntersections, vec2_segment_intersect
 
 
 def test_00Intersect(capsys):

@@ -1,9 +1,9 @@
 from test.testing import genFiles
 import pytest, re, inspect
 
-from rpcbSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY, pA, pC, pClose, pH, pM, pL, WrongValueTransformDef, pQ, pS, pT, pV
-from rpcbSVG.SVGLib import Desc, Group, Polygon, Re, SVGContent, Circle, Rect, RectRC, Title, Use, Path, AnalyticalPath, Polyline
-from rpcbSVG.SVGStyleText import Sty, CSSSty
+from rpSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY, pA, pC, pClose, pH, pM, pL, WrongValueTransformDef, pQ, pS, pT, pV
+from rpSVG.SVGLib import Desc, Group, Polygon, Re, SVGContent, Circle, Rect, RectRC, Title, Use, Path, AnalyticalPath, Polyline
+from rpSVG.SVGStyleText import Sty, CSSSty
 
 # from lxml import etree
 

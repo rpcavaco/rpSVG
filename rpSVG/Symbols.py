@@ -1,11 +1,11 @@
 
-from rpcbSVG.Structs import Re, VBox
-from rpcbSVG.SVGStyleText import Sty
+from rpSVG.Structs import Re, VBox
+from rpSVG.SVGStyleText import Sty
 from typing import Optional, Union
 from math import cos, radians, sin, sqrt, pow
 
-from rpcbSVG.Basics import Pt, Trans, calc3rdPointInLine, circleDividers, glRd, pA, pClose, pL, pM, polar2rectDegs, ptAdd, ptRemoveDecsep, removeDecsep, strictToNumber, toNumberAndUnit
-from rpcbSVG.SVGLib import AnalyticalPath, Desc, Rect, Symbol
+from rpSVG.Basics import Pt, Trans, calc3rdPointInLine, circleDividers, glRd, pA, pClose, pL, pM, polar2rectDegs, ptAdd, ptRemoveDecsep, removeDecsep, strictToNumber, toNumberAndUnit
+from rpSVG.SVGLib import AnalyticalPath, Desc, Rect, Symbol
 
 class Diamond(AnalyticalPath):
 

@@ -1,9 +1,9 @@
 
 
-from rpcbSVG.Basics import Ln, Pt, Trans, fontSizeToVPUnits, glRd, strictToNumber, toNumberAndUnit
-from rpcbSVG.Structs import Cir, Re
-from rpcbSVG.SVGLib import BaseSVGElem, Circle, Group, Rect, RectRC, TextParagraph, Use
-from rpcbSVG.Symbols import Cylinder, Diamond, Server
+from rpSVG.Basics import Ln, Pt, Trans, fontSizeToVPUnits, glRd, strictToNumber, toNumberAndUnit
+from rpSVG.Structs import Cir, Re
+from rpSVG.SVGLib import BaseSVGElem, Circle, Group, Rect, RectRC, TextParagraph, Use
+from rpSVG.Symbols import Cylinder, Diamond, Server
 
 from typing import Optional, Union
 

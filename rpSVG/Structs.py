@@ -3,7 +3,7 @@ from typing import Optional, Union
 from math import atan, degrees
 from re import split as re_split
 
-from rpcbSVG.Basics import MINDELTA, Pt, Env, XLINK_NAMESPACE, _attrs_struct, _withunits_struct, _kwarg_attrs_struct, glRd, hashed_href, isNumeric, removeDecsep, strictToNumber, toNumberAndUnit
+from rpSVG.Basics import MINDELTA, Pt, Env, XLINK_NAMESPACE, _attrs_struct, _withunits_struct, _kwarg_attrs_struct, glRd, hashed_href, isNumeric, removeDecsep, strictToNumber, toNumberAndUnit
 
 
 class Re(_withunits_struct):
