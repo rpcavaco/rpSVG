@@ -710,6 +710,9 @@ class Rotate(transform_def):
 	def __init__(self, *args) -> None:
 		super().__init__(*args)
 		self.validate()
+	def yinvert(self, p_yheight):
+		if hasattr(self, "cy"):
+			setattr(self, "cy", str(p_yheight - strictToNumber(getattr(self, "cy"))))
 
 class SkewX(transform_def):
 	_fields = ("skew-angle",)

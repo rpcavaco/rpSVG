@@ -63,7 +63,7 @@ def test_00Intersect():
 	assert ret is None, ret
 
 
-def genCITPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0, noninvert_cy=None):
+def genCITPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 
 	def rot_ab(p_a, p_b, p_ac, p_rot):
 		if p_rot != 0:
@@ -87,8 +87,8 @@ def genCITPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0, noninvert_cy=None)
 	right_axes = center.x + rx + offset_axes
 
 	gr1 = p_sc.addChild(Group())
-	if _rot != 0 and not noninvert_cy is None:
-		gr1.addTransform(Rotate(abs(_rot), center[0], noninvert_cy))
+	if _rot != 0:
+		gr1.addTransform(Rotate(abs(_rot), *center))
 	gr1.addChild(Ellipse(*center, rx, ry)).setClass('caixas')
 	# Y
 	gr1.addChild(Line(center.x, top_axes, center.x, bot_axes)).setClass('aid1')
@@ -268,7 +268,7 @@ def genCurveIntersectTest(p_ynvert):
 	else:
 		rot_ang = 30
 
-	genCITPart(sc, 1120, topY, {"extremesymb": extremesymb, "pointsymb": pointsymb}, rot=rot_ang, noninvert_cy=410)
+	genCITPart(sc, 1120, topY, {"extremesymb": extremesymb, "pointsymb": pointsymb}, rot=rot_ang)
 
 	return sc
 
