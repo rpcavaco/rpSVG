@@ -1,5 +1,5 @@
 
-# rpcbSVG
+# rpSVG
 
 An SVG generating package.
 
