@@ -1,8 +1,9 @@
 
-from math import sqrt
+from math import sqrt, cos as mcos, sin as msin, sqrt, radians as mradians
 from typing import Optional, Union
-from rpSVG.Basics import Elp, Ln, Pt, lineEquationParams, ptGetAngle
-from numpy import empty_like, dot, array, ndarray, radians, sin, cos
+from rpSVG.Basics import Elp, Ln, MINDELTA, NANODELTA, Pt, lineEquationParams, ptGetAngle
+from numpy import empty_like, dot, array, ndarray, radians, sin, cos, cross
+from numpy.linalg import norm
 
 MINNUM = 0.0000001
 
@@ -106,6 +107,27 @@ def vec2_rotate(p_pt: ndarray, p_degangle: Union[float, int], center: Optional[n
 		ret = vec2_rotation_mat(p_degangle) @ p_pt
 	return ret
 
+def vec2_arecollinear(p_p1: ndarray, p_p2: ndarray, p_p3: ndarray, mindelta=MINDELTA, inside_segment=False):
+	assert isinstance(p_p1, ndarray)
+	assert isinstance(p_p2, ndarray)
+	assert isinstance(p_p3, ndarray)
+
+	ret = False
+	vec_a = p_p2-p_p1
+	vec_b = p_p3-p_p1
+
+	cp = cross(vec_a, vec_b)
+	if abs(cp) < mindelta:
+
+		if not inside_segment:
+			ret = True
+		else:
+			dp = dot(vec_a, vec_b)
+			len2 = vec_a[0] * vec_a[0] + vec_a[1] * vec_a[1]
+
+			ret = True if dp > -mindelta and dp < len2 + mindelta else False
+	return ret
+
 ###############################################################################
 # Algebraic calculations
 ###############################################################################
@@ -170,6 +192,52 @@ def ellipseIntersections(p_line: Ln, p_ellipse: Elp):
 
 	return ret
 
+def ellipticalArcCenter(p_p0: Pt, p_p1: Pt, p_rx, p_ry, largearcflag=0, sweepflag=0, angle=0):
+
+	"""source: Batik Project
+	http://svn.apache.org/repos/asf/xmlgraphics/batik/branches/svg11/sources/org/apache/batik/ext/awt/geom/ExtendedGeneralPath.java
+	"""
+
+	p0 = Ptg(*p_p0)
+	p1 = Ptg(*p_p1)
+
+	dx2 = (p0.x - p1.x) / 2.0
+	dy2 = (p0.y - p1.y) / 2.0
+	_angle = mradians(angle % 360)
+	cosAngle = mcos(_angle)
+	sinAngle = msin(_angle)
+
+	x1 = cosAngle * dx2 + sinAngle * dy2
+	y1 = -sinAngle * dx2 + cosAngle * dy2
+
+	rx = abs(p_rx)
+	ry = abs(p_ry)
+	Prx = rx * rx
+	Pry = ry * ry
+	Px1 = x1 * x1
+	Py1 = y1 * y1
+	# check that radii are large enough
+	radiiCheck = Px1/Prx + Py1/Pry
+	if radiiCheck > 1:
+		rx = sqrt(radiiCheck) * rx
+		ry = sqrt(radiiCheck) * ry
+		Prx = rx * rx
+		Pry = ry * ry
+
+	sign = -1 if largearcflag == sweepflag else 1
+	sq0 = ((Prx*Pry)-(Prx*Py1)-(Pry*Px1)) / ((Prx*Py1)+(Pry*Px1))
+	sq = 0 if sq0 < 0 else sq0
+	coef = sign * sqrt(sq)
+	cx1 = coef * ((rx * y1) / ry)
+	cy1 = coef * -((ry * x1) / rx)
+
+	sx2 = (p0.x + p1.x) / 2.0
+	sy2 = (p0.y + p1.y) / 2.0
+
+	cx = sx2 + (cosAngle * cx1 - sinAngle * cy1)
+	cy = sy2 + (sinAngle * cx1 + cosAngle * cy1)
+
+	return Pt(cx, cy)
 
 
 

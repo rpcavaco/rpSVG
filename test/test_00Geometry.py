@@ -1,14 +1,45 @@
 
 
 import inspect
-from rpSVG.SVGLib import Circle, Ellipse, Group, Line, SVGContent, Text, Title, Use
+from rpSVG.SVGLib import AnalyticalPath, Circle, Ellipse, Group, Line, SVGContent, Text, Title, Use
 from test.testing import genFiles
 from rpSVG.Symbols import Cross, XSight
 from rpSVG.SVGStyleText import CSSSty, Sty
 from rpSVG.Structs import Re
-from rpSVG.Basics import GLOBAL_ENV, Pt, Rotate
+from rpSVG.Basics import GLOBAL_ENV, Pt, Rotate, pA, pL, pM, ptAdd
 import pytest
-from rpSVG.Geometry import Elpg, Lna, Lng, Pta, aToPt, ellipseIntersections, vec2_rotate, vec2_segment_intersect
+from rpSVG.Geometry import Elpg, Lna, Lng, Pta, aToPt, ellipseIntersections, ellipticalArcCenter, vec2_arecollinear, vec2_rotate, vec2_segment_intersect
+
+
+
+def test_00Colinearity(capsys):
+
+	pA = Pta(0,0)
+	pB = Pta(4,3)
+	pP = Pta(2,1.5)
+
+	ret = vec2_arecollinear(pA, pB, pP, inside_segment=True)
+	assert ret
+
+	pP = Pta(4,3)
+	ret = vec2_arecollinear(pA, pB, pP, inside_segment=True)
+	assert ret
+
+	pP = Pta(4.013333332,3.01)
+	ret = vec2_arecollinear(pA, pB, pP, inside_segment=True)
+	assert not ret
+
+	pP = Pta(4.013333332,3.01)
+	ret = vec2_arecollinear(pA, pB, pP, inside_segment=False)
+	assert ret
+
+	pP = Pta(-0.013333333,-0.01)
+	ret = vec2_arecollinear(pA, pB, pP, inside_segment=True)
+	assert not ret
+
+	pP = Pta(2.5,1.5)
+	ret = vec2_arecollinear(pA, pB, pP)
+	assert not ret
 
 def test_00Rotation():
 
@@ -63,7 +94,7 @@ def test_00Intersect():
 	assert ret is None, ret
 
 
-def genCITPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
+def genCompleteEllipsePart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 
 	def rot_ab(p_a, p_b, p_ac, p_rot):
 		if p_rot != 0:
@@ -218,6 +249,82 @@ def genCITPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 	p_sc.addChild(Line(*p1, *p2)).setClass('aid2')
 	p_sc.addChild(Line(*p1, *rb)).setClass('secondary')
 
+def genEllipticArcPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
+
+	width = 400
+	deltah = 70
+	deltav = 60
+	height = 380
+
+	hw = width / 2
+	hh = height / 2
+	deltaXarc = hw - deltah
+	deltaYarc = hh - deltav
+	left = p_centerx - hw
+	right = p_centerx + deltah
+	top1 = p_centery - hh
+	top2 = p_centery + deltav
+
+	radiiL = (200, 150)
+	radiiS = (50, 40)
+
+	p0 = Pt(left, top1)
+	p1 = ptAdd(p0,Pt(deltaXarc,deltaYarc))
+	print("p0, p1:", p0, p1, deltaXarc,deltaYarc)
+	ct = ellipticalArcCenter(p0, p1, *radiiL, largearcflag=0, sweepflag=0, angle=0)
+	p_sc.addChild(Use(ct, p_symbdict["crsymb"].getSel()).setClass('mrkr'))
+	with p_sc.addChild(AnalyticalPath()).setClass('caixas') as pth:
+		pth.addCmd(pM(*p0))
+		pth.addCmd(pA(*radiiL,rot,0,0,*p1))
+
+	a = Pt(left, top1 + deltaYarc)
+	b = Pt(left+deltaXarc, top1)
+
+	p_sc.addChild(Use(a, p_symbdict["extremesymb"].getSel()).setClass('mrkr'))
+
+	p_sc.addChild(Text(a.x-50, a.y+12)).\
+		setClass('text1').\
+		setText("A1")
+
+	p_sc.addChild(Text(b.x+20, b.y+10)).\
+		setClass('text1').\
+		setText("B1")
+
+	p_sc.addChild(Use(b, p_symbdict["extremesymb"].getSel()).setClass('mrkr'))
+
+	elip = Elpg(ct, radiiL[0], ry=radiiL[1], vertang=rot)
+	p1, p2 = ellipseIntersections(Lng(a,b), elip)
+	intpt = p1 if vec2_arecollinear(Pta(*a), Pta(*b), Pta(*p1), inside_segment=True) else p2
+	print("p1, p2:", p1, p2, intpt)
+	p_sc.addChild(Use(intpt, p_symbdict["pointsymb"].getSel()).setClass('ptmrkr'))
+	#p_sc.addChild(Use(p2, p_symbdict["pointsymb"].getSel()).setClass('ptmrkr'))
+
+	# p0 = Pt(right, top1)
+	# p1 = Pt(right+deltaXarc, top1+deltaYarc)
+	# ct = ellipticalArcCenter(p0, p1, *radiiS, largearcflag=1, sweepflag=0, angle=0)
+	# p_sc.addChild(Use(ct, p_symbdict["crsymb"].getSel()).setClass('mrkr'))
+	# with p_sc.addChild(AnalyticalPath()).setClass('caixas') as pth:
+	# 	pth.addCmd(pM(*p0))
+	# 	pth.addCmd(pA(*radiiS,rot,1,0,*p1))
+
+	# p0 = Pt(left, top2)
+	# p1 = Pt(right+deltaXarc, top1+deltaYarc)
+	# ct = ellipticalArcCenter(p0, p1, *radiiS, largearcflag=1, sweepflag=0, angle=0)
+	# p_sc.addChild(Use(ct, p_symbdict["crsymb"].getSel()).setClass('mrkr'))
+	# with p_sc.addChild(AnalyticalPath()).setClass('caixas') as pth:
+	# 	pth.addCmd(pM(left, top2))
+	# 	pth.addCmd(pA(*radiiL,rot,0,1,deltaXarc,deltaYarc,relative=True))
+
+	# with p_sc.addChild(AnalyticalPath()).setClass('caixas') as pth:
+	# 	pth.addCmd(pM(right, top2))
+	# 	pth.addCmd(pA(*radiiS,rot,1,1,deltaXarc,deltaYarc,relative=True))
+
+
+
+# "rx", "ry", "x-axis-rotation", "large-arc-flag", "sweep-flag", "x", "y
+
+
+
 def genCurveIntersectTest(p_ynvert):
 
 	# Coordinates rounded to 1 dec.place
@@ -240,7 +347,7 @@ def genCurveIntersectTest(p_ynvert):
 	# SYMBOL DEFINITIONS ------------------------------------------------------
 	#
 	xsight = sc.addChild(XSight(16,16,2), todefs=True, noyinvert=True)
-	# crsymb_centerMarker = sc.addChild(Cross(30,30), todefs=True)
+	crsymb = sc.addChild(Cross(30,30), todefs=True)
 	extremesymb = xsight
 	pointsymb = sc.addChild(Circle(0,0,6), todefs=True, noyinvert=True)
 	#
@@ -250,10 +357,12 @@ def genCurveIntersectTest(p_ynvert):
 		title_height = 1060
 		mainlabel = "Elliptical curve intersections (y-inverted)"
 		topY = 790
+		row2Y = 300
 	else:
 		title_height = 140
 		mainlabel = "Elliptical curve intersections"
 		topY = 410
+		row2Y = 900
 
 	sc.addChild(Title(mainlabel))
 
@@ -261,17 +370,24 @@ def genCurveIntersectTest(p_ynvert):
 		setStyle(Sty('fill', '#7C7C7C', 'font-size', 40, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
 		setText(mainlabel)
 
-	genCITPart(sc, 400, topY, {"extremesymb": extremesymb, "pointsymb": pointsymb})
+	sdict = {"crsymb": crsymb, "extremesymb": extremesymb, "pointsymb": pointsymb}
+
+	genCompleteEllipsePart(sc, 400, topY, sdict)
 
 	if p_ynvert:
 		rot_ang = -30
 	else:
 		rot_ang = 30
 
-	genCITPart(sc, 1120, topY, {"extremesymb": extremesymb, "pointsymb": pointsymb}, rot=rot_ang)
+	genCompleteEllipsePart(sc, 1120, topY, sdict, rot=rot_ang)
+
+	sc.addComment("Ellipitcal Arcs")
+
+	genEllipticArcPart(sc, 400, row2Y, sdict, rot=0)
 
 	return sc
 
+@pytest.mark.solo
 def test_00CurveIntersectTest_(capsys):
 
 	with capsys.disabled():
