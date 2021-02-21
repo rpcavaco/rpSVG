@@ -10,66 +10,71 @@ from rpSVG.Basics import GLOBAL_ENV, Pt, Rotate
 import pytest
 from rpSVG.Geometry import Elpg, Lna, Lng, Pta, aToPt, ellipseIntersections, vec2_rotate, vec2_segment_intersect
 
+def test_00Rotation():
 
-def test_00Intersect(capsys):
+	ct = Pta(3,2)
+	p1 = Pta(5,2)
+	assert vec2_rotate(p1, 90, center=ct).all() == Pta(3,4).all()
+
+def test_00Intersect():
 
 	la = (Pta(1,1), Pta(2,3))
 	lb = (Pta(3,1.5), Pta(5,0))
 
-	with capsys.disabled():
+	ret = vec2_segment_intersect(*la, *lb)
+	assert ret is None, ret
 
-		ret = vec2_segment_intersect(*la, *lb)
-		assert ret is None, ret
+	# ----------------------------------------------
 
-		# ----------------------------------------------
+	lb = (Pta(1.1,1.5), Pta(5,0))
 
-		lb = (Pta(1.1,1.5), Pta(5,0))
+	ret = vec2_segment_intersect(*la, *lb)
+	testret = [round(x,2) for x in ret]
+	assert testret == [1.23, 1.45], testret
 
-		ret = vec2_segment_intersect(*la, *lb)
-		testret = [round(x,2) for x in ret]
-		assert testret == [1.23, 1.45], testret
+	# ----------------------------------------------
 
-		# ----------------------------------------------
+	lb = (Pta(-3.1,1.5), Pta(1,1.5))
 
-		lb = (Pta(-3.1,1.5), Pta(1,1.5))
+	ret = vec2_segment_intersect(*la, *lb)
+	assert ret is None, ret
 
-		ret = vec2_segment_intersect(*la, *lb)
-		assert ret is None, ret
+	# ----------------------------------------------
 
-		# ----------------------------------------------
+	la = (Pta(-10,-1), Pta(1,1))
+	lb = (Pta(-10,1), Pta(1,-1))
 
-		la = (Pta(-10,-1), Pta(1,1))
-		lb = (Pta(-10,1), Pta(1,-1))
+	ret = vec2_segment_intersect(*la, *lb)
+	testret = [round(x,1) for x in ret]
+	assert testret == [-4.5, 0.0], testret
 
-		ret = vec2_segment_intersect(*la, *lb)
-		testret = [round(x,1) for x in ret]
-		assert testret == [-4.5, 0.0], testret
+	# ----------------------------------------------
 
-		# ----------------------------------------------
+	la = (Pta(-10,-1), Pta(-10,1))
+	lb = (Pta(1,-1), Pta(1,1))
 
-		la = (Pta(-10,-1), Pta(-10,1))
-		lb = (Pta(1,-1), Pta(1,1))
+	ret = vec2_segment_intersect(*la, *lb)
+	assert ret is None, ret
 
-		ret = vec2_segment_intersect(*la, *lb)
-		assert ret is None, ret
+	la = (Pta(240, 400), Pta(640, 300))
+	lb = (Pta(740, 355), Pta(740, 245))
 
-		la = (Pta(240, 400), Pta(640, 300))
-		lb = (Pta(740, 355), Pta(740, 245))
-
-		ret = vec2_segment_intersect(*la, *lb)
-		assert ret is None, ret
+	ret = vec2_segment_intersect(*la, *lb)
+	assert ret is None, ret
 
 
-def genCITPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
+def genCITPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0, noninvert_cy=None):
 
 	def rot_ab(p_a, p_b, p_ac, p_rot):
 		if p_rot != 0:
-			ra = aToPt(vec2_rotate(Pta(*p_a), rot, center=p_ac))
-			rb = aToPt(vec2_rotate(Pta(*p_b), rot, center=p_ac))
+			ra = aToPt(vec2_rotate(Pta(*p_a), p_rot, center=p_ac))
+			rb = aToPt(vec2_rotate(Pta(*p_b), p_rot, center=p_ac))
 		else:
 			ra = p_a
 			rb = p_b
 		return ra, rb
+
+	_rot = rot
 
 	center = Pt(p_centerx, p_centery)
 	wid_hei = (340, 250)
@@ -82,8 +87,8 @@ def genCITPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 	right_axes = center.x + rx + offset_axes
 
 	gr1 = p_sc.addChild(Group())
-	if rot != 0:
-		gr1.addTransform(Rotate(rot,*center))
+	if _rot != 0 and not noninvert_cy is None:
+		gr1.addTransform(Rotate(abs(_rot), center[0], noninvert_cy))
 	gr1.addChild(Ellipse(*center, rx, ry)).setClass('caixas')
 	# Y
 	gr1.addChild(Line(center.x, top_axes, center.x, bot_axes)).setClass('aid1')
@@ -98,7 +103,7 @@ def genCITPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 	a = Pt(linex1, top_axes)
 	b = Pt(linex2, bot_axes)
 
-	ra, rb = rot_ab(a, b, ac, rot)
+	ra, rb = rot_ab(a, b, ac, _rot)
 
 	gr1.addChild(Use(a, p_symbdict["extremesymb"].getSel()).setClass('mrkr'))
 
@@ -112,7 +117,7 @@ def genCITPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 
 	gr1.addChild(Use(b, p_symbdict["extremesymb"].getSel()).setClass('mrkr'))
 	
-	elip = Elpg(center, rx, ry=ry, vertang=rot)
+	elip = Elpg(center, rx, ry=ry, vertang=_rot)
 	p1, p2 = ellipseIntersections(Lng(a,b), elip)
 
 	p_sc.addChild(Use(p1, p_symbdict["pointsymb"].getSel()).setClass('ptmrkr'))
@@ -128,7 +133,7 @@ def genCITPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 	a = Pt(linex1, top_axes)
 	b = Pt(linex2, bot_axes)
 
-	ra, rb = rot_ab(a, b, ac, rot)
+	ra, rb = rot_ab(a, b, ac, _rot)
 
 	gr1.addChild(Use(a, p_symbdict["extremesymb"].getSel()).setClass('mrkr'))
 
@@ -158,7 +163,7 @@ def genCITPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 	a = Pt(linex1, hor)
 	b = Pt(linex2, hor)
 
-	ra, rb = rot_ab(a, b, ac, rot)
+	ra, rb = rot_ab(a, b, ac, _rot)
 
 	gr1.addChild(Use(a, p_symbdict["extremesymb"].getSel()).setClass('mrkr'))
 
@@ -190,7 +195,7 @@ def genCITPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 	a = Pt(linex1, hor1)
 	b = Pt(linex2, hor2)
 
-	ra, rb = rot_ab(a, b, ac, rot)
+	ra, rb = rot_ab(a, b, ac, _rot)
 
 	gr1.addChild(Use(a, p_symbdict["extremesymb"].getSel()).setClass('mrkr'))
 
@@ -256,16 +261,16 @@ def genCurveIntersectTest(p_ynvert):
 		setStyle(Sty('fill', '#7C7C7C', 'font-size', 40, 'font-family', 'Helvetica', 'font-weight', 'bold')).\
 		setText(mainlabel)
 
-	genCITPart(sc, 400, topY, {"extremesymb": extremesymb, "pointsymb": pointsymb,})
-	genCITPart(sc, 1120, topY, {"extremesymb": extremesymb, "pointsymb": pointsymb,}, rot=30)
+	genCITPart(sc, 400, topY, {"extremesymb": extremesymb, "pointsymb": pointsymb})
+
+	if p_ynvert:
+		rot_ang = -30
+	else:
+		rot_ang = 30
+
+	genCITPart(sc, 1120, topY, {"extremesymb": extremesymb, "pointsymb": pointsymb}, rot=rot_ang, noninvert_cy=410)
 
 	return sc
-
-def test_00Rotation():
-
-	ct = Pta(3,2)
-	p1 = Pta(5,2)
-	assert vec2_rotate(p1, 90, center=ct).all() == Pta(3,4).all()
 
 def test_00CurveIntersectTest_(capsys):
 
