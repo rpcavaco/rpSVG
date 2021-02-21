@@ -882,7 +882,6 @@ class RectRC(GenericSVGElem):
 	def getContour(self, p_anchorpt, p_anchoring):
 		"ccw from lower right"
 		strct = self.getStruct()
-		print("strct:", strct)
 		x = p_anchorpt.x
 		y = p_anchorpt.y
 		w, _u = toNumberAndUnit(strct.get("width"))

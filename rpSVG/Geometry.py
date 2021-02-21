@@ -1,7 +1,8 @@
 
 from math import sqrt
+from typing import Optional, Union
 from rpSVG.Basics import Elp, Ln, Pt, lineEquationParams, ptGetAngle
-from numpy import empty_like, dot, array, ndarray
+from numpy import empty_like, dot, array, ndarray, radians, sin, cos
 
 MINNUM = 0.0000001
 
@@ -14,6 +15,9 @@ def Pta(x, y):
 
 def Lna(pt1, pt2):
 	return (Pta(*pt1), Pta(*pt2))
+
+def aToPt(p_pt: ndarray):
+	return Pt(p_pt[0], p_pt[1])
 
 def Elpa(pt, rx, ry=None, vertang=0):
 	if ry is None:
@@ -78,6 +82,29 @@ def vec2_segment_intersect(a1,a2, b1,b2):
 				ret = intersection
 	return ret
 		
+def vec2_rotation_mat(p_degangle):
+    angle = radians(p_degangle)
+    return array([
+        [cos(angle), -sin(angle)],
+        [sin(angle),  cos(angle)]
+    ])
+
+def vec2_scale_mat(p_scale):
+    return array([
+        [p_scale, 0],
+        [0, p_scale]
+    ])
+
+def vec2_rotate(p_pt: ndarray, p_degangle: Union[float, int], center: Optional[ndarray] = None):
+	assert isinstance(p_pt, ndarray)
+	if not center is None:
+		assert isinstance(center, ndarray)
+		r1 = p_pt - center
+		r2 = vec2_rotation_mat(p_degangle) @ r1
+		ret = r2 + center
+	else:
+		ret = vec2_rotation_mat(p_degangle) @ p_pt
+	return ret
 
 ###############################################################################
 # Algebraic calculations
@@ -97,12 +124,11 @@ def Elpg(pt, rx, ry=None, vertang=0):
 	return ret
 
 def ellipseIntersections(p_line: Ln, p_ellipse: Elp):
-	"source: http://www.ambrsoft.com/TrigoCalc/Circles2/Ellipse/EllipseLine.htm"
-	print("\nintersect line:", p_line, ", ellipse:",p_ellipse )
+	"""Uses numpy if p_ellipse has rotation angle.
+	Algorithm source: http://www.ambrsoft.com/TrigoCalc/Circles2/Ellipse/EllipseLine.htm"""
 	tipo, m, c = lineEquationParams(*p_line)
 	a = p_ellipse.rx
 	b = p_ellipse.ry
-	print("a,b:", a, b)
 	a2 = pow(a, 2)
 	b2 = pow(b, 2)
 	h = p_ellipse.pt.x
@@ -134,7 +160,15 @@ def ellipseIntersections(p_line: Ln, p_ellipse: Elp):
 		ya = m * xa + c
 		yb = m * xb + c
 
-	return Pt(xa, ya), Pt(xb, yb)
+	if p_ellipse.ang != 0:
+		pa = vec2_rotate(Pta(xa, ya), p_ellipse.ang, center=Pta(h,k))
+		pb = vec2_rotate(Pta(xb, yb), p_ellipse.ang, center=Pta(h,k))
+		ret = Pt(pa[0], pa[1]), Pt(pb[0], pb[1])
+	else:
+		ret = Pt(xa, ya), Pt(xb, yb)
+
+
+	return ret
 
 
 
