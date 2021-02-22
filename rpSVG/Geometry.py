@@ -1,6 +1,6 @@
 
 from math import sqrt, cos, sin, sqrt, radians
-from typing import Optional, Union
+from typing import List, Optional, Union
 from rpSVG.Basics import Elp, Ln, MINDELTA, NANODELTA, Pt, lineEquationParams, ptAdd, ptGetAngle, ptMult, ptSub
 #from numpy import empty_like, dot, array, ndarray, radians, sin, cos, cross
 #from numpy.linalg import norm
@@ -58,6 +58,14 @@ def vec2_crossprod_det(p_a: Pt, p_b: Pt):
 	assert isinstance(p_a, Pt)
 	assert isinstance(p_b, Pt)
 	return p_a.x * p_b.y - p_a.y * p_b.x
+
+def vec2_area2(p_pts: List[Pt]):
+	ret = 0
+	j = len(p_pts) - 1
+	for i, pt in enumerate(p_pts):
+		ret += p_pts[j].x * pt.y - p_pts[j].y * pt.x
+		j = i
+	return ret
 
 def vec2_len2(p_a: Pt, p_b: Pt):
 	assert isinstance(p_a, Pt)
