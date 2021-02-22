@@ -75,6 +75,9 @@ def ptAdd(pa: Pt, pb: Pt):
 def ptSub(pa: Pt, pb: Pt):
 	return Pt(pa.x - pb.x, pa.y - pb.y)
 
+def ptMult(p_m: Union[float, int], p_pt: Pt):
+	return Pt(p_m * p_pt.x, p_m * p_pt.y)
+
 def ptDxInt(pa: Pt, pb: Pt):
 	return (pa.x, pb.x)
 
