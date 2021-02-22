@@ -340,10 +340,8 @@ def genEllipticArcPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 
 	p0 = Pt(left, top2)
 	p1 = Pt(right+deltaXarc, top1+deltaYarc)
-	ct, nrx, nry = ellipticalArcCenterAndRadii(p0, p1, *radiiS, largearcflag=1, sweepflag=0, angle=0)
+	ct, nrx, nry = ellipticalArcCenterAndRadii(p0, p1, *radiiS, largearcflag=0, sweepflag=1, angle=0)
 	p_sc.addChild(Use(ct, p_symbdict["crsymb"].getSel()).setClass('mrkr'))
-
-	elip = Elpg(ct, nrx, ry=nry, vertang=rot)
 
 	with p_sc.addChild(AnalyticalPath()).setClass('caixas') as pth:
 		pth.addCmd(pM(left, top2))
@@ -352,6 +350,7 @@ def genEllipticArcPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 	a = Pt(left, top2 + deltaYarc)
 	b = Pt(left+deltaXarc, top2)
 
+	elip = Elpg(ct, nrx, ry=nry, vertang=rot)
 	pInt1, pInt2 = ellipseIntersections(Lng(a,b), elip)
 	area1 = vec2_area2((p0, pInt1, p1))
 	area2 = vec2_area2((p0, pInt2, p1))
@@ -370,10 +369,42 @@ def genEllipticArcPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 		setText("B1")
 	p_sc.addChild(Use(b, p_symbdict["extremesymb"].getSel()).setClass('mrkr'))
 
+	p_sc.addChild(Use(intpt, p_symbdict["pointsymb"].getSel()).setClass('ptmrkr'))
+
 	# #########################################################################
+
+	p0 = Pt(right, top2)
+	p1 = Pt(right+deltaXarc, top2+deltaYarc)
+	ct, nrx, nry = ellipticalArcCenterAndRadii(p0, p1, *radiiS, largearcflag=1, sweepflag=1, angle=0)
+	p_sc.addChild(Use(ct, p_symbdict["crsymb"].getSel()).setClass('mrkr'))
+
 	with p_sc.addChild(AnalyticalPath()).setClass('caixas') as pth:
-		pth.addCmd(pM(right, top2))
+		pth.addCmd(pM(*p0))
 		pth.addCmd(pA(*radiiS,rot,1,1,deltaXarc,deltaYarc,relative=True))
+
+	a = Pt(right, top2 + deltaYarc)
+	b = Pt(right+deltaXarc + 20, top2 - 30)
+
+	elip = Elpg(ct, nrx, ry=nry, vertang=rot)
+	pInt1, pInt2 = ellipseIntersections(Lng(a,b), elip)
+	area1 = vec2_area2((p0, pInt1, p1))
+	area2 = vec2_area2((p0, pInt2, p1))
+	# Porque large-arc = 0
+	if abs(area1) < abs(area2):
+		intpt = pInt1
+	else:
+		intpt = pInt2
+
+	p_sc.addChild(Use(a, p_symbdict["extremesymb"].getSel()).setClass('mrkr'))
+	p_sc.addChild(Text(a.x-50, a.y+12)).\
+		setClass('text1').\
+		setText("A4")
+	p_sc.addChild(Text(b.x+20, b.y+10)).\
+		setClass('text1').\
+		setText("B4")
+	p_sc.addChild(Use(b, p_symbdict["extremesymb"].getSel()).setClass('mrkr'))
+
+	p_sc.addChild(Use(intpt, p_symbdict["pointsymb"].getSel()).setClass('ptmrkr'))
 
 
 
