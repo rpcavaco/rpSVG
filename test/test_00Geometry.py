@@ -8,7 +8,7 @@ from rpSVG.SVGStyleText import CSSSty, Sty
 from rpSVG.Structs import Re
 from rpSVG.Basics import GLOBAL_ENV, Pt, Rotate, pA, pL, pM, ptAdd
 import pytest
-from rpSVG.Geometry import Elpg, Lng, Ptg, ellipseIntersections, ellipticalArcCenter, vec2_area2, vec2_arecollinear, vec2_crossprod_det, vec2_rotate, vec2_segment_intersect
+from rpSVG.Geometry import Elpg, Lng, Ptg, ellipseIntersections, ellipticalArcCenterAndRadii, vec2_area2, vec2_arecollinear, vec2_crossprod_det, vec2_rotate, vec2_segment_intersect
 
 
 #@pytest.mark.solo
@@ -270,7 +270,7 @@ def genEllipticArcPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 
 	p0 = Pt(left, top1)
 	p1 = ptAdd(p0,Pt(deltaXarc,deltaYarc))
-	ct = ellipticalArcCenter(p0, p1, *radiiL, largearcflag=0, sweepflag=0, angle=0)
+	ct, nrx, nry = ellipticalArcCenterAndRadii(p0, p1, *radiiL, largearcflag=0, sweepflag=0, angle=0)
 	elip = Elpg(ct, radiiL[0], ry=radiiL[1], vertang=rot)
 
 	a = Pt(left, top1 + deltaYarc)
@@ -304,10 +304,10 @@ def genEllipticArcPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 
 	p0 = Pt(right, top1)
 	p1 = Pt(right+deltaXarc, top1+deltaYarc)
-	ct = ellipticalArcCenter(p0, p1, *radiiS, largearcflag=1, sweepflag=0, angle=0)
+	ct, nrx, nry = ellipticalArcCenterAndRadii(p0, p1, *radiiS, largearcflag=1, sweepflag=0, angle=0)
 	p_sc.addChild(Use(ct, p_symbdict["crsymb"].getSel()).setClass('mrkr'))
 
-	elip = Elpg(ct, radiiS[0], ry=radiiS[1], vertang=rot)
+	elip = Elpg(ct, nrx, ry=nry, vertang=rot)
 
 	with p_sc.addChild(AnalyticalPath()).setClass('caixas') as pth:
 		pth.addCmd(pM(*p0))
@@ -319,10 +319,8 @@ def genEllipticArcPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 	pInt1, pInt2 = ellipseIntersections(Lng(a,b), elip)
 	area1 = vec2_area2((p0, pInt1, p1))
 	area2 = vec2_area2((p0, pInt2, p1))
-	# large-arc = 1
-	# print(area2, area1)
-	# if False and abs(area2) < abs(area1):
-	if True:
+	# Porque large-arc = 1
+	if abs(area1) > abs(area2):
 		intpt = pInt1
 	else:
 		intpt = pInt2
@@ -340,17 +338,42 @@ def genEllipticArcPart(p_sc, p_centerx, p_centery, p_symbdict, rot=0):
 
 	# #########################################################################
 
-	# p0 = Pt(left, top2)
-	# p1 = Pt(right+deltaXarc, top1+deltaYarc)
-	# ct = ellipticalArcCenter(p0, p1, *radiiS, largearcflag=1, sweepflag=0, angle=0)
-	# p_sc.addChild(Use(ct, p_symbdict["crsymb"].getSel()).setClass('mrkr'))
-	# with p_sc.addChild(AnalyticalPath()).setClass('caixas') as pth:
-	# 	pth.addCmd(pM(left, top2))
-	# 	pth.addCmd(pA(*radiiL,rot,0,1,deltaXarc,deltaYarc,relative=True))
+	p0 = Pt(left, top2)
+	p1 = Pt(right+deltaXarc, top1+deltaYarc)
+	ct, nrx, nry = ellipticalArcCenterAndRadii(p0, p1, *radiiS, largearcflag=1, sweepflag=0, angle=0)
+	p_sc.addChild(Use(ct, p_symbdict["crsymb"].getSel()).setClass('mrkr'))
 
-	# with p_sc.addChild(AnalyticalPath()).setClass('caixas') as pth:
-	# 	pth.addCmd(pM(right, top2))
-	# 	pth.addCmd(pA(*radiiS,rot,1,1,deltaXarc,deltaYarc,relative=True))
+	elip = Elpg(ct, nrx, ry=nry, vertang=rot)
+
+	with p_sc.addChild(AnalyticalPath()).setClass('caixas') as pth:
+		pth.addCmd(pM(left, top2))
+		pth.addCmd(pA(*radiiL,rot,0,1,deltaXarc,deltaYarc,relative=True))
+
+	a = Pt(left, top2 + deltaYarc)
+	b = Pt(left+deltaXarc, top2)
+
+	pInt1, pInt2 = ellipseIntersections(Lng(a,b), elip)
+	area1 = vec2_area2((p0, pInt1, p1))
+	area2 = vec2_area2((p0, pInt2, p1))
+	# Porque large-arc = 0
+	if abs(area1) < abs(area2):
+		intpt = pInt1
+	else:
+		intpt = pInt2
+
+	p_sc.addChild(Use(a, p_symbdict["extremesymb"].getSel()).setClass('mrkr'))
+	p_sc.addChild(Text(a.x-50, a.y+12)).\
+		setClass('text1').\
+		setText("A1")
+	p_sc.addChild(Text(b.x+20, b.y+10)).\
+		setClass('text1').\
+		setText("B1")
+	p_sc.addChild(Use(b, p_symbdict["extremesymb"].getSel()).setClass('mrkr'))
+
+	# #########################################################################
+	with p_sc.addChild(AnalyticalPath()).setClass('caixas') as pth:
+		pth.addCmd(pM(right, top2))
+		pth.addCmd(pA(*radiiS,rot,1,1,deltaXarc,deltaYarc,relative=True))
 
 
 

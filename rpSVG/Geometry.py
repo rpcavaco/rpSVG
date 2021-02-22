@@ -1,9 +1,7 @@
 
 from math import sqrt, cos, sin, sqrt, radians
 from typing import List, Optional, Union
-from rpSVG.Basics import Elp, Ln, MINDELTA, NANODELTA, Pt, lineEquationParams, ptAdd, ptGetAngle, ptMult, ptSub
-#from numpy import empty_like, dot, array, ndarray, radians, sin, cos, cross
-#from numpy.linalg import norm
+from rpSVG.Basics import Elp, Ln, MINDELTA, NANODELTA, Pt, lineEquationParams, ptAdd, ptMult, ptSub
 
 def Ptg(x, y):
 	return Pt(float(x), float(y))
@@ -20,30 +18,6 @@ def Elpg(pt, rx, ry=None, vertang=0):
 	else:
 		ret = Elp(Ptg(*pt), float(rx), float(ry), float(vertang))
 	return ret
-
-
-# def Pta(x, y):
-# 	return array((float(x), float(y)))
-
-# def Lna(pt1, pt2):
-# 	return (Pta(*pt1), Pta(*pt2))
-
-# def aToPt(p_pt: ndarray):
-# 	return Pt(p_pt[0], p_pt[1])
-
-# def Elpa(pt, rx, ry=None, vertang=0):
-# 	if ry is None:
-# 		ret = (Pta(*pt), float(rx), None, float(vertang))
-# 	else:
-# 		ret = (Pta(*pt), float(rx), float(ry), float(vertang))
-# 	return ret
-
-# def vec2_perpendicular0(p_a):
-# 	assert isinstance(p_a, ndarray)
-# 	b = empty_like(p_a)
-# 	b[0] = -p_a[1]
-# 	b[1] = p_a[0]
-# 	return b
 
 def vec2_perpendicular(p_a: Pt):
 	assert isinstance(p_a, Pt)
@@ -72,39 +46,6 @@ def vec2_len2(p_a: Pt, p_b: Pt):
 	assert isinstance(p_b, Pt)
 	vec_a = ptSub(p_b, p_a)
 	return vec_a.x * vec_a.x + vec_a.y * vec_a.y
-
-
-# def vec2_line_intersect0(a1,a2, b1,b2):
-# 	"""Intersection of two infinite lines, described by 2 points each:
-# 			first: a1, a2
-# 			second: b1, b2
-# 		Returns a tuple with:
-# 			- scalar multiplier of vector representation of segment from line B
-# 			- the intersection point
-# 		In case of parallel lines, this method returns 0 as scalar and None as intersection point.
-# 	"""
-# 	assert isinstance(a1, ndarray)
-# 	assert isinstance(a2, ndarray)
-# 	assert isinstance(b1, ndarray)
-# 	assert isinstance(b2, ndarray)
-# 	vec_a = a2-a1
-# 	vec_b = b2-b1
-# 	vec_origins_separation = a1-b1
-# 	perpend_a = vec2_perpendicular(vec_a)
-# 	perpend_b = vec2_perpendicular(vec_b)
-# 	denomin = dot(perpend_a, vec_b)
-# 	new_vec = None
-# 	if abs(denomin) > MINNUM:
-# 		a_scalar_multiplier = dot(perpend_b, vec_origins_separation) / denomin
-# 		numer = dot(perpend_a, vec_origins_separation)
-# 		b_scalar_multiplier = numer / denomin
-# 		new_vec = b_scalar_multiplier * vec_b
-# 		intpt = new_vec + b1
-# 	else:
-# 		a_scalar_multiplier = 0
-# 		b_scalar_multiplier = 0
-# 		intpt = None
-# 	return a_scalar_multiplier, b_scalar_multiplier, intpt
 
 def vec2_line_intersect(a1: Pt,a2: Pt, b1: Pt, b2: Pt, mindelta=NANODELTA):
 	"""Intersection of two infinite lines, described by 2 points each:
@@ -138,23 +79,6 @@ def vec2_line_intersect(a1: Pt,a2: Pt, b1: Pt, b2: Pt, mindelta=NANODELTA):
 		intpt = None
 	return a_scalar_multiplier, b_scalar_multiplier, intpt
 
-# def vec2_segment_intersect0(a1,a2, b1,b2):
-# 	"""Intersection of two line segments, each described by their extreme points:
-# 			first: a1, a2
-# 			second: b1, b2
-# 		Returns:
-# 			- None if segments don't intersect
-# 			- the intersection point
-# 	"""
-# 	ret = None
-# 	a_scal_mult, b_scal_mult, intersection = vec2_line_intersect(a1,a2, b1,b2)
-# 	#print("scalar:", a_scal_mult, b_scal_mult, intersection)
-# 	if not intersection is None:
-# 		if a_scal_mult >= 0 and a_scal_mult <= 1.0:
-# 			if b_scal_mult >= 0 and b_scal_mult <= 1.0:
-# 				ret = intersection
-# 	return ret
-
 def vec2_segment_intersect(a1: Pt,a2: Pt, b1: Pt, b2: Pt):
 	"""Intersection of two line segments, each described by their extreme points:
 			first: a1, a2
@@ -176,19 +100,6 @@ def vec2_segment_intersect(a1: Pt,a2: Pt, b1: Pt, b2: Pt):
 				ret = intersection
 	return ret
 
-# def vec2_rotation_mat(p_degangle):
-#     angle = radians(p_degangle)
-#     return (
-#         cos(angle), -sin(angle)],
-#         [sin(angle),  cos(angle)]
-#     )
-
-# def vec2_scale_mat(p_scale):
-#     return array([
-#         [p_scale, 0],
-#         [0, p_scale]
-#     ])
-
 def vec2_rotation_mat(p_degangle):
     angle = radians(p_degangle)
     return (
@@ -201,17 +112,6 @@ def vec2_scale_mat(p_scale):
         (p_scale, 0),
         (0, p_scale)
     )
-
-# def vec2_rotate0(p_pt: ndarray, p_degangle: Union[float, int], center: Optional[ndarray] = None):
-# 	assert isinstance(p_pt, ndarray)
-# 	if not center is None:
-# 		assert isinstance(center, ndarray)
-# 		r1 = p_pt - center
-# 		r2 = vec2_rotation_mat(p_degangle) @ r1
-# 		ret = r2 + center
-# 	else:
-# 		ret = vec2_rotation_mat(p_degangle) @ p_pt
-# 	return ret
 
 def vec2_matmult(p_mat, p_pt: Pt):
 	return Pt(
@@ -229,27 +129,6 @@ def vec2_rotate(p_pt: Pt, p_degangle: Union[float, int], center: Optional[Pt] = 
 	else:
 		ret = vec2_matmult(p_pt, vec2_rotation_mat(p_degangle))
 	return ret
-
-# def vec2_arecollinear(p_p1: ndarray, p_p2: ndarray, p_p3: ndarray, mindelta=MINDELTA, inside_segment=False):
-# 	assert isinstance(p_p1, ndarray)
-# 	assert isinstance(p_p2, ndarray)
-# 	assert isinstance(p_p3, ndarray)
-
-# 	ret = False
-# 	vec_a = p_p2-p_p1
-# 	vec_b = p_p3-p_p1
-
-# 	cp = cross(vec_a, vec_b)
-# 	if abs(cp) < mindelta:
-
-# 		if not inside_segment:
-# 			ret = True
-# 		else:
-# 			dp = dot(vec_a, vec_b)
-# 			len2 = vec_a[0] * vec_a[0] + vec_a[1] * vec_a[1]
-
-# 			ret = True if dp > -mindelta and dp < len2 + mindelta else False
-# 	return ret
 
 def vec2_arecollinear(p_p1: Pt, p_p2: Pt, p_p3: Pt, mindelta=MINDELTA, inside_segment=False):
 	assert isinstance(p_p1, Pt)
@@ -272,11 +151,8 @@ def vec2_arecollinear(p_p1: Pt, p_p2: Pt, p_p3: Pt, mindelta=MINDELTA, inside_se
 			ret = True if dp > -mindelta and dp < len2 + mindelta else False
 	return ret
 
-
-
 def ellipseIntersections(p_line: Ln, p_ellipse: Elp):
-	"""Uses numpy if p_ellipse has rotation angle.
-	Algorithm source: http://www.ambrsoft.com/TrigoCalc/Circles2/Ellipse/EllipseLine.htm"""
+	"""Algorithm source: http://www.ambrsoft.com/TrigoCalc/Circles2/Ellipse/EllipseLine.htm"""
 	tipo, m, c = lineEquationParams(*p_line)
 	a = p_ellipse.rx
 	b = p_ellipse.ry
@@ -318,10 +194,9 @@ def ellipseIntersections(p_line: Ln, p_ellipse: Elp):
 	else:
 		ret = Pt(xa, ya), Pt(xb, yb)
 
-
 	return ret
 
-def ellipticalArcCenter(p_p0: Pt, p_p1: Pt, p_rx, p_ry, largearcflag=0, sweepflag=0, angle=0):
+def ellipticalArcCenterAndRadii(p_p0: Pt, p_p1: Pt, p_rx, p_ry, largearcflag=0, sweepflag=0, angle=0):
 	"""Code source: Batik Project (adapted from Java)
 	http://svn.apache.org/repos/asf/xmlgraphics/batik/branches/svg11/sources/org/apache/batik/ext/awt/geom/ExtendedGeneralPath.java
 	"""
@@ -365,7 +240,7 @@ def ellipticalArcCenter(p_p0: Pt, p_p1: Pt, p_rx, p_ry, largearcflag=0, sweepfla
 	cx = sx2 + (cosAngle * cx1 - sinAngle * cy1)
 	cy = sy2 + (sinAngle * cx1 + cosAngle * cy1)
 
-	return Pt(cx, cy)
+	return Pt(cx, cy), rx, ry
 
 
 
