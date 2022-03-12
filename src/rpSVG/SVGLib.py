@@ -3,6 +3,7 @@
 #import rsvg
 
 from io import StringIO
+from ssl import ALERT_DESCRIPTION_ACCESS_DENIED
 from typing import Optional, List, Union
 from warnings import warn
 
@@ -306,12 +307,13 @@ class BaseSVGElem(object):
 		return self._transforms
 
 	def __enter__(self):
-	 	return (self.getStruct(), self.getStyle(), self.getTransformsList())
+		return (self.getStruct(), self.getStyle(), self.getTransformsList())
 
 	def __exit__(self, exc_type, exc_value, traceback):
 		self.updateStructAttrs()
 		self.updateStyleAttrs()
 		self.updateTransformAttr()
+
 
 	def getSel(self, select='id'):
 		return self.getSelector(select=select)
@@ -1083,7 +1085,7 @@ class AnalyticalPath(Path):
 			self._yinvertdelta = p_height
 
 	def __enter__(self):
-	 	return self
+		return self
 
 	def __exit__(self, exc_type, exc_value, traceback):
 		self.refresh()
@@ -1216,7 +1218,7 @@ class TextParagraph(Group):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+			return
 		self.addTransform(Trans(*self._txtanchorpt))
 		self.tx = self.addChild(Text())
 		if self._justify == "left":

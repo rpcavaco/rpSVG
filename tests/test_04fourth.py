@@ -1,6 +1,6 @@
 
 import inspect
-from test.testing import genFiles
+from tests.testing import genFiles
 
 import cairosvg, pytest
 

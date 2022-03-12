@@ -219,7 +219,7 @@ class TextBox(Group):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+			return
 		self.refresh()
 
 	def getContour(self, forceanchoring=None):

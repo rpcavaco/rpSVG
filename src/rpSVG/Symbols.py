@@ -71,7 +71,7 @@ class Diamond(AnalyticalPath):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+			return
 		self.build()
 
 class Cross(AnalyticalPath):
@@ -87,7 +87,7 @@ class Cross(AnalyticalPath):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+			return
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
 		mw = removeDecsep(w / 2)
@@ -112,7 +112,7 @@ class XSymb(AnalyticalPath):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+			return
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
 		mw = removeDecsep(w / 2)
@@ -137,7 +137,7 @@ class XSight(AnalyticalPath):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+			return
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
 		sep, _u = toNumberAndUnit(self.dims[2])
@@ -175,7 +175,7 @@ class CrossSight(AnalyticalPath):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+			return
 		w, _u = toNumberAndUnit(self.dims[0])
 		h, _u = toNumberAndUnit(self.dims[1])
 		sep, _u = toNumberAndUnit(self.dims[2])
@@ -225,7 +225,7 @@ class Asterisk(AnalyticalPath):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return False
+			return False
 
 		step = 30
 		def nextangle(p_ang, halve=False):
@@ -287,7 +287,7 @@ class Arrow(AnalyticalPath):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return False
+			return False
 		length, basewidth, headwidth, headlength, handle = self.dims
 		baselength = length - headlength
 		mw = basewidth / 2
@@ -395,7 +395,7 @@ class Wedge(AnalyticalPath):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return -1
+			return -1
 		w = strictToNumber(self.dims[0])
 		h = strictToNumber(self.dims[1])
 		i = strictToNumber(self.dims[2])
@@ -462,7 +462,7 @@ class Crescent(Symbol):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+			return
 
 		self.addChild(Desc().setText(self.getComment()))
 		ap = self.addChild(AnalyticalPath())
@@ -515,7 +515,7 @@ class SuspPointCirc(Symbol):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+			return
 
 		self.addChild(Desc().setText(self.getComment()))
 		ap = self.addChild(AnalyticalPath())
@@ -574,7 +574,7 @@ class SuspPointSquare(Symbol):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+			return
 
 		self.addChild(Desc().setText(self.getComment()))
 		ap = self.addChild(AnalyticalPath())
@@ -637,7 +637,7 @@ class SuspPointTriang(Symbol):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+			return
 
 		self.addChild(Desc().setText(self.getComment()))
 
@@ -705,7 +705,7 @@ class Star(AnalyticalPath):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return False
+			return False
 
 		step = 360 / self.nspikes
 		rot = self.rot - 90 # 0 is vertical
@@ -791,7 +791,7 @@ class RegPoly(AnalyticalPath):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return False
+			return False
 
 		addRegPolyToPath(self, self.rot, self.radius, self.n, self._rhr)
 
@@ -853,7 +853,7 @@ class Donut(AnalyticalPath):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+			return
 
 		r2 = self.radius - self.offset
 
@@ -921,7 +921,7 @@ class Cylinder(Symbol):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+			return
 		self.refresh()
 
 	def yinvert(self, p_height: Union[float, int]):
@@ -1019,7 +1019,7 @@ class Server(Symbol):
 		if not self._parentadded:
 			self._parentadded = True
 		else:
-		 	return
+			return
 		self.refresh()
 
 	def yinvert(self, p_height: Union[float, int]):

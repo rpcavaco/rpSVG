@@ -1,0 +1,4 @@
+python -m pip install pytest
+python -m pip install lxml
+python -m pip install cairosvg
+

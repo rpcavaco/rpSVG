@@ -1,0 +1,10 @@
+bin/
+dist/
+lib/
+lib64
+*.pyc
+*.png
+*.svg
+*.pdf
+*.jpg
+rpSVG.egg-info/

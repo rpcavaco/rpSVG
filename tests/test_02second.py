@@ -1,4 +1,4 @@
-from test.testing import genFiles
+from tests.testing import genFiles
 import pytest, re, inspect
 
 from rpSVG.Basics import Pt, Mat, Trans, Scale, Rotate, SkewX, SkewY, pA, pC, pClose, pH, pM, pL, WrongValueTransformDef, pQ, pS, pT, pV

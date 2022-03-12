@@ -6,7 +6,7 @@ import pytest, inspect
 
 from os.path import exists, join as path_join
 
-from test.testing import genFiles
+from tests.testing import genFiles
 
 from rpSVG.Structs import VBox
 from rpSVG.Basics import Pt, Rotate, pA, pC, pQ, pS, pT, polar2rectDegs, ptAdd, ptGetAngle
@@ -169,7 +169,7 @@ def test_03Image():
 
 	sc = SVGContent(Re(0,0,1600,1200)).setIdentityViewbox()
 
-	path = path_join("test", "assets", "test_image.jpg")
+	path = path_join("assets", "test_image.jpg")
 	assert exists(path)
 
 	sc.addChild(Image(100,100,1400,916,path))
@@ -304,7 +304,7 @@ def test_03YInvert():
 	sc.addChild(Line(650,300,740,300).setClass('aid2'))
 	sc.addChild(Line(740,210,740,300).setClass('aid2'))
 
-	path = path_join("test", "assets", "test_image.jpg")
+	path = path_join("assets", "test_image.jpg")
 	sc.addChild(Image(1080,60, 420, 287,path))
 
 	sc.addChild(Text(1020, 60)).\

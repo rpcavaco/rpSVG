@@ -4,7 +4,7 @@
 import inspect
 
 import pytest
-from test.testing import genFiles
+from tests.testing import genFiles
 import cairosvg
 
 from rpSVG.Symbols import Cross, Cylinder, Diamond, Server, XSight
@@ -104,7 +104,7 @@ def genTxBoxParagraph(p_ynvert, p_vcenter_fontszpx, p_capsys):
 		if p_sc.getYInvertFlag():
 			lbly = p_top + p_lbloffset
 		else:
-		 	lbly = p_top - p_lbloffset
+			lbly = p_top - p_lbloffset
 		return lbly
 
 	def boxinsertion(p_nome_interno, p_label, p_lblanchor, p_anchor, p_tbanchoring, p_boxdims, p_text_just, p_paddingv, p_shape, txt=None):

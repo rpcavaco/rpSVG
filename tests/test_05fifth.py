@@ -2,7 +2,7 @@
 import inspect
 
 import pytest
-from test.testing import genFiles
+from tests.testing import genFiles
 import cairosvg
 
 from rpSVG.Symbols import XSight
